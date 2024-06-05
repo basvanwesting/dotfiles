@@ -112,7 +112,8 @@ source $ZSH/oh-my-zsh.sh
 ############################## Env ##################################
 #####################################################################
 
-export PATH="/opt/homebrew/bin:$PATH"
+
+export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
 # export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"
 # export LDFLAGS="-L/opt/homebrew/opt/postgresql@15/lib"
 # export CPPFLAGS="-I/opt/homebrew/opt/postgresql@15/include"
@@ -128,8 +129,10 @@ export PATH="/opt/homebrew/bin:$PATH"
 eval "$(starship init zsh)"
 
 #####################################################################
-###################### Aliases / Functions ##########################
+################## Bindkey / Aliases / Functions ####################
 #####################################################################
+
+bindkey '^y' forward-word
 
 function e() {
   if [[ $# -eq 0 ]] ; then
