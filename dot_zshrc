@@ -1,0 +1,195 @@
+# If you come from bash you might have to change your $PATH.
+# export PATH=$HOME/bin:/usr/local/bin:$PATH
+
+# Path to your oh-my-zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+# Set name of the theme to load --- if set to "random", it will
+# load a random theme each time oh-my-zsh is loaded, in which case,
+# to know which specific one was loaded, run: echo $RANDOM_THEME
+# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
+ZSH_THEME="robbyrussell"
+
+# Set list of themes to pick from when loading at random
+# Setting this variable when ZSH_THEME=random will cause zsh to load
+# a theme from this variable instead of looking in $ZSH/themes/
+# If set to an empty array, this variable will have no effect.
+# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+
+# Uncomment the following line to use case-sensitive completion.
+# CASE_SENSITIVE="true"
+
+# Uncomment the following line to use hyphen-insensitive completion.
+# Case-sensitive completion must be off. _ and - will be interchangeable.
+# HYPHEN_INSENSITIVE="true"
+
+# Uncomment one of the following lines to change the auto-update behavior
+# zstyle ':omz:update' mode disabled  # disable automatic updates
+# zstyle ':omz:update' mode auto      # update automatically without asking
+# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+
+# Uncomment the following line to change how often to auto-update (in days).
+# zstyle ':omz:update' frequency 13
+
+# Uncomment the following line if pasting URLs and other text is messed up.
+# DISABLE_MAGIC_FUNCTIONS="true"
+
+# Uncomment the following line to disable colors in ls.
+# DISABLE_LS_COLORS="true"
+
+# Uncomment the following line to disable auto-setting terminal title.
+# DISABLE_AUTO_TITLE="true"
+
+# Uncomment the following line to enable command auto-correction.
+# ENABLE_CORRECTION="true"
+
+# Uncomment the following line to display red dots whilst waiting for completion.
+# You can also set it to another string to have that shown instead of the default red dots.
+# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
+# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
+# COMPLETION_WAITING_DOTS="true"
+
+# Uncomment the following line if you want to disable marking untracked files
+# under VCS as dirty. This makes repository status check for large repositories
+# much, much faster.
+# DISABLE_UNTRACKED_FILES_DIRTY="true"
+
+# Uncomment the following line if you want to change the command execution time
+# stamp shown in the history command output.
+# You can set one of the optional three formats:
+# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
+# or set a custom format using the strftime function format specifications,
+# see 'man strftime' for details.
+# HIST_STAMPS="mm/dd/yyyy"
+
+# Would you like to use another custom folder than $ZSH/custom?
+# ZSH_CUSTOM=/path/to/new-custom-folder
+
+# Which plugins would you like to load?
+# Standard plugins can be found in $ZSH/plugins/
+# Custom plugins may be added to $ZSH_CUSTOM/plugins/
+# Example format: plugins=(rails git textmate ruby lighthouse)
+# Add wisely, as too many plugins slow down shell startup.
+plugins=(git)
+
+source $ZSH/oh-my-zsh.sh
+
+# User configuration
+
+# export MANPATH="/usr/local/man:$MANPATH"
+
+# You may need to manually set your language environment
+export LANG=en_US.UTF-8
+
+# Preferred editor for local and remote sessions
+if [[ -n $SSH_CONNECTION ]]; then
+  export EDITOR='vim'
+else
+  export EDITOR='nvim'
+fi
+
+# Compilation flags
+# export ARCHFLAGS="-arch x86_64"
+
+# Set personal aliases, overriding those provided by oh-my-zsh libs,
+# plugins, and themes. Aliases can be placed here, though oh-my-zsh
+# users are encouraged to define aliases within the ZSH_CUSTOM folder.
+# For a full list of active aliases, run `alias`.
+#
+# Example aliases
+# alias zshconfig="mate ~/.zshrc"
+# alias ohmyzsh="mate ~/.oh-my-zsh"
+
+# Perl config
+LC_ALL=
+LC_CTYPE=UTF-8
+LC_TERMINAL=iTerm2
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+#. ~/bin/dotfiles/zsh/env
+#. ~/bin/dotfiles/zsh/config
+#. ~/bin/dotfiles/zsh/aliases
+
+function e() {
+  if [[ $# -eq 0 ]] ; then
+    nvim .
+  else
+    nvim "$@"
+  fi
+}
+
+alias psp='ps aux | egrep -v "Evernote|Dropbox" | egrep -i --color "ruby|rails|rake|spring|puma|unicorn|delayed|vbox|python|neovim|phantomjs|beam|erlang|elixir|vim|coc"'
+alias en='(cd ~/bin/dotfiles/nvim && nvim init.vim)'
+
+# Git => based in OhMyZsh
+alias g='gst'
+#alias gr='git l -20'
+#alias gra='git l -20 --all'
+#alias gdc='git diff --cached'
+#alias gt="git log --graph --simplify-by-decoration --pretty=format:'%d' --all"
+# alias gba='git branch --all'
+function gtag() {
+  git tag -a $1 -m $1
+}
+
+function st() {
+  if [[ $# -eq 0 ]] ; then
+    bundle exec spring rspec
+  else
+    bundle exec spring rspec "$@"
+  fi
+}
+function bt() {
+  if [[ $# -eq 0 ]] ; then
+    bundle exec rspec
+  else
+    bundle exec rspec "$@"
+  fi
+}
+
+alias stmo='git ls-files --modified --others spec | grep _spec.rb | tee /dev/tty | xargs bundle exec spring rspec'
+alias btmo='git ls-files --modified --others spec | grep _spec.rb | tee /dev/tty | xargs bundle exec rspec'
+alias stt="git status spec | grep -v 'deleted: ' | grep -o -E '\S+(_spec.rb|\/)$' | tee /dev/tty | xargs bundle exec spring rspec"
+alias btt="git status spec | grep -v 'deleted: ' | grep -o -E '\S+(_spec.rb|\/)$' | tee /dev/tty | xargs bundle exec rspec"
+alias sth='git show --name-only --no-notes --oneline HEAD | grep _spec.rb | tee /dev/tty | xargs bundle exec spring rspec'
+alias bth='git show --name-only --no-notes --oneline HEAD | grep _spec.rb | tee /dev/tty | xargs bundle exec rspec'
+alias stf="fzf -m --bind enter:clear-selection+select-all+accept --query '_spec.rb$ ' | tee /dev/tty | xargs bundle exec spring rspec"
+alias btf="fzf -m --bind enter:clear-selection+select-all+accept --query '_spec.rb$ ' | tee /dev/tty | xargs bundle exec rspec"
+alias ss="bundle exec spring stop"
+alias sw="bundle exec spring rspec spec/models/user_spec.rb" #warm up in test-mode
+alias ssw="ss && sw"
+alias sstf="ss && stf"
+alias sst="ss && st"
+
+function rmig() {
+  bundle exec rake db:migrate RAILS_ENV=${1:-development}
+}
+function remig() {
+  bundle exec rake db:migrate:redo RAILS_ENV=${1:-development}
+}
+function unmig() {
+  bundle exec rake db:rollback RAILS_ENV=${1:-development}
+}
+
+alias cu='cd ~/workspace/cu'
+alias dqs='cd ~/workspace/dqs'
+alias fta='cd ~/workspace/fta'
+alias kbt='cd ~/workspace/kbt'
+alias wiki='e ~/bin/wiki'
+
+
+#non-latest homwbrew versions
+export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"
+export LDFLAGS="-L/opt/homebrew/opt/postgresql@15/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/postgresql@15/include"
+export PKG_CONFIG_PATH="/opt/homebrew/opt/postgresql@15/lib/pkgconfig"
+
+#export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+#export LDFLAGS="-L/opt/homebrew/opt/libpq/lib $LDFLAGS"
+#export CPPFLAGS="-I/opt/homebrew/opt/libpq/include $CPPFLAGS"
+#export PKG_CONFIG_PATH="/opt/homebrew/opt/libpq/lib/pkgconfig $PKG_CONFIG_PATH"
+
+. /opt/homebrew/opt/asdf/libexec/asdf.sh
+. "$HOME/.cargo/env"
+# eval "$(starship init zsh)"
