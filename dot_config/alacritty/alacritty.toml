@@ -1,0 +1,14 @@
+[shell]
+program = "/bin/zsh"
+#args = ["-l", "-c", "zellij"]
+
+[env]
+EDITOR = "nvim"
+
+[window]
+option_as_alt = "Both"
+startup_mode = "SimpleFullscreen"
+
+[font]
+size = 13
+normal = { family = "JetBrainsMono Nerd Font" }
