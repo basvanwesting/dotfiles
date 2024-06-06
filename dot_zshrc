@@ -130,6 +130,7 @@ export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 export EDITOR=nvim
 export HOMEBREW_NO_AUTO_UPDATE=1
 export XDG_CONFIG_HOME="$HOME/.config"
+export SHELL="$(which zsh)"
 
 # export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"
 # export LDFLAGS="-L/opt/homebrew/opt/postgresql@15/lib"
