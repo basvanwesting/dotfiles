@@ -117,6 +117,7 @@ if [[ $(arch) =~ 'arm' ]]; then
 else
   export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
 fi
+export PATH="$HOME/.local/bin:$PATH"
 
 export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 export EDITOR=nvim
