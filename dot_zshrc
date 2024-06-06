@@ -2,7 +2,7 @@
 ############################## PATH #################################
 #####################################################################
 #
-if [[ $(arch) =~ 'arm' ]]; then
+if [[ $(uname -m) =~ 'arm' ]]; then
   export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
 else
   export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
