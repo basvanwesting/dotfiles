@@ -112,7 +112,11 @@ source $ZSH/oh-my-zsh.sh
 ############################## Env ##################################
 #####################################################################
 
-export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
+if [[ $(arch) =~ 'arm' ]]; then
+  export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
+else
+  export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
+fi
 
 export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 export EDITOR=nvim

@@ -13,10 +13,12 @@ brew install \
     font-jetbrains-mono-nerd-font \
     fzf \
     git \
+    make \
     neovim \
     nushell \
     pv \
     ripgrep \
+    sd \
     starship \
     tokei \
     tree \
