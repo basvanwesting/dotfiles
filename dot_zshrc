@@ -155,6 +155,9 @@ alias psp='ps aux | egrep -v "Evernote|Dropbox" | egrep -i --color "ruby|rails|r
 
 # Git => based in OhMyZsh, additions below
 alias g='gst'
+alias gdc='gdca'
+alias gr='git r'
+alias gt='git tree'
 function gtag() {
   git tag -a $1 -m $1
 }
