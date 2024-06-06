@@ -1,4 +1,15 @@
 #####################################################################
+############################## PATH #################################
+#####################################################################
+#
+if [[ $(arch) =~ 'arm' ]]; then
+  export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
+else
+  export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
+fi
+export PATH="$HOME/.local/bin:$PATH"
+
+#####################################################################
 ############################## OMZ ##################################
 #####################################################################
 #
@@ -12,8 +23,11 @@ export ZSH=$HOME/.oh-my-zsh
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-# ZSH_THEME="robbyrussell"
-ZSH_THEME=""
+if [[ $(command -v starship) ]]; then
+  ZSH_THEME=""
+else
+  ZSH_THEME="robbyrussell"
+fi
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -111,13 +125,6 @@ source $ZSH/oh-my-zsh.sh
 #####################################################################
 ############################## Env ##################################
 #####################################################################
-
-if [[ $(arch) =~ 'arm' ]]; then
-  export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
-else
-  export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
-fi
-export PATH="$HOME/.local/bin:$PATH"
 
 export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 export EDITOR=nvim
