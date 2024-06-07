@@ -26,6 +26,10 @@ brew install \
     zellij \
     zoxide
 
+sh -c "$(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs)"
+cargo install nu_plugin_polars
+RUN nu -c "plugin add ~/.cargo/bin/nu_plugin_polars"
+
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 ```
