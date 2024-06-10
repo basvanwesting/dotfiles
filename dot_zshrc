@@ -132,10 +132,10 @@ export HOMEBREW_NO_AUTO_UPDATE=1
 export XDG_CONFIG_HOME="$HOME/.config"
 export SHELL="$(which zsh)"
 
-export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"
-export LDFLAGS="-L/opt/homebrew/opt/postgresql@15/lib"
-export CPPFLAGS="-I/opt/homebrew/opt/postgresql@15/include"
-export PKG_CONFIG_PATH="/opt/homebrew/opt/postgresql@15/lib/pkgconfig"
+[[ $(command -v brew) ]] && export PATH="$(brew --prefix)/opt/postgresql@15/bin:$PATH"
+[[ $(command -v brew) ]] && export LDFLAGS="-L$(brew --prefix)/opt/postgresql@15/lib"
+[[ $(command -v brew) ]] && export CPPFLAGS="-I$(brew --prefix)/opt/postgresql@15/include"
+[[ $(command -v brew) ]] && export PKG_CONFIG_PATH="$(brew --prefix)/opt/postgresql@15/lib/pkgconfig"
 
 #####################################################################
 ############################# Tools #################################
@@ -144,7 +144,7 @@ export PKG_CONFIG_PATH="/opt/homebrew/opt/postgresql@15/lib/pkgconfig"
 [ -f "$HOME/.fzf.zsh" ]   && source "$HOME/.fzf.zsh"
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 
-[[ $(command -v asdf) ]] && source "$(brew --prefix)/opt/asdf/libexec/asdf.sh"
+[[ $(command -v brew) ]] && [[ $(command -v asdf) ]] && source "$(brew --prefix)/opt/asdf/libexec/asdf.sh"
 [[ $(command -v starship) ]] && eval "$(starship init zsh)"
 
 #####################################################################
