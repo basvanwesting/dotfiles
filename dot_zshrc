@@ -129,9 +129,10 @@ source $ZSH/oh-my-zsh.sh
 
 export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 export EDITOR=nvim
+export HAVE_NERD_FONT=1
 export HOMEBREW_NO_AUTO_UPDATE=1
-export XDG_CONFIG_HOME="$HOME/.config"
 export SHELL="$(which zsh)"
+export XDG_CONFIG_HOME="$HOME/.config"
 
 [[ $(command -v brew) ]] && export PATH="$(brew --prefix)/opt/postgresql@15/bin:$PATH"
 [[ $(command -v brew) ]] && export LDFLAGS="-L$(brew --prefix)/opt/postgresql@15/lib"
