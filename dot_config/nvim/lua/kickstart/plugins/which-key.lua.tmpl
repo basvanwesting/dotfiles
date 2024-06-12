@@ -22,7 +22,9 @@ return {
 
       -- Document existing key chains
       require('which-key').register {
+        {{ if .personal }}
         ['<leader>a'] = { name = '[A]I CopilotChat', _ = 'which_key_ignore', mode = { 'n', 'v' } },
+        {{ end }}
         ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
         ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
         ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },

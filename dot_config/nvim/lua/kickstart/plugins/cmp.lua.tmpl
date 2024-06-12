@@ -27,6 +27,7 @@ return {
           -- },
         },
       },
+      {{ if .personal }}
       {
         'zbirenbaum/copilot-cmp',
         dependencies = 'copilot.lua',
@@ -34,6 +35,7 @@ return {
           require('copilot_cmp').setup()
         end,
       },
+      {{ end }}
       'saadparwaiz1/cmp_luasnip',
 
       -- Adds other completion capabilities.
@@ -114,7 +116,9 @@ return {
           { name = 'luasnip' },
           { name = 'buffer' },
           { name = 'path' },
+          {{ if .personal }} 
           { name = 'copilot' },
+          {{ end }}
         },
       }
     end,
