@@ -2,6 +2,7 @@ return {
   {
     'CopilotC-Nvim/CopilotChat.nvim',
     branch = 'canary',
+    cond = vim.g.personal,
     -- cmd = 'CopilotChat',
     dependencies = {
       { 'zbirenbaum/copilot.lua' },

@@ -1,6 +1,7 @@
 return {
   {
     'zbirenbaum/copilot.lua',
+    cond = vim.g.personal,
     cmd = 'Copilot',
     build = ':Copilot auth',
     event = 'InsertEnter',

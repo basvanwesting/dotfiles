@@ -90,8 +90,8 @@ P.S. You can delete this when you're done too. It's your config now! :)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
--- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = {{ .have_nerd_font }}
+-- chezmoi template data, set here so no .tmpl is needed further down the road
+require 'flags'
 
 -- [[ Setting options ]]
 require 'options'
