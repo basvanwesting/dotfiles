@@ -213,7 +213,7 @@ alias wiki='e ~/bin/wiki'
 #####################################################################
 
 {{ if .remote }}
-if [[ -z "$ZELLIJ" ]]; then
+if [[ $(command -v zellij) ]] && [[ -z "$ZELLIJ" ]]; then
     if [[ "$ZELLIJ_AUTO_ATTACH" == "true" ]]; then
         zellij attach -c
     else
@@ -225,4 +225,3 @@ if [[ -z "$ZELLIJ" ]]; then
     fi
 fi
 {{ end }}
-
