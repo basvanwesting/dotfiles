@@ -12,6 +12,15 @@
 return {
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
+    dependencies = {
+      'folke/which-key.nvim',
+      config = function()
+        require('which-key').setup()
+        require('which-key').register {
+          ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore', mode = { 'n', 'v' } },
+        }
+      end,
+    },
     opts = {
       signs = {
         add = { text = '+' },
@@ -47,8 +56,6 @@ return {
         end, { desc = 'Jump to previous git [c]hange' })
 
         -- Actions
-        -- namespace
-        map({ 'n', 'v' }, '<leader>h', 'which_key_ignore', { desc = 'Git [H]unk' })
         -- visual mode
         map('v', '<leader>hs', function()
           gitsigns.stage_hunk { vim.fn.line '.', vim.fn.line 'v' }
