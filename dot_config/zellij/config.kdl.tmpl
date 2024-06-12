@@ -216,7 +216,7 @@ plugins {
 //    - true
 //    - false (Default)
 //
-// simplified_ui true
+simplified_ui {{ not .have_nerd_font }}
 
 // Choose the path to the default shell that zellij will use for opening new panes
 // Default: $SHELL
@@ -246,7 +246,7 @@ pane_frames false
 //   - true (default)
 //   - false
 //
-// session_serialization false
+session_serialization false
 
 // Whether pane viewports are serialized along with the session, default is false
 // Options:
@@ -302,7 +302,7 @@ default_mode "locked"
 //   - true (default)
 //   - false
 //
-// mouse_mode false
+mouse_mode false
 
 // Configure the scroll back buffer size
 // This is the number of lines zellij stores for each pane in the scroll back
@@ -321,7 +321,7 @@ default_mode "locked"
 // copy_command "xclip -selection clipboard" // x11
 // copy_command "wl-copy"                    // wayland
 // copy_command "pbcopy"                     // osx
-copy_command {{ .clipboard_copy_command | quote }}
+// copy_command {{ .clipboard_copy_command | quote }}
 
 // Choose the destination for copied text
 // Allows using the primary selection buffer (on x11/wayland) instead of the system clipboard.
