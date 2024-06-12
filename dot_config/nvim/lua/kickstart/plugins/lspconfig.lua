@@ -60,26 +60,26 @@ return {
           -- Jump to the definition of the word under your cursor.
           --  This is where a variable was first declared, or where a function is defined, etc.
           --  To jump back, press <C-t>.
-          map('gd', require('telescope.builtin').lsp_definitions, 'Goto [d]efinition')
+          map('<leader>ld', require('telescope.builtin').lsp_definitions, 'Goto [d]efinition')
 
           -- Find references for the word under your cursor.
-          map('gr', require('telescope.builtin').lsp_references, 'Goto [r]eferences')
+          map('<leader>lr', require('telescope.builtin').lsp_references, 'Goto [r]eferences')
 
           -- Jump to the implementation of the word under your cursor.
           --  Useful when your language has ways of declaring types without an actual implementation.
-          map('gI', require('telescope.builtin').lsp_implementations, 'Goto [I]mplementation')
+          map('<leader>lI', require('telescope.builtin').lsp_implementations, 'Goto [I]mplementation')
 
           -- WARN: This is not Goto Definition, this is Goto Declaration.
           --  For example, in C this would take you to the header.
-          map('gD', vim.lsp.buf.declaration, 'Goto [D]eclaration')
+          map('<leader>lD', vim.lsp.buf.declaration, 'Goto [D]eclaration')
 
           -- Fuzzy find all the symbols in your current document.
           --  Symbols are things like variables, functions, types, etc.
-          map('<leader>ss', require('telescope.builtin').lsp_document_symbols, 'Document [s]ymbols')
+          map('<leader>ls', require('telescope.builtin').lsp_document_symbols, 'Document [s]ymbols')
 
           -- Fuzzy find all the symbols in your current workspace.
           --  Similar to document symbols, except searches over your entire project.
-          map('<leader>sS', require('telescope.builtin').lsp_dynamic_workspace_symbols, 'Workspace [S]ymbols')
+          map('<leader>lS', require('telescope.builtin').lsp_dynamic_workspace_symbols, 'Workspace [S]ymbols')
 
           -- Jump to the type of the word under your cursor.
           --  Useful when you're not sure what type a variable is and you want to see
@@ -88,7 +88,7 @@ return {
 
           -- Rename the variable under your cursor.
           --  Most Language Servers support renaming across files, etc.
-          map('<leader>lr', vim.lsp.buf.rename, '[r]ename')
+          map('<leader>lR', vim.lsp.buf.rename, '[R]ename')
 
           -- Execute a code action, usually your cursor needs to be on top of an error
           -- or a suggestion from your LSP for this to activate.
