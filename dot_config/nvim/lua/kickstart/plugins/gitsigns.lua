@@ -4,17 +4,11 @@
 --
 -- See `:help gitsigns` to understand what the configuration keys do
 
--- register top level which-key
--- require('which-key').register({
---   ['<leader>h'] = { 'Git [H]unk' },
--- }, { mode = 'v' })
-
 return {
   {
     'folke/which-key.nvim',
     event = 'VimEnter', -- Sets the loading event to 'VimEnter'
     config = function()
-      require('which-key').setup()
       require('which-key').register {
         ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore', mode = { 'n', 'v' } },
       }
