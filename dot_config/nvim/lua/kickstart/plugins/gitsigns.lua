@@ -47,6 +47,8 @@ return {
         end, { desc = 'Jump to previous git [c]hange' })
 
         -- Actions
+        -- namespace
+        map({ 'n', 'v' }, '<leader>h', 'which_key_ignore', { desc = 'Git [H]unk' })
         -- visual mode
         map('v', '<leader>hs', function()
           gitsigns.stage_hunk { vim.fn.line '.', vim.fn.line 'v' }
