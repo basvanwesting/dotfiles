@@ -5,15 +5,6 @@
 -- See `:help gitsigns` to understand what the configuration keys do
 
 return {
-  {
-    'folke/which-key.nvim',
-    event = 'VimEnter', -- Sets the loading event to 'VimEnter'
-    config = function()
-      require('which-key').register {
-        ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore', mode = { 'n', 'v' } },
-      }
-    end,
-  },
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
     opts = {
@@ -51,6 +42,9 @@ return {
         end, { desc = 'Jump to previous git [c]hange' })
 
         -- Actions
+        require('which-key').register {
+          ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore', mode = { 'n', 'v' } },
+        }
         -- visual mode
         map('v', '<leader>hs', function()
           gitsigns.stage_hunk { vim.fn.line '.', vim.fn.line 'v' }
