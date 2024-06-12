@@ -7,15 +7,15 @@ EDITOR = "nvim"
 
 [window]
 option_as_alt = "Both"
-{{ if eq .chezmoi.os "darwin" }}
-  {{ if eq .chezmoi.arch "arm64" }}
+{{- if eq .chezmoi.os "darwin" -}}
+  {{- if eq .chezmoi.arch "arm64" -}}
 startup_mode = "Maximized"
-  {{ else }} {{/* "amd64" */}}
+  {{- else -}} {{- /* "amd64" */ -}}
 startup_mode = "SimpleFullscreen"
-  {{ end }}
-{{ else }} {{/* "linux" */}}
+  {{- end -}}
+{{- else -}} {{- /* "linux" */ -}}
 startup_mode = "Maximized"
-{{ end }}
+{{- end -}}
 
 [font]
 size = 13
