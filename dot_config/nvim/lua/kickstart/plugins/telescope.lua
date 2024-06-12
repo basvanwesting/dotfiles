@@ -86,23 +86,6 @@ return {
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
-      -- -- Show help actions with telescope
-      -- vim.keymap.set({ 'n', 'v' }, '<leader>ad', function()
-      --   local actions = require 'CopilotChat.actions'
-      --   local help = actions.help_actions()
-      --   if not help then
-      --     vim.print 'No diagnostics found on the current line'
-      --     return
-      --   end
-      --   require('CopilotChat.integrations.telescope').pick(help)
-      -- end, { desc = 'Diagnostic Help (CopilotChat)' })
-      --
-      -- -- Show prompts actions with telescope
-      -- vim.keymap.set({ 'n', 'v' }, '<leader>ap', function()
-      --   local actions = require 'CopilotChat.actions'
-      --   require('CopilotChat.integrations.telescope').pick(actions.prompt_actions())
-      -- end, { desc = 'Prompt Actions (CopilotChat)' })
-
       -- Find Files with custom root
       vim.keymap.set('n', '<leader>sF', function()
         vim.ui.input({ prompt = 'Enter root path: ', completion = 'dir' }, function(path)
