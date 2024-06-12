@@ -61,3 +61,9 @@ vim.opt.scrolloff = 10
 
 -- Start no-wrapped
 vim.opt.wrap = false
+
+-- tab to 2 spaces always
+vim.opt.expandtab = true
+vim.opt.tabstop = 2
+vim.opt.softtabstop = 2
+vim.opt.shiftwidth = 2
