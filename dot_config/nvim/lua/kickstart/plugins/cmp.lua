@@ -27,14 +27,14 @@ return {
           -- },
         },
       },
-      {
-        'zbirenbaum/copilot-cmp',
-        cond = vim.g.personal,
-        dependencies = 'copilot.lua',
-        config = function()
-          require('copilot_cmp').setup()
-        end,
-      },
+      -- {
+      --   'zbirenbaum/copilot-cmp',
+      --   cond = vim.g.personal,
+      --   dependencies = 'copilot.lua',
+      --   config = function()
+      --     require('copilot_cmp').setup()
+      --   end,
+      -- },
       'saadparwaiz1/cmp_luasnip',
 
       -- Adds other completion capabilities.
