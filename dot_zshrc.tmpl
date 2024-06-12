@@ -1,14 +1,18 @@
 #####################################################################
 ############################## PATH #################################
 #####################################################################
-#
-if [[ $(uname -m) =~ 'arm' ]]; then
-  export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
-else
-  export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
-fi
+
+{{ if eq .chezmoi.os "darwin" }}
+  {{ if eq .chezmoi.arch "aarch64" }}
+    export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
+  {{/* else if eq .chezmoi.arch "amd64" */}}
+  {{ else }}
+    export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
+  {{ end }}
+  export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+{{ end }}
+
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
 
 #####################################################################
 ############################## OMZ ##################################
@@ -133,10 +137,12 @@ export HOMEBREW_NO_AUTO_UPDATE=1
 export XDG_CONFIG_HOME="$HOME/.config"
 export SHELL="$(which zsh)"
 
-[[ $(command -v brew) ]] && export PATH="$(brew --prefix)/opt/postgresql@15/bin:$PATH"
-[[ $(command -v brew) ]] && export LDFLAGS="-L$(brew --prefix)/opt/postgresql@15/lib"
-[[ $(command -v brew) ]] && export CPPFLAGS="-I$(brew --prefix)/opt/postgresql@15/include"
-[[ $(command -v brew) ]] && export PKG_CONFIG_PATH="$(brew --prefix)/opt/postgresql@15/lib/pkgconfig"
+if $(command -v brew) && [[ -d "$(brew --prefix)/opt/postgresql@15" ]]; then
+  export PATH="$(brew --prefix)/opt/postgresql@15/bin:$PATH"
+  export LDFLAGS="-L$(brew --prefix)/opt/postgresql@15/lib"
+  export CPPFLAGS="-I$(brew --prefix)/opt/postgresql@15/include"
+  export PKG_CONFIG_PATH="$(brew --prefix)/opt/postgresql@15/lib/pkgconfig"
+fi
 
 #####################################################################
 ############################# Tools #################################
