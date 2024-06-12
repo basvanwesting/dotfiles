@@ -6,6 +6,7 @@ return {
 		dependencies = {
 			{ "zbirenbaum/copilot.lua" },
 			{ "nvim-lua/plenary.nvim" },
+			-- { 'folke/which-key.nvim'},
 		},
 		keys = {
 			{
@@ -89,6 +90,9 @@ return {
 				end,
 			})
 			require("CopilotChat").setup(opts)
+			require("which-key").register({
+				["<leader>a"] = { name = "[A]I CopilotChat", _ = "which_key_ignore", mode = { "n", "v" } },
+			})
 		end,
 	},
 }
