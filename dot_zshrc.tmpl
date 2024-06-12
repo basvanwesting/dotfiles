@@ -3,13 +3,13 @@
 #####################################################################
 
 {{ if eq .chezmoi.os "darwin" }}
-  {{ if eq .chezmoi.arch "aarch64" }}
-    export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
+  {{ if eq .chezmoi.arch "arm64" }}
+export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
   {{/* else if eq .chezmoi.arch "amd64" */}}
   {{ else }}
-    export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
+export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
   {{ end }}
-  export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
 {{ end }}
 
 export PATH="$HOME/.local/bin:$PATH"
