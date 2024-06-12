@@ -6,7 +6,7 @@ return {
 		dependencies = {
 			{ "zbirenbaum/copilot.lua" },
 			{ "nvim-lua/plenary.nvim" },
-			-- { 'folke/which-key.nvim'},
+			{ "folke/which-key.nvim" },
 		},
 		keys = {
 			{
