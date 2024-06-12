@@ -10,17 +10,18 @@
 -- }, { mode = 'v' })
 
 return {
+  {
+    'folke/which-key.nvim',
+    event = 'VimEnter', -- Sets the loading event to 'VimEnter'
+    config = function()
+      require('which-key').setup()
+      require('which-key').register {
+        ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore', mode = { 'n', 'v' } },
+      }
+    end,
+  },
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
-    dependencies = {
-      'folke/which-key.nvim',
-      config = function()
-        require('which-key').setup()
-        require('which-key').register {
-          ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore', mode = { 'n', 'v' } },
-        }
-      end,
-    },
     opts = {
       signs = {
         add = { text = '+' },
