@@ -5,9 +5,9 @@
 -- See `:help gitsigns` to understand what the configuration keys do
 
 -- register top level which-key
-require('which-key').register({
-  ['<leader>h'] = { 'Git [H]unk' },
-}, { mode = 'v' })
+-- require('which-key').register({
+--   ['<leader>h'] = { 'Git [H]unk' },
+-- }, { mode = 'v' })
 
 return {
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
