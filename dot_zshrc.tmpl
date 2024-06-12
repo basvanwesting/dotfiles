@@ -207,3 +207,22 @@ alias dqs='cd ~/workspace/dqs'
 alias fta='cd ~/workspace/fta'
 alias kbt='cd ~/workspace/kbt'
 alias wiki='e ~/bin/wiki'
+
+#####################################################################
+######################### Shell Starter #############################
+#####################################################################
+
+{{ if .remote }}
+if [[ -z "$ZELLIJ" ]]; then
+    if [[ "$ZELLIJ_AUTO_ATTACH" == "true" ]]; then
+        zellij attach -c
+    else
+        zellij
+    fi
+
+    if [[ "$ZELLIJ_AUTO_EXIT" == "true" ]]; then
+        exit
+    fi
+fi
+{{ end }}
+
