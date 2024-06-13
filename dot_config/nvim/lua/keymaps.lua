@@ -63,8 +63,24 @@ vim.keymap.set('n', '*', 'g*``')
 -- select whole file
 vim.keymap.set('n', 'VV', 'ggVG')
 
+-- delete into black hole
+vim.keymap.set('n', 'd', '"_d')
+vim.keymap.set('v', 'd', '"_d')
+vim.keymap.set('n', 'D', '"_D')
+vim.keymap.set('n', 'c', '"_c')
+vim.keymap.set('v', 'c', '"_c')
+vim.keymap.set('n', 'C', '"_C')
+vim.keymap.set('n', 'x', '"_x')
+vim.keymap.set('v', 'x', '"_x')
+
+-- reselect after paste
+vim.keymap.set('n', 'p', 'pgvy')
+vim.keymap.set('n', 'P', 'Pgvy')
+vim.keymap.set('v', 'p', 'pgvy')
+vim.keymap.set('v', 'P', 'Pgvy')
+
 -- set text wrapping toggles
-vim.keymap.set('n', '<leader>Tw', ':set invwrap<CR>:set wrap?<CR>', { desc = '[T]oggle [W]rap' })
+vim.keymap.set('n', '<leader>Tw', ':set invwrap<CR>:set wrap?<CR>', { desc = 'Toggle [w]rap' })
 
 -- common typos
 vim.api.nvim_create_user_command('Wa', 'wa', {})
