@@ -1,6 +1,6 @@
 # Dotfiles managed by chezmoi
 
-## chezmoi.toml
+## ~/.config/chezmoi/chezmoi.toml
 
 ```toml
 [data]
@@ -10,35 +10,54 @@ remote = false        #boolean, connected by ssh terminal (i.e. auto-start termi
 offline = false       #boolean, has access to internet (e.g. disable auto-installs, auto-updates, github)
 ```
 
-## dependencies
-
+## Install
 
 ```sh
 brew install \
     alacritty \
-    asdf \
-    bat \
-    bottom \
     chezmoi \
-    fd \
     font-jetbrains-mono-nerd-font \
     fzf \
     git \
     make \
     neovim \
-    nushell \
-    pv \
     ripgrep \
-    sd \
     starship \
-    tokei \
-    tree \
-    yazi \
-    zellij \
-    zoxide
+    zellij
 
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+
+chezmoi init https://github.com/basvanwesting/dotfiles.git
+cat << EOF > ~/.config/chezmoi/chezmoi.toml
+[git]
+autoCommit = true
+autoPush = true
+
+[data]
+have_nerd_font = true
+personal = true
+remote = false
+offline = false
+EOF
+chezmoi apply
+```
+
+## Additional installs
+
+```sh
+brew install \
+    asdf \
+    bat \
+    bottom \
+    fd \
+    nushell \
+    pv \
+    sd \
+    tokei \
+    tree \
+    yazi \
+    zoxide
 
 sh -c "$(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs)"
 ```
