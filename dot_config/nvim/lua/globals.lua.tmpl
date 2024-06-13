@@ -1,0 +1,10 @@
+-- Set <space> as the leader key
+-- See `:help mapleader`
+--  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
+vim.g.mapleader = ' '
+vim.g.maplocalleader = ' '
+
+-- chezmoi template data, set here so no .tmpl is needed further down the road
+--
+vim.g.have_nerd_font = {{ .have_nerd_font }}
+vim.g.personal = {{ .personal }}
