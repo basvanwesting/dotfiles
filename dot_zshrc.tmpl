@@ -217,6 +217,9 @@ alias wiki='e ~/bin/wiki'
 #####################################################################
 
 {{ if .remote }}
+export ZELLIJ_AUTO_ATTACH=true
+export ZELLIJ_AUTO_EXIT=true
+
 if [[ $(command -v zellij) ]] && [[ -z "$ZELLIJ" ]]; then
     if [[ "$ZELLIJ_AUTO_ATTACH" == "true" ]]; then
         zellij attach -c
