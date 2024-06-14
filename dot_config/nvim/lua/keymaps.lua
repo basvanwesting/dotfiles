@@ -73,12 +73,6 @@ vim.keymap.set('n', 'C', '"_C')
 vim.keymap.set('n', 'x', '"_x')
 vim.keymap.set('v', 'x', '"_x')
 
--- reselect after paste
-vim.keymap.set('n', 'p', 'pgvy')
-vim.keymap.set('n', 'P', 'Pgvy')
-vim.keymap.set('v', 'p', 'pgvy')
-vim.keymap.set('v', 'P', 'Pgvy')
-
 -- set text wrapping toggles
 vim.keymap.set('n', '<leader>Tw', ':set invwrap<CR>:set wrap?<CR>', { desc = 'Toggle [w]rap' })
 
