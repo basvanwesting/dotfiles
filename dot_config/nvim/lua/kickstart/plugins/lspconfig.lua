@@ -61,6 +61,7 @@ return {
           --  This is where a variable was first declared, or where a function is defined, etc.
           --  To jump back, press <C-t>.
           map('<leader>ld', require('telescope.builtin').lsp_definitions, 'Goto [d]efinition')
+          map('gd', require('telescope.builtin').lsp_definitions, 'Goto [d]efinition')
 
           -- Find references for the word under your cursor.
           map('<leader>lr', require('telescope.builtin').lsp_references, 'Goto [r]eferences')

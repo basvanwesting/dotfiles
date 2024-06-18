@@ -80,6 +80,16 @@ return {
       require('neotest').setup {
         adapters = {
           require 'neotest-rspec',
+          require 'neotest-rspec' {
+            rspec_cmd = function()
+              -- test for local bin/spring as spring is shimmed globally
+              if vim.fn.executable 'bin/spring' == 1 then
+                return { 'bundle', 'exec', 'spring', 'rspec' }
+              else
+                return { 'bundle', 'exec', 'rspec' }
+              end
+            end,
+          },
           require 'rustaceanvim.neotest',
         },
       }
