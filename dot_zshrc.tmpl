@@ -202,6 +202,7 @@ function st() {
     bundle exec spring rspec "$@"
   fi
 }
+alias ss='bundle exec spring stop'
 alias stmo='git ls-files --modified --others spec | grep _spec.rb | tee /dev/tty | xargs bundle exec spring rspec'
 alias stt="git status spec | grep -v 'deleted: ' | grep -o -E '\S+(_spec.rb|\/)$' | tee /dev/tty | xargs bundle exec spring rspec"
 alias sth='git show --name-only --no-notes --oneline HEAD | grep _spec.rb | tee /dev/tty | xargs bundle exec spring rspec'
