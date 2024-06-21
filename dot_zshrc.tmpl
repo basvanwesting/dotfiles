@@ -190,11 +190,22 @@ function bt() {
     bundle exec rspec "$@"
   fi
 }
-
 alias btmo='git ls-files --modified --others spec | grep _spec.rb | tee /dev/tty | xargs bundle exec rspec'
 alias btt="git status spec | grep -v 'deleted: ' | grep -o -E '\S+(_spec.rb|\/)$' | tee /dev/tty | xargs bundle exec rspec"
 alias bth='git show --name-only --no-notes --oneline HEAD | grep _spec.rb | tee /dev/tty | xargs bundle exec rspec'
 alias btf="fzf -m --bind enter:clear-selection+select-all+accept --query '_spec.rb$ ' | tee /dev/tty | xargs bundle exec rspec"
+
+function st() {
+  if [[ $# -eq 0 ]] ; then
+    bundle exec spring rspec
+  else
+    bundle exec spring rspec "$@"
+  fi
+}
+alias stmo='git ls-files --modified --others spec | grep _spec.rb | tee /dev/tty | xargs bundle exec spring rspec'
+alias stt="git status spec | grep -v 'deleted: ' | grep -o -E '\S+(_spec.rb|\/)$' | tee /dev/tty | xargs bundle exec spring rspec"
+alias sth='git show --name-only --no-notes --oneline HEAD | grep _spec.rb | tee /dev/tty | xargs bundle exec spring rspec'
+alias stf="fzf -m --bind enter:clear-selection+select-all+accept --query '_spec.rb$ ' | tee /dev/tty | xargs bundle exec spring rspec"
 
 function rmig() {
   bundle exec rake db:migrate RAILS_ENV=${1:-development}
