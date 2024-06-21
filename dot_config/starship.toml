@@ -19,3 +19,6 @@ disabled = true
 
 [python]
 disabled = true
+
+[docker_context]
+disabled = true
