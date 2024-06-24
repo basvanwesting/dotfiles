@@ -198,6 +198,7 @@ alias btmo='git ls-files --modified --others spec | grep _spec.rb | tee /dev/tty
 alias btt="git status spec | grep -v 'deleted: ' | grep -o -E '\S+(_spec.rb|\/)$' | tee /dev/tty | xargs bundle exec rspec"
 alias bth='git show --name-only --no-notes --oneline HEAD | grep _spec.rb | tee /dev/tty | xargs bundle exec rspec'
 alias btf="fzf -m --bind enter:clear-selection+select-all+accept --query '_spec.rb$ ' | tee /dev/tty | xargs bundle exec rspec"
+alias btof="bundle exec rspec --only-failures"
 
 function st() {
   if [[ $# -eq 0 ]] ; then
@@ -211,6 +212,7 @@ alias stmo='git ls-files --modified --others spec | grep _spec.rb | tee /dev/tty
 alias stt="git status spec | grep -v 'deleted: ' | grep -o -E '\S+(_spec.rb|\/)$' | tee /dev/tty | xargs bundle exec spring rspec"
 alias sth='git show --name-only --no-notes --oneline HEAD | grep _spec.rb | tee /dev/tty | xargs bundle exec spring rspec'
 alias stf="fzf -m --bind enter:clear-selection+select-all+accept --query '_spec.rb$ ' | tee /dev/tty | xargs bundle exec spring rspec"
+alias stof="bundle exec spring rspec --only-failures"
 
 function rmig() {
   bundle exec rake db:migrate RAILS_ENV=${1:-development}
