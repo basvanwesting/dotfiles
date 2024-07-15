@@ -230,6 +230,15 @@ alias fta='cd ~/workspace/fta'
 alias kbt='cd ~/workspace/kbt'
 alias wiki='e ~/bin/wiki'
 
+function za() {
+  if [[ $# -eq 0 ]] ; then
+    zellij attach -c
+  else
+    zellij attach $@ -c
+  fi
+}
+
+
 #####################################################################
 ######################### Shell Starter #############################
 #####################################################################
