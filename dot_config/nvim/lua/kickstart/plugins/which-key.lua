@@ -22,12 +22,21 @@ return {
 
       -- Document existing key chains, define and claim prefixes also for lazy or disabled ones
       require('which-key').register {
-        ['<leader>a'] = { name = '[a]I CopilotChat', _ = 'which_key_ignore', mode = { 'n', 'v' } },
-        ['<leader>l'] = { name = '[l]SP', _ = 'which_key_ignore' },
-        ['<leader>s'] = { name = '[s]earch', _ = 'which_key_ignore' },
-        ['<leader>t'] = { name = '[t]est', _ = 'which_key_ignore' },
-        ['<leader>T'] = { name = '[T]oggle', _ = 'which_key_ignore' },
-        ['<leader>h'] = { name = 'Git [h]unk', _ = 'which_key_ignore', mode = { 'n', 'v' } },
+        { '<leader>T', group = '[T]oggle' },
+        { '<leader>T_', hidden = true },
+        { '<leader>l', group = '[l]SP' },
+        { '<leader>l_', hidden = true },
+        { '<leader>s', group = '[s]earch' },
+        { '<leader>s_', hidden = true },
+        { '<leader>t', group = '[t]est' },
+        { '<leader>t_', hidden = true },
+        {
+          mode = { 'n', 'v' },
+          { '<leader>a', group = '[a]I CopilotChat' },
+          { '<leader>a_', hidden = true },
+          { '<leader>h', group = 'Git [h]unk' },
+          { '<leader>h_', hidden = true },
+        },
       }
     end,
   },
