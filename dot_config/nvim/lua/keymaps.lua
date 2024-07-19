@@ -73,6 +73,9 @@ vim.keymap.set('n', 'C', '"_C')
 vim.keymap.set('n', 'x', '"_x')
 vim.keymap.set('v', 'x', '"_x')
 
+-- don't yank on visual paste
+vim.keymap.set('x', 'p', 'P')
+
 -- set text wrapping toggles
 vim.keymap.set('n', '<leader>Tw', ':set invwrap<CR>:set wrap?<CR>', { desc = 'Toggle [w]rap' })
 
