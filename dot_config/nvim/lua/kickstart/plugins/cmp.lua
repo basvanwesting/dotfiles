@@ -103,8 +103,8 @@ return {
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
         },
         sources = {
-          { name = 'nvim_lsp' },
-          { name = 'luasnip' },
+          { name = 'nvim_lsp', priority = 30 },
+          { name = 'luasnip', priority = 50 },
           {
             name = 'buffer',
             option = {
@@ -112,9 +112,10 @@ return {
                 return vim.api.nvim_list_bufs()
               end,
             },
+            priority = 10,
           },
-          { name = 'path' },
-          { name = 'copilot' },
+          { name = 'path', priority = 20 },
+          { name = 'copilot', priority = 40 },
         },
       }
     end,
