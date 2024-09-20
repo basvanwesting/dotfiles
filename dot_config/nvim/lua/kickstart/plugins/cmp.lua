@@ -104,7 +104,7 @@ return {
         },
         sources = {
           { name = 'nvim_lsp', priority = 30 },
-          { name = 'luasnip', priority = 50 },
+          { name = 'luasnip', priority = 10 },
           {
             name = 'buffer',
             option = {
@@ -112,10 +112,10 @@ return {
                 return vim.api.nvim_list_bufs()
               end,
             },
-            priority = 10,
+            priority = 50,
           },
-          { name = 'path', priority = 20 },
-          { name = 'copilot', priority = 40 },
+          { name = 'path', priority = 40 },
+          { name = 'copilot', priority = 20 },
         },
       }
     end,
