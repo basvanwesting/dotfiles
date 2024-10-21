@@ -43,6 +43,7 @@ require('lazy').setup({
   require 'kickstart/plugins/autopairs',
 
   require 'custom/plugins/abolish',
+  require 'custom/plugins/easymotion',
   require 'custom/plugins/rustaceanvim',
   require 'custom/plugins/oil',
   require 'custom/plugins/neotest',
