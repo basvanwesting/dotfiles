@@ -88,19 +88,31 @@ return {
       vim.keymap.set('n', '<leader>ss', builtin.lsp_document_symbols, { desc = 'Find [s]ymbols in document' })
       vim.keymap.set('n', '<leader><leader>', builtin.find_files, { desc = 'Search [f]iles' })
 
-      -- Find Files with custom root
+      -- Find Files with Oil current dir
       vim.keymap.set('n', '<leader>sF', function()
-        vim.ui.input({ prompt = 'Enter root path: ', completion = 'dir' }, function(path)
-          builtin.find_files { prompt_title = 'Find Files in ' .. path, cwd = path }
-        end)
-      end, { desc = 'Search by [F]iles (custom root)' })
+        local path = require('oil').get_current_dir()
+        builtin.find_files { prompt_title = 'Find Files in ' .. path, cwd = path }
+      end, { desc = 'Search by [F]iles (current Oil path)' })
 
-      -- Live Grep with custom root
+      -- Live Grep with Oil current dir
       vim.keymap.set('n', '<leader>sG', function()
-        vim.ui.input({ prompt = 'Enter root path: ', completion = 'dir' }, function(path)
-          builtin.live_grep { prompt_title = 'Live Grep in ' .. path, cwd = path }
-        end)
-      end, { desc = 'Search by [G]rep (custom root)' })
+        local path = require('oil').get_current_dir()
+        builtin.live_grep { prompt_title = 'Live Grep in ' .. path, cwd = path }
+      end, { desc = 'Search by [G]rep (current Oil path)' })
+
+      -- -- Find Files with custom root
+      -- vim.keymap.set('n', '<leader>sF', function()
+      --   vim.ui.input({ prompt = 'Enter root path: ', completion = 'dir' }, function(path)
+      --     builtin.find_files { prompt_title = 'Find Files in ' .. path, cwd = path }
+      --   end)
+      -- end, { desc = 'Search by [F]iles (custom root)' })
+      --
+      -- -- Live Grep with custom root
+      -- vim.keymap.set('n', '<leader>sG', function()
+      --   vim.ui.input({ prompt = 'Enter root path: ', completion = 'dir' }, function(path)
+      --     builtin.live_grep { prompt_title = 'Live Grep in ' .. path, cwd = path }
+      --   end)
+      -- end, { desc = 'Search by [G]rep (custom root)' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
