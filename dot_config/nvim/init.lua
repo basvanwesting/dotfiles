@@ -91,6 +91,9 @@ require 'globals'
 -- [[ Setting options ]]
 require 'options'
 
+-- [[ Lua helper funcitons ]]
+require 'helpers'
+
 -- [[ Basic Keymaps ]]
 require 'keymaps'
 
