@@ -82,21 +82,21 @@ return {
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = 'Search current [w]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = 'Search by [g]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = 'Search [d]iagnostics' })
-      vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = 'Search [r]esume' })
-      vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = 'Search Recent Files ("." for repeat)' })
-      vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = '[ ] Find existing buffers' })
-      vim.keymap.set('n', '<leader>ss', builtin.lsp_document_symbols, { desc = 'Find [s]ymbols in document' })
+      vim.keymap.set('n', '<leader>ss', builtin.resume, { desc = 'Search re[s]ume' })
+      vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = 'Search recent files ("." for repeat)' })
+      vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = 'Search existing [b]uffers' })
+      vim.keymap.set('n', '<leader>sS', builtin.lsp_document_symbols, { desc = 'Find [S]ymbols in document' })
       vim.keymap.set('n', '<leader><leader>', builtin.find_files, { desc = 'Search [f]iles' })
 
       -- Find Files with Oil current dir or file directory
       vim.keymap.set('n', '<leader>sF', function()
-        local relative_path = vim.fn.fnamemodify(require('oil').get_current_dir() or vim.fn.expand '%:h', ':~:.')
+        local relative_path = require('helpers').get_current_buffer_relative_dir()
         builtin.find_files { prompt_title = 'Find Files in ' .. relative_path, cwd = relative_path }
       end, { desc = 'Search by [F]iles (current buffer path)' })
 
       -- Live Grep with Oil current dir or file directory
       vim.keymap.set('n', '<leader>sG', function()
-        local relative_path = vim.fn.fnamemodify(require('oil').get_current_dir() or vim.fn.expand '%:h', ':~:.')
+        local relative_path = require('helpers').get_current_buffer_relative_dir()
         builtin.live_grep { prompt_title = 'Live Grep in ' .. relative_path, cwd = relative_path }
       end, { desc = 'Search by [G]rep (current buffer path)' })
 
