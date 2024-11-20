@@ -88,15 +88,15 @@ return {
       vim.keymap.set('n', '<leader>ss', builtin.lsp_document_symbols, { desc = 'Find [s]ymbols in document' })
       vim.keymap.set('n', '<leader><leader>', builtin.find_files, { desc = 'Search [f]iles' })
 
-      -- Find Files with Oil current dir
+      -- Find Files with Oil current dir or file directory
       vim.keymap.set('n', '<leader>sF', function()
-        local path = require('oil').get_current_dir() or vim.fn.expand '%:.'
+        local path = require('oil').get_current_dir() or vim.fn.expand '%:h'
         builtin.find_files { prompt_title = 'Find Files in ' .. path, cwd = path }
       end, { desc = 'Search by [F]iles (current buffer path)' })
 
-      -- Live Grep with Oil current dir
+      -- Live Grep with Oil current dir or file directory
       vim.keymap.set('n', '<leader>sG', function()
-        local path = require('oil').get_current_dir() or vim.fn.expand '%:.'
+        local path = require('oil').get_current_dir() or vim.fn.expand '%:h'
         builtin.live_grep { prompt_title = 'Live Grep in ' .. path, cwd = path }
       end, { desc = 'Search by [G]rep (current buffer path)' })
 
