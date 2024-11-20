@@ -10,7 +10,7 @@ return {
       }
       vim.keymap.set('', '<leader>f', function()
         hop.hint_char2()
-      end, { desc = 'Hop [f]ind characters' })
+      end, { desc = 'Hop [f]ind 2 characters' })
 
       -- local directions = require('hop.hint').HintDirection
       -- vim.keymap.set('', '<leader>F', function()
