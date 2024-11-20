@@ -90,15 +90,15 @@ return {
 
       -- Find Files with Oil current dir
       vim.keymap.set('n', '<leader>sF', function()
-        local path = require('oil').get_current_dir()
+        local path = require('oil').get_current_dir() or vim.fn.expand '%:.'
         builtin.find_files { prompt_title = 'Find Files in ' .. path, cwd = path }
-      end, { desc = 'Search by [F]iles (current Oil path)' })
+      end, { desc = 'Search by [F]iles (current buffer path)' })
 
       -- Live Grep with Oil current dir
       vim.keymap.set('n', '<leader>sG', function()
-        local path = require('oil').get_current_dir()
+        local path = require('oil').get_current_dir() or vim.fn.expand '%:.'
         builtin.live_grep { prompt_title = 'Live Grep in ' .. path, cwd = path }
-      end, { desc = 'Search by [G]rep (current Oil path)' })
+      end, { desc = 'Search by [G]rep (current buffer path)' })
 
       -- -- Find Files with custom root
       -- vim.keymap.set('n', '<leader>sF', function()
