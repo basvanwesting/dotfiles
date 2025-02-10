@@ -10,6 +10,7 @@ export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
 export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
   {{ end }}
 export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+export PATH="$PATH:/Users/basvanwesting/.lmstudio/bin"
 {{ end }}
 
 export PATH="$HOME/.local/bin:$PATH"
@@ -152,13 +153,10 @@ fi
 ############################# Tools #################################
 #####################################################################
 
+export ASDF_DATA_DIR="$HOME/.asdf"
+export PATH="$ASDF_DATA_DIR/shims:$PATH"
 [ -f "$HOME/.fzf.zsh"      ] && source "$HOME/.fzf.zsh"
 [ -f "$HOME/.cargo/env"    ] && source "$HOME/.cargo/env"
-## if [[ -f "$HOME/.asdf/asdf.sh" ]]; then 
-##   source "$HOME/.asdf/asdf.sh"
-## elif [[ $(command -v brew) ]] && [[ $(command -v asdf) ]]; then 
-##   source "$(brew --prefix)/opt/asdf/libexec/asdf.sh"
-## fi
 
 [[ $(command -v starship) ]] && eval "$(starship init zsh)"
 
