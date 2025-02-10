@@ -154,11 +154,11 @@ fi
 
 [ -f "$HOME/.fzf.zsh"      ] && source "$HOME/.fzf.zsh"
 [ -f "$HOME/.cargo/env"    ] && source "$HOME/.cargo/env"
-if [[ -f "$HOME/.asdf/asdf.sh" ]]; then 
-  source "$HOME/.asdf/asdf.sh"
-elif [[ $(command -v brew) ]] && [[ $(command -v asdf) ]]; then 
-  source "$(brew --prefix)/opt/asdf/libexec/asdf.sh"
-fi
+## if [[ -f "$HOME/.asdf/asdf.sh" ]]; then 
+##   source "$HOME/.asdf/asdf.sh"
+## elif [[ $(command -v brew) ]] && [[ $(command -v asdf) ]]; then 
+##   source "$(brew --prefix)/opt/asdf/libexec/asdf.sh"
+## fi
 
 [[ $(command -v starship) ]] && eval "$(starship init zsh)"
 
