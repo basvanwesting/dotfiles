@@ -32,13 +32,7 @@ return {
 
       require('mini.bracketed').setup()
 
-      -- Inside `MiniJump2d.setup()` (make sure to use all defined options)
-      local jump2d = require 'mini.jump2d'
-      local jump_def = jump2d.builtin_opts.single_character
-      jump2d.setup {
-        spotter = jump_def.spotter,
-        hooks = { before_start = jump_def.hooks.before_start },
-      }
+      require('mini.jump2d').setup()
 
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
