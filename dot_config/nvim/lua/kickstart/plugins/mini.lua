@@ -28,6 +28,12 @@ return {
       require('mini.indentscope').setup { draw = {} }
       vim.g.miniindentscope_disable = true
 
+      require('mini.pairs').setup()
+
+      require('mini.bracketed').setup()
+
+      require('mini.jump2d').setup()
+
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
