@@ -34,7 +34,7 @@ return {
 
       -- Inside `MiniJump2d.setup()` (make sure to use all defined options)
       local jump2d = require 'mini.jump2d'
-      local jump_def = jump2d.builtin_opts.query
+      local jump_def = jump2d.builtin_opts.single_character
       jump2d.setup {
         spotter = jump_def.spotter,
         hooks = { after_jump = jump_def.hooks.after_jump },
