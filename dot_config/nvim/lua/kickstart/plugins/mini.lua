@@ -32,7 +32,15 @@ return {
 
       require('mini.bracketed').setup()
 
-      require('mini.jump2d').setup()
+      require('mini.jump2d').setup {
+        view = {
+          -- Whether to dim lines with at least one jump spot
+          dim = true,
+        },
+        allowed_lines = {
+          blank = false, -- Blank line (not sent to spotter even if `true`)
+        },
+      }
 
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
