@@ -37,7 +37,7 @@ return {
       local jump_def = jump2d.builtin_opts.single_character
       jump2d.setup {
         spotter = jump_def.spotter,
-        hooks = { after_jump = jump_def.hooks.after_jump },
+        hooks = { before_start = jump_def.hooks.before_start },
       }
 
       -- Simple and easy statusline.
