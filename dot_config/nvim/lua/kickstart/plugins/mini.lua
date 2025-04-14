@@ -28,7 +28,7 @@ return {
       require('mini.indentscope').setup { draw = {} }
       vim.g.miniindentscope_disable = true
 
-      require('mini.pairs').setup()
+      -- require('mini.pairs').setup()
 
       require('mini.bracketed').setup()
 

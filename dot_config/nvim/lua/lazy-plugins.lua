@@ -49,7 +49,7 @@ require('lazy').setup({
   require 'custom/plugins/oil',
   require 'custom/plugins/neotest',
   require 'custom/plugins/slim',
-  require 'custom/plugins/copilot',
+  -- require 'custom/plugins/copilot',
   require 'custom/plugins/copilotchat',
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
