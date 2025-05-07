@@ -32,7 +32,26 @@ return {
 
       require('mini.bracketed').setup()
 
-      require('mini.jump2d').setup()
+      local jump2d = require 'mini.jump2d'
+      local jump_line_start = jump2d.builtin_opts.word_start
+      jump2d.setup {
+        spotter = jump_line_start.spotter,
+
+        -- Which lines are used for computing spots
+        allowed_lines = {
+          blank = false, -- Blank line (not sent to spotter even if `true`)
+          cursor_before = true, -- Lines before cursor line
+          cursor_at = true, -- Cursor line
+          cursor_after = true, -- Lines after cursor line
+          fold = true, -- Start of fold (not sent to spotter even if `true`)
+        },
+
+        -- Which windows from current tabpage are used for visible lines
+        allowed_windows = {
+          current = true,
+          not_current = false,
+        },
+      }
 
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
