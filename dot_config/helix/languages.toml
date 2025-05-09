@@ -1,0 +1,8 @@
+[language-server.ruby-lsp]
+command = "ruby-lsp"
+config = { diagnostics = true, formatting = false }
+
+[[language]]
+name = "ruby"
+language-servers = ["ruby-lsp"]
+auto-format = false
