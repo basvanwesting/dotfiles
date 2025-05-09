@@ -185,6 +185,13 @@ return {
             },
           },
         },
+
+        -- elixirls = {
+        --   -- filetypes = { 'ex', 'exs' },
+        --   -- cmd = { 'elixir-ls' },
+        --   cmd = { vim.fs.normalize '~/.asdf/installs/elixir-ls/0.27.2/language_server.sh' },
+        -- },
+
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --

@@ -45,6 +45,7 @@ require('lazy').setup({
 
   require 'custom/plugins/abolish',
   -- require 'custom/plugins/hop',
+  require 'custom/plugins/elixir-tools',
   require 'custom/plugins/rustaceanvim',
   require 'custom/plugins/oil',
   require 'custom/plugins/neotest',
