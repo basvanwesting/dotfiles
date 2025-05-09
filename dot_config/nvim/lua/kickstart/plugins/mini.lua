@@ -37,6 +37,15 @@ return {
       jump2d.setup {
         spotter = jump_line_start.spotter,
 
+        -- Options for visual effects
+        view = {
+          -- Whether to dim lines with at least one jump spot
+          dim = false,
+
+          -- How many steps ahead to show. Set to big number to show all steps.
+          n_steps_ahead = 1,
+        },
+
         -- Which lines are used for computing spots
         allowed_lines = {
           blank = false, -- Blank line (not sent to spotter even if `true`)
