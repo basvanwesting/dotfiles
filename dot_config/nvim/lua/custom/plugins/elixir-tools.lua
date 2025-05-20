@@ -14,7 +14,7 @@ return {
           -- cmd = { vim.fs.normalize '~/.asdf/installs/elixir-ls/0.27.2/language_server.sh' },
           cmd = { vim.fs.normalize '~/.asdf/shims/elixir-ls' },
           settings = elixirls.settings {
-            dialyzerEnabled = false,
+            dialyzerEnabled = true,
             enableTestLenses = false,
           },
           -- on_attach = function(client, bufnr)
