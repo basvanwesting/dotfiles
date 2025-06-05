@@ -59,5 +59,18 @@ brew install \
     yazi \
     zoxide
 
+asdf plugin add bazel
+asdf plugin add elixir
+asdf plugin add elixir-ls
+asdf plugin add erlang
+asdf plugin add lua
+asdf plugin add lua-language-server
+asdf plugin add nodejs
+asdf plugin add perl
+asdf plugin add python
+asdf plugin add ruby
+asdf plugin add stylua
+asdf plugin add yarn
+
 sh -c "$(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs)"
 ```
