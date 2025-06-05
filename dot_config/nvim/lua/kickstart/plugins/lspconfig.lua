@@ -177,10 +177,11 @@ return {
             -- diagnostics = { disable = { 'missing-fields' } },
           },
         },
+      }
 
       require('lspconfig').ruby_lsp.setup {
-        cmd = { vim.fs.normalize '~/.asdf/shims/ruby-lsp' },
-        -- cmd = { 'bundle', 'exec', 'ruby-lsp' },
+        -- cmd = { vim.fs.normalize '~/.asdf/shims/ruby-lsp' },
+        cmd = { vim.fs.normalize '~/.asdf/shims/bundle', 'exec', 'ruby-lsp' },
         init_options = {
           addonSettings = {
             ['Ruby LSP Rails'] = {
