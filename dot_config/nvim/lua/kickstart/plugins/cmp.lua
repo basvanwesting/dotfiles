@@ -107,11 +107,11 @@ return {
           { name = 'luasnip', priority = 10 },
           {
             name = 'buffer',
-            option = {
-              get_bufnrs = function()
-                return vim.api.nvim_list_bufs()
-              end,
-            },
+            -- option = {
+            --   get_bufnrs = function()
+            --     return vim.api.nvim_list_bufs()
+            --   end,
+            -- },
             priority = 50,
           },
           { name = 'path', priority = 40 },

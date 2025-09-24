@@ -141,7 +141,9 @@ return {
           -- This may be unwanted, since they displace some of your code
           if client and client.server_capabilities.inlayHintProvider and vim.lsp.inlay_hint then
             map('<leader>Th', function()
-              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled {})
+              -- In Neovim 0.11, inlay_hint.enable requires explicit boolean values
+              -- and buffer argument (0 for current buffer)
+              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }, { bufnr = event.buf })
             end, 'Toggle Inlay [h]ints')
           end
         end,
@@ -164,10 +166,12 @@ return {
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
 
-      require('lspconfig').lua_ls.setup {
+      -- Configure LSP servers using the new vim.lsp.config API (Neovim 0.11+)
+      vim.lsp.config.lua_ls = {
         cmd = { vim.fs.normalize '~/.asdf/shims/lua-language-server' },
-        -- filetypes = { ...},
-        -- capabilities = {},
+        filetypes = { 'lua' },
+        root_markers = { '.luarc.json', '.luarc.jsonc', '.luacheckrc', '.stylua.toml', 'stylua.toml', 'selene.toml', 'selene.yml', '.git' },
+        capabilities = capabilities,
         settings = {
           Lua = {
             completion = {
@@ -179,9 +183,12 @@ return {
         },
       }
 
-      require('lspconfig').ruby_lsp.setup {
+      vim.lsp.config.ruby_lsp = {
         -- cmd = { vim.fs.normalize '~/.asdf/shims/ruby-lsp' },
         cmd = { vim.fs.normalize '~/.asdf/shims/bundle', 'exec', 'ruby-lsp' },
+        filetypes = { 'ruby' },
+        root_markers = { 'Gemfile', '.git', '.rubocop.yml' },
+        capabilities = capabilities,
         init_options = {
           addonSettings = {
             ['Ruby LSP Rails'] = {
@@ -190,6 +197,9 @@ return {
           },
         },
       }
+
+      -- Enable the configured LSP servers
+      vim.lsp.enable { 'lua_ls', 'ruby_lsp' }
     end,
   },
 }
