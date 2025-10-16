@@ -48,7 +48,7 @@ require('lazy').setup({
   require 'custom/plugins/elixir-tools',
   require 'custom/plugins/rustaceanvim',
   require 'custom/plugins/oil',
-  require 'custom/plugins/neotest',
+  -- require 'custom/plugins/neotest',
   require 'custom/plugins/slim',
   -- require 'custom/plugins/copilot',
   -- require 'custom/plugins/copilotchat',
