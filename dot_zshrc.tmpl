@@ -142,6 +142,7 @@ export EDITOR=nvim
 export HOMEBREW_NO_AUTO_UPDATE=1
 export XDG_CONFIG_HOME="$HOME/.config"
 export SHELL="$(which zsh)"
+export ERL_AFLAGS="-kernel shell_history enabled"
 
 if [[ $(command -v brew) ]] && [[ -d "$(brew --prefix)/opt/postgresql@15" ]]; then
   export PATH="$(brew --prefix)/opt/postgresql@15/bin:$PATH"
