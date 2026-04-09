@@ -31,7 +31,7 @@ require('lazy').setup({
 
   -- which key needs to be loaded first, so other plugins can register
   require 'kickstart/plugins/which-key',
-  require 'kickstart/plugins/gitsigns',
+  -- require 'kickstart/plugins/gitsigns',
   require 'kickstart/plugins/telescope',
   require 'kickstart/plugins/lspconfig',
   require 'kickstart/plugins/conform',
@@ -45,6 +45,7 @@ require('lazy').setup({
 
   require 'custom/plugins/abolish',
   -- require 'custom/plugins/hop',
+  require 'custom/plugins/lazygit',
   require 'custom/plugins/elixir-tools',
   require 'custom/plugins/rustaceanvim',
   require 'custom/plugins/oil',
