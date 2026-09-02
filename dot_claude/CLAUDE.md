@@ -10,6 +10,16 @@ description: Deliver complete, consistent changes even if it takes longer. Parti
 Be concise in all interactions and commit messages. Sacrifice grammar for brevity.
 End each plan with a list of unresolved questions (if any). Keep questions brief.
 
+## Challenge Weak Requirements; Count Supporting Machinery
+
+A feature's cost is itself PLUS every piece of supporting machinery it drags in (state fields, widened function signatures, generic UI components, config/API surface). A human hand-writing that plumbing feels friction that acts as a design signal — AI doesn't, so replace it with explicit habits:
+
+- When a request is weakly specified or weakly motivated, question the requirement FIRST (what need? who uses it? does an existing mechanism serve it better?) instead of implementing it well.
+- When proposing a feature, enumerate its supporting machinery as part of the price. Machinery only one feature needs is a red flag — prefer deriving from existing state.
+- Before extending a mechanism, cheaply check whether it's used at all (grep / DB query). Prefer removing unused mechanics over building on top.
+
+Example failure: a vague "reward fast answers" idea (`speed_bonus_values`) dragged in an order-tracking state field on two structs, a widened scoring signature, a generic UI component, and config/API surface — never used by any stored design; removal touched 12+ files.
+
 ## Always Use Generators
 
 When a framework generator exists for an artifact (Rails migrations/models/controllers, `cargo new`, `npm create`, etc.), run the generator first and rework its output with Edit. Never hand-write files to skip the generator's startup time — generators carry the framework's current conventions (canonical timestamps, naming, placement, base classes); hand-written files carry invented ones. Example failure: hand-rounded Rails migration timestamps caused a silent master/feature version collision.

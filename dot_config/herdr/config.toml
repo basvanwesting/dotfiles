@@ -4,3 +4,6 @@ agent_panel_sort = "spaces"
 [keys]
 next_tab = ["prefix+n", "cmd+shift+]"]
 previous_tab = ["prefix+p", "cmd+shift+["]
+next_workspace = "cmd+ctrl+]"
+previous_workspace = "cmd+ctrl+["
+switch_workspace = "cmd+1..9"
