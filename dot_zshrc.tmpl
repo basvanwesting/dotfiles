@@ -4,7 +4,7 @@
 
 {{ if eq .chezmoi.os "darwin" }}
   {{ if eq .chezmoi.arch "arm64" }}
-export PATH="/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
+eval "$(/opt/homebrew/bin/brew shellenv)"
   {{/* else if eq .chezmoi.arch "amd64" */}}
   {{ else }}
 export PATH="/usr/local/sbin:/usr/local/bin:$PATH"
