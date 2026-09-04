@@ -3,6 +3,34 @@ return {
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
+    init = function()
+      -- Compat shim: nvim-treesitter `master` (frozen) registers predicates/directives with
+      -- `{ all = false }`, expecting `match[id]` to be a single TSNode. Neovim 0.12 removed that
+      -- option and always passes a list of nodes, which breaks e.g. markdown code-fence injections
+      -- ("attempt to call method 'range' (a nil value)"). Wrap the registration so those handlers
+      -- get the legacy single-node shape (last node per capture, as 0.10/0.11 did).
+      if vim.fn.has 'nvim-0.12' == 1 then
+        local query = vim.treesitter.query
+        local function legacy(handler)
+          return function(match, ...)
+            local single = {}
+            for id, nodes in pairs(match) do
+              single[id] = type(nodes) == 'table' and nodes[#nodes] or nodes
+            end
+            return handler(single, ...)
+          end
+        end
+        for _, fname in ipairs { 'add_predicate', 'add_directive' } do
+          local orig = query[fname]
+          query[fname] = function(name, handler, opts)
+            if type(opts) == 'table' and opts.all == false then
+              return orig(name, legacy(handler), { force = opts.force })
+            end
+            return orig(name, handler, opts)
+          end
+        end
+      end
+    end,
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
       -- ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc' },
