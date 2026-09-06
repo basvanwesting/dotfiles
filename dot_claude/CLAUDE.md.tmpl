@@ -28,6 +28,7 @@ When a framework generator exists for an artifact (Rails migrations/models/contr
 
 Vim user — reflexively hits Esc as a "reset to normal mode" gesture with no intent to cancel. Esc is unbound from `chat:cancel` in `~/.claude/keybindings.json` (Chat context). Ctrl-C is the interrupt key. Editor mode stays on `normal` (not vim mode), because vim mode makes slash commands trigger search.
 
+{{ if eq .chezmoi.os "darwin" -}}
 ## Environment: macOS with Modern Toolchain
 
 **Primary tools (Claude Code + modern CLI):**
@@ -42,6 +43,23 @@ Vim user — reflexively hits Esc as a "reset to normal mode" gesture with no in
 - BSD sed requires: `sed -i '' 's/old/new/g' file`
 - BSD grep lacks `-P` flag (no PCRE)
 - Prefer modern tools (rg/fd/sd) - they're faster and cross-platform
+{{- else -}}
+## Environment: Omarchy (Arch Linux + Hyprland) with Modern Toolchain
+
+**Primary tools (Claude Code + modern CLI):**
+- `Grep` tool - content search across files
+- `Glob` tool - pattern-based file discovery
+- `Read` tool - file content viewing
+- `rg` (ripgrep) - fast grep alternative
+- `fd` - fast find alternative
+- `sd` - simple sed alternative
+
+**Linux-specific considerations:**
+- GNU sed: `sed -i 's/old/new/g' file` (no `''` argument)
+- Never run `sudo` from the Bash tool. Hand me a `! <command>` line to run myself.
+- Packages via `omarchy pkg` / pacman / yay; Omarchy owns Hyprland, bar, themes, bash rc layer
+- Prefer modern tools (rg/fd/sd) - they're faster and cross-platform
+{{- end }}
 
 ## Workflow: Find Everything, Change Everything
 

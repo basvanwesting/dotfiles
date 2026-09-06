@@ -1,76 +1,54 @@
 # Dotfiles managed by chezmoi
 
+Near-identical setup on macOS (zsh + oh-my-zsh, Homebrew) and Omarchy (bash + Omarchy's rc layer).
+Shared, in this repo: herdr, nvim, ghostty, git, starship, `~/.config/shell/{env,aliases,functions}.sh`, `~/.claude/CLAUDE.md`.
+OS layer, not in this repo: Hyprland/omarchy on Linux; `~/.gitconfig` (identity, credential helpers) per machine.
+
 ## ~/.config/chezmoi/chezmoi.toml
 
 ```toml
-[data]
-have_nerd_font = true #boolean, use fancy fonts or not
-personal = true       #boolean, whether machine is authenticated (e.g. github, copilot, docker)
-remote = false        #boolean, connected by ssh terminal (i.e. auto-start terminal multiplexer in shell)
-offline = false       #boolean, has access to internet (e.g. disable auto-installs, auto-updates, github)
-```
-
-## Install
-
-```sh
-brew install \
-    alacritty \
-    chezmoi \
-    font-jetbrains-mono-nerd-font \
-    fzf \
-    git \
-    make \
-    neovim \
-    ripgrep \
-    starship \
-    zellij
-
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-
-chezmoi init https://github.com/basvanwesting/dotfiles.git
-cat << EOF > ~/.config/chezmoi/chezmoi.toml
 [git]
 autoCommit = true
 autoPush = true
 
 [data]
-have_nerd_font = true
-personal = true
-remote = false
-offline = false
-EOF
+have_nerd_font = true #boolean, use fancy fonts or not
+personal = true       #boolean, whether machine is authenticated (e.g. github, copilot, docker)
+offline = false       #boolean, has access to internet (e.g. disable auto-installs, auto-updates, github)
+```
+
+## Install (macOS)
+
+```sh
+brew install chezmoi
+chezmoi init https://github.com/basvanwesting/dotfiles.git   # no --apply: write chezmoi.toml first, then `chezmoi diff`
+chezmoi apply
+brew bundle --global                                          # ~/.Brewfile
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+mise install                                                  # runtimes from ~/.tool-versions
+sh -c "$(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs)"
+```
+
+## Install (Omarchy)
+
+```sh
+omarchy pkg add chezmoi ripgrep fd sd lazygit
+chezmoi init https://github.com/basvanwesting/dotfiles.git   # no --apply
+# write ~/.config/chezmoi/chezmoi.toml, then:
+chezmoi diff
 chezmoi apply
 ```
 
-## Additional installs
+Then add to the "your own exports, aliases, and functions" section of `~/.bashrc`:
 
 ```sh
-brew install \
-    asdf \
-    bat \
-    bottom \
-    fd \
-    nushell \
-    pv \
-    sd \
-    tokei \
-    tree \
-    yazi \
-    zoxide
-
-asdf plugin add bazel
-asdf plugin add elixir
-asdf plugin add elixir-ls
-asdf plugin add erlang
-asdf plugin add lua
-asdf plugin add lua-language-server
-asdf plugin add nodejs
-asdf plugin add perl
-asdf plugin add python
-asdf plugin add ruby
-asdf plugin add stylua
-asdf plugin add yarn
-
-sh -c "$(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs)"
+source ~/.config/shell/env.sh
+source ~/.config/shell/aliases.sh
+source ~/.config/shell/functions.sh
 ```
+
+## Keybinding rules
+
+- Prefix/leader keys are identical on both: herdr `ctrl+b` (stock), nvim leader `space`. `prefix+ctrl+b` (prefix twice) sends a literal `ctrl+b`, built in.
+- Modifier chords belong to the OS layer: Cmd is free for herdr on macOS (`cmd+shift+[/]` tabs, `cmd+ctrl+[/]` workspaces, `cmd+1..9`); Super belongs to Hyprland, so Linux gets `ctrl+page_up/down` for tabs only.

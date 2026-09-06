@@ -1,0 +1,32 @@
+# Stock herdr (prefix ctrl+b, tmux-flavoured defaults) plus additions.
+# Cmd chords are macOS-only: Super belongs to Hyprland on Omarchy.
+onboarding = false
+
+[ui]
+agent_panel_sort = "spaces"
+status_indicators = "symbols"
+
+[ui.toast]
+delivery = "system"
+
+[keys]
+{{ if eq .chezmoi.os "darwin" -}}
+next_tab = ["prefix+n", "cmd+shift+]"]
+previous_tab = ["prefix+p", "cmd+shift+["]
+next_workspace = "cmd+ctrl+]"
+previous_workspace = "cmd+ctrl+["
+switch_workspace = "cmd+1..9"
+{{- else -}}
+next_tab = ["prefix+n", "ctrl+page_down"]
+previous_tab = ["prefix+p", "ctrl+page_up"]
+{{- end }}
+
+# prefix+ctrl+b (prefix twice) sends a literal ctrl+b: built into herdr, no binding needed.
+
+[theme]
+{{ if eq .chezmoi.os "darwin" -}}
+name = "catppuccin"
+auto_switch = false
+{{- else -}}
+name = "terminal"
+{{- end }}
