@@ -1,14 +1,15 @@
+{{- $darwin := eq .chezmoi.os "darwin" -}}
 # Ghostty is only the outer terminal: herdr owns tabs, splits and their chords.
-# Shared body (Omarchy-derived); per-OS fragments are gated below.
-
+# Shared body (Omarchy-derived); per-OS fragments are gated inline.
+{{ if not $darwin }}
+# Omarchy theme colors (Omarchy 4 keeps the current theme under ~/.local/state).
+# Included first so the explicit settings below win if a theme ever overlaps.
+config-file = ?"~/.local/state/omarchy/current/theme/ghostty.conf"
+{{ end }}
 # Font (family shared; size is per machine, screens differ)
 font-family = "JetBrainsMono Nerd Font"
 font-style = Regular
-{{ if eq .chezmoi.os "darwin" -}}
-font-size = 13
-{{- else -}}
-font-size = 9
-{{- end }}
+font-size = {{ if $darwin }}13{{ else }}9{{ end }}
 
 # Window
 window-theme = ghostty
@@ -16,6 +17,9 @@ window-padding-x = 14
 window-padding-y = 14
 confirm-close-surface = false
 resize-overlay = never
+{{- if not $darwin }}
+gtk-toolbar-style = flat
+{{- end }}
 
 # Cursor styling
 cursor-style = "block"
@@ -25,23 +29,27 @@ cursor-style-blink = false
 # (all shell integration options must be passed together)
 shell-integration-features = no-cursor,ssh-env
 
+# Slowdown mouse scrolling
+mouse-scroll-multiplier = 0.95
+{{ if $darwin }}
+# Left Option acts as Alt so herdr's alt+1..9 / alt+arrows navigation matches
+# Omarchy; right Option still composes accents (Dutch layout).
+macos-option-as-alt = left
+{{- else }}
+# Fix general slowness on hyprland (https://github.com/ghostty-org/ghostty/discussions/3224)
+async-backend = epoll
+{{- end }}
+
 # Keyboard bindings
 keybind = shift+insert=paste_from_clipboard
 keybind = control+insert=copy_to_clipboard
 # Send Shift+Enter as CSI-u so TUIs can distinguish it from Enter.
 keybind = shift+enter=csi:13;2u
 
-# Slowdown mouse scrolling
-mouse-scroll-multiplier = 0.95
-
 # Every default tab/split/surface bind is unbound (ghostty +list-keybinds --default).
 # The macOS and Linux lists differ because ghostty's defaults differ per OS:
 # regenerate each from that command on its own OS, never merge them.
-{{ if eq .chezmoi.os "darwin" -}}
-# Left Option acts as Alt so herdr's alt+1..9 / alt+arrows navigation matches
-# Omarchy; right Option still composes accents (Dutch layout).
-macos-option-as-alt = left
-
+{{ if $darwin -}}
 # alt+left/right default to esc:b / esc:f (word movement); herdr needs them for tabs.
 keybind = alt+arrow_left=unbind
 keybind = alt+arrow_right=unbind
@@ -84,13 +92,6 @@ keybind = super+shift+enter=unbind
 keybind = super+t=unbind
 keybind = super+w=unbind
 {{- else -}}
-# Omarchy theme colors (Omarchy 4 keeps the current theme under ~/.local/state)
-config-file = ?"~/.local/state/omarchy/current/theme/ghostty.conf"
-gtk-toolbar-style = flat
-
-# Fix general slowness on hyprland (https://github.com/ghostty-org/ghostty/discussions/3224)
-async-backend = epoll
-
 # alt+1..9 and ctrl+alt+arrows collide with herdr's switch_tab / focus_pane otherwise.
 keybind = alt+1=unbind
 keybind = alt+2=unbind
