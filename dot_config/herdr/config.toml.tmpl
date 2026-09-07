@@ -4,18 +4,13 @@ onboarding = false
 # Keybindings behind the prefix are herdr STOCK, deliberately — see [keys].
 
 [theme]
-{{ if $darwin -}}
-name = "catppuccin"
-auto_switch = false
-{{- else -}}
-# tmux ran on the terminal's own palette (bg=default, fg=default, ANSI blue accents)
+# Follow the outer terminal's palette (Omarchy theme on Linux, ghostty theme on macOS).
 name = "terminal"
 
 [theme.custom]
 # The active tab is drawn as panel_bg text on an accent background, so panel_bg
 # has to be dark for it to read - same colors as status-left's "#[fg=black,bg=blue]"
 panel_bg = "black"
-{{- end }}
 
 [terminal]
 # Matches -c "#{pane_current_path}" on every split, window, and session

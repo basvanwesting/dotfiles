@@ -25,9 +25,7 @@ alias sth='git show --name-only --no-notes --oneline HEAD | grep _spec.rb | tee 
 alias stf="fzf -m --bind enter:clear-selection+select-all+accept --query '_spec.rb$ ' | tee /dev/tty | xargs bundle exec spring rspec"
 alias stof='bundle exec spring rspec --only-failures'
 
-# Projects
-alias cu='cd ~/workspace/cu'
-alias dqs='cd ~/workspace/dqs'
-alias fta='cd ~/workspace/fta'
-alias kbt='cd ~/workspace/kbt'
 alias wiki='e ~/bin/wiki'
+
+# Machine-local, unmanaged (client project shortcuts etc.): not in the public repo.
+[ -r "$HOME/.config/shell/local.sh" ] && . "$HOME/.config/shell/local.sh"
