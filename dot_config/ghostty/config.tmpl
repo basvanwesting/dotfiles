@@ -1,7 +1,8 @@
 {{- if eq .chezmoi.os "darwin" -}}
-# Free Cmd chords for herdr (cmd+shift+[/] tabs, cmd+1..9 workspaces)
-keybind = super+shift+[=unbind
-keybind = super+shift+]=unbind
+# Ghostty is only the outer terminal: herdr owns tabs, splits and their chords.
+# Every default tab/split/surface bind is unbound (ghostty +list-keybinds --default).
+keybind = ctrl+shift+tab=unbind
+keybind = ctrl+tab=unbind
 keybind = super+1=unbind
 keybind = super+2=unbind
 keybind = super+3=unbind
@@ -11,6 +12,19 @@ keybind = super+6=unbind
 keybind = super+7=unbind
 keybind = super+8=unbind
 keybind = super+9=unbind
+keybind = super+[=unbind
+keybind = super+]=unbind
+keybind = super+alt+arrow_down=unbind
+keybind = super+alt+arrow_left=unbind
+keybind = super+alt+arrow_right=unbind
+keybind = super+alt+arrow_up=unbind
+keybind = super+alt+w=unbind
+keybind = super+ctrl+=unbind
+keybind = super+ctrl+arrow_down=unbind
+keybind = super+ctrl+arrow_left=unbind
+keybind = super+ctrl+arrow_right=unbind
+keybind = super+ctrl+arrow_up=unbind
+keybind = super+d=unbind
 keybind = super+digit_1=unbind
 keybind = super+digit_2=unbind
 keybind = super+digit_3=unbind
@@ -19,6 +33,12 @@ keybind = super+digit_5=unbind
 keybind = super+digit_6=unbind
 keybind = super+digit_7=unbind
 keybind = super+digit_8=unbind
+keybind = super+shift+[=unbind
+keybind = super+shift+]=unbind
+keybind = super+shift+d=unbind
+keybind = super+shift+enter=unbind
+keybind = super+t=unbind
+keybind = super+w=unbind
 {{- else -}}
 # Omarchy's stock ghostty config (user-owned copy; Omarchy seeds once and never overwrites)
 

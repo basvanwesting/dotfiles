@@ -22,56 +22,42 @@ panel_bg = "black"
 new_cwd = "follow"
 
 [keys]
-# Policy: every chord behind the prefix is left at herdr's stock default, so
-# muscle memory ports between machines. The entries below only ADD prefix-free
-# chords alongside the stock prefix chord; no stock chord is reassigned.
-# Anything not listed here is stock by omission.
-#
-# Prefix-free chords belong to the OS layer: Cmd on macOS (free for herdr),
-# alt / ctrl+alt on Omarchy (Super belongs to Hyprland there).
+# Policy: ACTIONS (split, close, resize, move/rename tab, new workspace, ...)
+# stay on herdr's stock prefix chords, identical on both machines; nothing
+# stock is reassigned. NAVIGATION additionally gets the OS-native prefix-free
+# chord: Cmd on macOS (browser/terminal convention), Alt on Omarchy (Super
+# belongs to Hyprland; Alt is Omarchy's own herdr/ghostty convention).
+# Ghostty's own tab/split binds are unbound on both OSes so herdr owns them.
 # prefix+ctrl+b (prefix twice) sends a literal ctrl+b: built into herdr, no binding needed.
 
 # Stock default anyway, kept explicit: the tmux/zellij/herdr standard.
 prefix = "ctrl+b"
+{{ if $darwin }}
+previous_tab = ["prefix+p", "cmd+shift+["]
+next_tab = ["prefix+n", "cmd+shift+]"]
+switch_tab = ["prefix+1..9", "cmd+1..9"]
 
-# Stock prefix chord + prefix-free alternative.
-split_horizontal = ["prefix+minus"{{ if not $darwin }}, "alt+enter"{{ end }}]
-split_vertical = ["prefix+v"{{ if not $darwin }}, "alt+shift+enter"{{ end }}]
-close_pane = ["prefix+x"{{ if not $darwin }}, "alt+esc"{{ end }}]
-
-focus_pane_left = ["prefix+h"{{ if not $darwin }}, "ctrl+alt+left"{{ end }}]
-focus_pane_down = ["prefix+j"{{ if not $darwin }}, "ctrl+alt+down"{{ end }}]
-focus_pane_up = ["prefix+k"{{ if not $darwin }}, "ctrl+alt+up"{{ end }}]
-focus_pane_right = ["prefix+l"{{ if not $darwin }}, "ctrl+alt+right"{{ end }}]
-
-switch_tab = ["prefix+1..9"{{ if not $darwin }}, "alt+1..9"{{ end }}]
-previous_tab = ["prefix+p", {{ if $darwin }}"cmd+shift+["{{ else }}"alt+left"{{ end }}]
-next_tab = ["prefix+n", {{ if $darwin }}"cmd+shift+]"{{ else }}"alt+right"{{ end }}]
-
-# No stock binding exists for these, so they are purely additive.
-{{ if $darwin -}}
-move_tab_previous = "cmd+shift+ctrl+["
-move_tab_next = "cmd+shift+ctrl+]"
+focus_pane_left = ["prefix+h", "cmd+alt+left"]
+focus_pane_down = ["prefix+j", "cmd+alt+down"]
+focus_pane_up = ["prefix+k", "cmd+alt+up"]
+focus_pane_right = ["prefix+l", "cmd+alt+right"]
 
 previous_workspace = "cmd+ctrl+["
 next_workspace = "cmd+ctrl+]"
-switch_workspace = "cmd+1..9"
-{{- else -}}
-resize_pane_left = "ctrl+alt+shift+left"
-resize_pane_down = "ctrl+alt+shift+down"
-resize_pane_up = "ctrl+alt+shift+up"
-resize_pane_right = "ctrl+alt+shift+right"
+{{ else }}
+previous_tab = ["prefix+p", "alt+left"]
+next_tab = ["prefix+n", "alt+right"]
+switch_tab = ["prefix+1..9", "alt+1..9"]
 
-move_tab_previous = "alt+shift+left"
-move_tab_next = "alt+shift+right"
+focus_pane_left = ["prefix+h", "ctrl+alt+left"]
+focus_pane_down = ["prefix+j", "ctrl+alt+down"]
+focus_pane_up = ["prefix+k", "ctrl+alt+up"]
+focus_pane_right = ["prefix+l", "ctrl+alt+right"]
 
-# Omarchy also had prefix+shift+p / prefix+shift+n here, but those are stock's
-# rename_pane and new_workspace. Only the prefix-free halves survive.
 previous_workspace = "alt+up"
 next_workspace = "alt+down"
-{{- end }}
-
-# ';' is unbound in stock, so this stays as a non-conflicting extra.
+{{ end }}
+# ';' is unbound in stock; tmux's last-pane chord.
 last_pane = "prefix+;"
 
 [ui]
