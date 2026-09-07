@@ -9,3 +9,9 @@ vim.g.maplocalleader = ' '
 vim.g.have_nerd_font = {{ .have_nerd_font }}
 vim.g.personal = {{ .personal }}
 vim.g.offline = {{ .offline }}
+
+-- No remote plugins in use: disable the language hosts (quiet :checkhealth, faster startup)
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_python3_provider = 0
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_node_provider = 0
