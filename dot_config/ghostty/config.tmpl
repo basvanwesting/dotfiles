@@ -73,14 +73,48 @@ keybind = control+insert=copy_to_clipboard
 keybind = shift+enter=csi:13;2u
 # Legacy encoding sends Alt+Shift+Enter the same as Alt+Enter; send CSI-u so tmux can match M-S-Enter.
 keybind = alt+shift+enter=csi:13;4u
-# Super+Shift+[ / ] -> alt+left / alt+right (herdr previous_tab / next_tab).
-# Avoids encoding super+shift+punctuation over the wire, which is terminal-dependent.
-keybind = super+shift+bracket_left=csi:1;3D
-keybind = super+shift+bracket_right=csi:1;3C
-keybind = super+control+shift+alt+arrow_down=resize_split:down,100
-keybind = super+control+shift+alt+arrow_up=resize_split:up,100
-keybind = super+control+shift+alt+arrow_left=resize_split:left,100
-keybind = super+control+shift+alt+arrow_right=resize_split:right,100
+
+# Ghostty is only the outer terminal: herdr owns tabs, splits and their chords.
+# Every default tab/split/surface bind is unbound (ghostty 1.2.4 +list-keybinds --default).
+# alt+1..9 and ctrl+alt+arrows collide with herdr's switch_tab / focus_pane otherwise.
+keybind = alt+1=unbind
+keybind = alt+2=unbind
+keybind = alt+3=unbind
+keybind = alt+4=unbind
+keybind = alt+5=unbind
+keybind = alt+6=unbind
+keybind = alt+7=unbind
+keybind = alt+8=unbind
+keybind = alt+9=unbind
+keybind = alt+digit_1=unbind
+keybind = alt+digit_2=unbind
+keybind = alt+digit_3=unbind
+keybind = alt+digit_4=unbind
+keybind = alt+digit_5=unbind
+keybind = alt+digit_6=unbind
+keybind = alt+digit_7=unbind
+keybind = alt+digit_8=unbind
+keybind = ctrl+alt+arrow_down=unbind
+keybind = ctrl+alt+arrow_left=unbind
+keybind = ctrl+alt+arrow_right=unbind
+keybind = ctrl+alt+arrow_up=unbind
+keybind = ctrl+page_down=unbind
+keybind = ctrl+page_up=unbind
+keybind = ctrl+shift+arrow_left=unbind
+keybind = ctrl+shift+arrow_right=unbind
+keybind = ctrl+shift+e=unbind
+keybind = ctrl+shift+enter=unbind
+keybind = ctrl+shift+o=unbind
+keybind = ctrl+shift+tab=unbind
+keybind = ctrl+shift+t=unbind
+keybind = ctrl+shift+w=unbind
+keybind = ctrl+tab=unbind
+keybind = super+ctrl+]=unbind
+keybind = super+ctrl+[=unbind
+keybind = super+ctrl+shift+arrow_down=unbind
+keybind = super+ctrl+shift+arrow_left=unbind
+keybind = super+ctrl+shift+arrow_right=unbind
+keybind = super+ctrl+shift+arrow_up=unbind
 
 # Slowdown mouse scrolling
 mouse-scroll-multiplier = 0.95
