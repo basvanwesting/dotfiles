@@ -57,8 +57,11 @@ focus_pane_right = ["prefix+l", "ctrl+alt+right"]
 previous_workspace = "alt+up"
 next_workspace = "alt+down"
 {{ end }}
-# ';' is unbound in stock; tmux's last-pane chord.
+# Unbound in stock: tmux's last-pane chord, and the tmux-pain-control '<' / '>'
+# swap-window idiom (move_tab has no stock prefix chord at all).
 last_pane = "prefix+;"
+move_tab_previous = "prefix+<"
+move_tab_next = "prefix+>"
 
 [ui]
 accent = "blue"
