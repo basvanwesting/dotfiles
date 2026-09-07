@@ -1,7 +1,11 @@
 {{- $darwin := eq .chezmoi.os "darwin" -}}
 # Ghostty is only the outer terminal: herdr owns tabs, splits and their chords.
 # Shared body (Omarchy-derived); per-OS fragments are gated inline.
-{{ if not $darwin }}
+{{ if $darwin }}
+# Palette: herdr runs its "terminal" theme, so the outer terminal sets the colors.
+# Ghostty's built-in Catppuccin Mocha, the flavour herdr's old "catppuccin" theme was.
+theme = Catppuccin Mocha
+{{ else }}
 # Omarchy theme colors (Omarchy 4 keeps the current theme under ~/.local/state).
 # Included first so the explicit settings below win if a theme ever overlaps.
 config-file = ?"~/.local/state/omarchy/current/theme/ghostty.conf"
