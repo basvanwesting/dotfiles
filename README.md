@@ -10,8 +10,8 @@ OS layer, not in this repo: Hyprland/omarchy on Linux; `~/.gitconfig` (identity,
 
 ```toml
 [git]
-autoCommit = true
-autoPush = true
+autoCommit = true   # true on the machine where edits are made (macOS), false on Omarchy
+autoPush = true     # public repo: nothing should leave a machine unasked
 
 [data]
 have_nerd_font = true #boolean, use fancy fonts or not
