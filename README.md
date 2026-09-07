@@ -53,5 +53,5 @@ source ~/.config/shell/functions.sh
 ## Keybinding rules
 
 - Prefix/leader keys are identical on both: herdr `ctrl+b` (stock), nvim leader `space`. `prefix+ctrl+b` (prefix twice) sends a literal `ctrl+b`, built in.
-- Actions (split, close, resize, move/rename tab, workspaces by number) stay on herdr's stock prefix chords on both machines. Navigation additionally gets the OS-native prefix-free chord: macOS Cmd (`cmd+shift+[/]` tabs, `cmd+1..9` switch tab, `cmd+alt+arrows` focus pane, `cmd+ctrl+[/]` workspaces), Omarchy Alt (`alt+left/right`, `alt+1..9`, `ctrl+alt+arrows`, `alt+up/down`). Super stays with Hyprland.
+- Actions (split, close, resize, rename tab, workspaces by number) stay on herdr's stock prefix chords. Navigation also gets a prefix-free Alt chord, identical on both machines: `alt+left/right` tabs, `alt+1..9` switch tab, `ctrl+alt+arrows` focus pane, `alt+up/down` workspaces. Super stays with Hyprland; on macOS ghostty maps left Option to Alt (`macos-option-as-alt = left`).
 - Ghostty is only the outer terminal: all of its own tab/split binds are unbound on both OSes so herdr owns those chords.

@@ -22,29 +22,16 @@ panel_bg = "black"
 new_cwd = "follow"
 
 [keys]
-# Policy: ACTIONS (split, close, resize, move/rename tab, new workspace, ...)
-# stay on herdr's stock prefix chords, identical on both machines; nothing
-# stock is reassigned. NAVIGATION additionally gets the OS-native prefix-free
-# chord: Cmd on macOS (browser/terminal convention), Alt on Omarchy (Super
-# belongs to Hyprland; Alt is Omarchy's own herdr/ghostty convention).
+# Policy: ACTIONS (split, close, resize, rename tab, new workspace, ...) stay on
+# herdr's stock prefix chords; nothing stock is reassigned. NAVIGATION also gets
+# a prefix-free Alt chord, identical on both machines (Omarchy's own convention;
+# Super belongs to Hyprland there, and on macOS ghostty maps left Option to Alt).
 # Ghostty's own tab/split binds are unbound on both OSes so herdr owns them.
 # prefix+ctrl+b (prefix twice) sends a literal ctrl+b: built into herdr, no binding needed.
 
 # Stock default anyway, kept explicit: the tmux/zellij/herdr standard.
 prefix = "ctrl+b"
-{{ if $darwin }}
-previous_tab = ["prefix+p", "cmd+shift+["]
-next_tab = ["prefix+n", "cmd+shift+]"]
-switch_tab = ["prefix+1..9", "cmd+1..9"]
 
-focus_pane_left = ["prefix+h", "cmd+alt+left"]
-focus_pane_down = ["prefix+j", "cmd+alt+down"]
-focus_pane_up = ["prefix+k", "cmd+alt+up"]
-focus_pane_right = ["prefix+l", "cmd+alt+right"]
-
-previous_workspace = "cmd+ctrl+["
-next_workspace = "cmd+ctrl+]"
-{{ else }}
 previous_tab = ["prefix+p", "alt+left"]
 next_tab = ["prefix+n", "alt+right"]
 switch_tab = ["prefix+1..9", "alt+1..9"]
@@ -56,7 +43,7 @@ focus_pane_right = ["prefix+l", "ctrl+alt+right"]
 
 previous_workspace = "alt+up"
 next_workspace = "alt+down"
-{{ end }}
+
 # Unbound in stock: tmux's last-pane chord, and the tmux-pain-control '<' / '>'
 # swap-window idiom (move_tab has no stock prefix chord at all).
 # If a terminal mangles shifted punctuation, prefix+shift+comma / prefix+shift+period
