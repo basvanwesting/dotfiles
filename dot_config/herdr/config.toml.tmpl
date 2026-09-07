@@ -50,6 +50,9 @@ next_tab = ["prefix+n", {{ if $darwin }}"cmd+shift+]"{{ else }}"alt+right"{{ end
 
 # No stock binding exists for these, so they are purely additive.
 {{ if $darwin -}}
+move_tab_previous = "cmd+shift+ctrl+["
+move_tab_next = "cmd+shift+ctrl+]"
+
 previous_workspace = "cmd+ctrl+["
 next_workspace = "cmd+ctrl+]"
 switch_workspace = "cmd+1..9"
