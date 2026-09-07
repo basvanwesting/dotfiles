@@ -115,7 +115,6 @@ return {
             priority = 50,
           },
           { name = 'path', priority = 40 },
-          { name = 'copilot', priority = 20 },
         },
       }
     end,

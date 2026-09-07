@@ -25,12 +25,8 @@ return {
         { '<leader>l_', hidden = true },
         { '<leader>s', group = '[s]earch' },
         { '<leader>s_', hidden = true },
-        { '<leader>t', group = '[t]est' },
-        { '<leader>t_', hidden = true },
         {
           mode = { 'n', 'v' },
-          { '<leader>a', group = '[a]I CopilotChat' },
-          { '<leader>a_', hidden = true },
           { '<leader>h', group = 'Git [h]unk' },
           { '<leader>h_', hidden = true },
         },
