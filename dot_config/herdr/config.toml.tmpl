@@ -79,7 +79,9 @@ tab_bar_right = [{ type = "zoom" }, { type = "hostname" }]
 # and it resolves on the server so remote sessions name the remote host.
 window_title = "{hostname}: {workspace}"
 
-agent_panel_sort = "spaces"
+# One agent per workspace, so grouping by space adds nothing; rank by attention
+# (blocked > unseen idle > working > seen idle), recency as tie-breaker.
+agent_panel_sort = "priority"
 status_indicators = "symbols"
 
 [ui.toast]
