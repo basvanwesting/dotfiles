@@ -5,6 +5,8 @@ macos-option-as-alt = left
 
 # Ghostty is only the outer terminal: herdr owns tabs, splits and their chords.
 # Every default tab/split/surface bind is unbound (ghostty +list-keybinds --default).
+# The macOS and Linux lists differ because ghostty's defaults differ per OS:
+# regenerate each from that command on its own OS, never merge them.
 # alt+left/right default to esc:b / esc:f (word movement); herdr needs them for tabs.
 keybind = alt+arrow_left=unbind
 keybind = alt+arrow_right=unbind
@@ -81,6 +83,8 @@ keybind = shift+enter=csi:13;2u
 
 # Ghostty is only the outer terminal: herdr owns tabs, splits and their chords.
 # Every default tab/split/surface bind is unbound (ghostty 1.2.4 +list-keybinds --default).
+# The macOS and Linux lists differ because ghostty's defaults differ per OS:
+# regenerate each from that command on its own OS, never merge them.
 # alt+1..9 and ctrl+alt+arrows collide with herdr's switch_tab / focus_pane otherwise.
 keybind = alt+1=unbind
 keybind = alt+2=unbind
