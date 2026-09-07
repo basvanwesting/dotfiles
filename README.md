@@ -53,4 +53,4 @@ source ~/.config/shell/functions.sh
 ## Keybinding rules
 
 - Prefix/leader keys are identical on both: herdr `ctrl+b` (stock), nvim leader `space`. `prefix+ctrl+b` (prefix twice) sends a literal `ctrl+b`, built in.
-- Modifier chords belong to the OS layer: Cmd is free for herdr on macOS (`cmd+shift+[/]` tabs, `cmd+ctrl+[/]` workspaces, `cmd+1..9`); Super belongs to Hyprland, so Linux gets `ctrl+page_up/down` for tabs only.
+- Modifier chords belong to the OS layer: Cmd is free for herdr on macOS (`cmd+shift+[/]` tabs, `cmd+ctrl+[/]` workspaces, `cmd+1..9`); Super belongs to Hyprland, so Omarchy uses its stock `alt` / `ctrl+alt` chords (`alt+enter` split, `alt+left/right` tabs, `alt+up/down` workspaces, `ctrl+alt+arrows` focus). Stock prefix chords are never reassigned on either OS.

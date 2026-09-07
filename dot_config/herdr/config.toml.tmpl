@@ -1,32 +1,115 @@
-# Stock herdr (prefix ctrl+b, tmux-flavoured defaults) plus additions.
-# Cmd chords are macOS-only: Super belongs to Hyprland on Omarchy.
+{{- $darwin := eq .chezmoi.os "darwin" -}}
 onboarding = false
+# UI, theme and terminal behaviour follow Omarchy's shipped config (shared on both OSes).
+# Keybindings behind the prefix are herdr STOCK, deliberately — see [keys].
+
+[theme]
+{{ if $darwin -}}
+name = "catppuccin"
+auto_switch = false
+{{- else -}}
+# tmux ran on the terminal's own palette (bg=default, fg=default, ANSI blue accents)
+name = "terminal"
+
+[theme.custom]
+# The active tab is drawn as panel_bg text on an accent background, so panel_bg
+# has to be dark for it to read - same colors as status-left's "#[fg=black,bg=blue]"
+panel_bg = "black"
+{{- end }}
+
+[terminal]
+# Matches -c "#{pane_current_path}" on every split, window, and session
+new_cwd = "follow"
+
+[keys]
+# Policy: every chord behind the prefix is left at herdr's stock default, so
+# muscle memory ports between machines. The entries below only ADD prefix-free
+# chords alongside the stock prefix chord; no stock chord is reassigned.
+# Anything not listed here is stock by omission.
+#
+# Prefix-free chords belong to the OS layer: Cmd on macOS (free for herdr),
+# alt / ctrl+alt on Omarchy (Super belongs to Hyprland there).
+# prefix+ctrl+b (prefix twice) sends a literal ctrl+b: built into herdr, no binding needed.
+
+# Stock default anyway, kept explicit: the tmux/zellij/herdr standard.
+prefix = "ctrl+b"
+
+# Stock prefix chord + prefix-free alternative.
+split_horizontal = ["prefix+minus"{{ if not $darwin }}, "alt+enter"{{ end }}]
+split_vertical = ["prefix+v"{{ if not $darwin }}, "alt+shift+enter"{{ end }}]
+close_pane = ["prefix+x"{{ if not $darwin }}, "alt+esc"{{ end }}]
+
+focus_pane_left = ["prefix+h"{{ if not $darwin }}, "ctrl+alt+left"{{ end }}]
+focus_pane_down = ["prefix+j"{{ if not $darwin }}, "ctrl+alt+down"{{ end }}]
+focus_pane_up = ["prefix+k"{{ if not $darwin }}, "ctrl+alt+up"{{ end }}]
+focus_pane_right = ["prefix+l"{{ if not $darwin }}, "ctrl+alt+right"{{ end }}]
+
+switch_tab = ["prefix+1..9"{{ if not $darwin }}, "alt+1..9"{{ end }}]
+previous_tab = ["prefix+p", {{ if $darwin }}"cmd+shift+["{{ else }}"alt+left"{{ end }}]
+next_tab = ["prefix+n", {{ if $darwin }}"cmd+shift+]"{{ else }}"alt+right"{{ end }}]
+
+# No stock binding exists for these, so they are purely additive.
+{{ if $darwin -}}
+previous_workspace = "cmd+ctrl+["
+next_workspace = "cmd+ctrl+]"
+switch_workspace = "cmd+1..9"
+{{- else -}}
+resize_pane_left = "ctrl+alt+shift+left"
+resize_pane_down = "ctrl+alt+shift+down"
+resize_pane_up = "ctrl+alt+shift+up"
+resize_pane_right = "ctrl+alt+shift+right"
+
+move_tab_previous = "alt+shift+left"
+move_tab_next = "alt+shift+right"
+
+# Omarchy also had prefix+shift+p / prefix+shift+n here, but those are stock's
+# rename_pane and new_workspace. Only the prefix-free halves survive.
+previous_workspace = "alt+up"
+next_workspace = "alt+down"
+{{- end }}
+
+# ';' is unbound in stock, so this stays as a non-conflicting extra.
+last_pane = "prefix+;"
 
 [ui]
+accent = "blue"
+
+# tmux drew single-line dividers between adjacent panes and no outer frame
+pane_gaps = false
+pane_outer_borders = false
+
+# tmux had no scrollbar column beside its panes
+pane_scrollbars = false
+
+# kill-window and kill-session never asked
+confirm_close = false
+
+# automatic-rename gave windows a name without prompting
+prompt_new_tab_name = false
+
+# set -g mouse on
+mouse_capture = true
+{{ if not $darwin }}
+# foot's [scrollback] multiplier=7.0. herdr captures the mouse, so this is
+# the operative wheel setting now, not the outer terminal's. Linux only:
+# macOS trackpad momentum makes 7 lines per notch too fast.
+mouse_scroll_lines = 7
+{{ end }}
+# status-right had the zoom flag followed by #h
+tab_bar_right = [{ type = "zoom" }, { type = "hostname" }]
+
+# set -g set-titles on / set -g set-titles-string '#h:#W', where tmux's #W was
+# the basename of the pane cwd. This is what Hyprland shows in the group bar,
+# and it resolves on the server so remote sessions name the remote host.
+window_title = "{hostname}: {workspace}"
+
 agent_panel_sort = "spaces"
 status_indicators = "symbols"
 
 [ui.toast]
 delivery = "system"
 
-[keys]
-{{ if eq .chezmoi.os "darwin" -}}
-next_tab = ["prefix+n", "cmd+shift+]"]
-previous_tab = ["prefix+p", "cmd+shift+["]
-next_workspace = "cmd+ctrl+]"
-previous_workspace = "cmd+ctrl+["
-switch_workspace = "cmd+1..9"
-{{- else -}}
-next_tab = ["prefix+n", "ctrl+page_down"]
-previous_tab = ["prefix+p", "ctrl+page_up"]
-{{- end }}
-
-# prefix+ctrl+b (prefix twice) sends a literal ctrl+b: built into herdr, no binding needed.
-
-[theme]
-{{ if eq .chezmoi.os "darwin" -}}
-name = "catppuccin"
-auto_switch = false
-{{- else -}}
-name = "terminal"
-{{- end }}
+[experimental]
+# Render images in panes via the Kitty graphics protocol. Requires a
+# Kitty-graphics-capable outer terminal: Ghostty works, foot is sixel-only.
+kitty_graphics = true
