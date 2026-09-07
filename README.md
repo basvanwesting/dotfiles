@@ -38,6 +38,8 @@ chezmoi init https://github.com/basvanwesting/dotfiles.git   # no --apply
 # write ~/.config/chezmoi/chezmoi.toml, then:
 chezmoi diff
 chezmoi apply
+git config --file ~/.gitconfig user.name "..."               # identity is per machine, not in this repo
+git config --file ~/.gitconfig user.email "..."
 ```
 
 Then add to the "your own exports, aliases, and functions" section of `~/.bashrc`:

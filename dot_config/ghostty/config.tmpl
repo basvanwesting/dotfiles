@@ -23,7 +23,7 @@ keybind = super+digit_8=unbind
 # Omarchy's stock ghostty config (user-owned copy; Omarchy seeds once and never overwrites)
 
 # Dynamic theme colors
-config-file = ?"~/.config/omarchy/current/theme/ghostty.conf"
+config-file = ?"~/.local/state/omarchy/current/theme/ghostty.conf"
 
 # Font
 font-family = "JetBrainsMono Nerd Font"
@@ -53,6 +53,10 @@ keybind = control+insert=copy_to_clipboard
 keybind = shift+enter=csi:13;2u
 # Legacy encoding sends Alt+Shift+Enter the same as Alt+Enter; send CSI-u so tmux can match M-S-Enter.
 keybind = alt+shift+enter=csi:13;4u
+# Super+Shift+[ / ] -> alt+left / alt+right (herdr previous_tab / next_tab).
+# Avoids encoding super+shift+punctuation over the wire, which is terminal-dependent.
+keybind = super+shift+bracket_left=csi:1;3D
+keybind = super+shift+bracket_right=csi:1;3C
 keybind = super+control+shift+alt+arrow_down=resize_split:down,100
 keybind = super+control+shift+alt+arrow_up=resize_split:up,100
 keybind = super+control+shift+alt+arrow_left=resize_split:left,100
