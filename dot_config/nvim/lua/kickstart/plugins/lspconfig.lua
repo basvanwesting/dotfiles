@@ -168,7 +168,7 @@ return {
 
       -- Configure LSP servers using the new vim.lsp.config API (Neovim 0.11+)
       vim.lsp.config.lua_ls = {
-        cmd = { vim.fs.normalize '~/.asdf/shims/lua-language-server' },
+        cmd = { 'lua-language-server' },
         filetypes = { 'lua' },
         root_markers = { '.luarc.json', '.luarc.jsonc', '.luacheckrc', '.stylua.toml', 'stylua.toml', 'selene.toml', 'selene.yml', '.git' },
         capabilities = capabilities,
@@ -184,8 +184,8 @@ return {
       }
 
       vim.lsp.config.ruby_lsp = {
-        -- cmd = { vim.fs.normalize '~/.asdf/shims/ruby-lsp' },
-        cmd = { vim.fs.normalize '~/.asdf/shims/bundle', 'exec', 'ruby-lsp' },
+        -- cmd = { 'ruby-lsp' },
+        cmd = { 'bundle', 'exec', 'ruby-lsp' },
         filetypes = { 'ruby' },
         root_markers = { 'Gemfile', '.git', '.rubocop.yml' },
         capabilities = capabilities,

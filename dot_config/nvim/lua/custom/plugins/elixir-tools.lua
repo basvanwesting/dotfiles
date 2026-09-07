@@ -11,8 +11,7 @@ return {
         nextls = { enable = false },
         elixirls = {
           enable = true,
-          -- cmd = { vim.fs.normalize '~/.asdf/installs/elixir-ls/0.27.2/language_server.sh' },
-          cmd = { vim.fs.normalize '~/.asdf/shims/elixir-ls' },
+          cmd = { 'elixir-ls' },
           settings = elixirls.settings {
             dialyzerEnabled = true,
             enableTestLenses = false,

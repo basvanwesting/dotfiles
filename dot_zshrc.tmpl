@@ -33,13 +33,7 @@ source "$ZSH/oh-my-zsh.sh"
 # Tools
 [[ -f "$HOME/.fzf.zsh" ]] && source "$HOME/.fzf.zsh"
 [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
-if (( $+commands[mise] )); then
-  eval "$(mise activate zsh)"
-else
-  # TODO remove once migrated to mise
-  export ASDF_DATA_DIR="$HOME/.asdf"
-  export PATH="$ASDF_DATA_DIR/shims:$PATH"
-fi
+eval "$(mise activate zsh)"
 (( $+commands[starship] )) && eval "$(starship init zsh)"
 
 # Shared with bash on Omarchy

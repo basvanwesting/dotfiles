@@ -101,9 +101,9 @@ return {
             rspec_cmd = function()
               -- test for local bin/spring as spring is shimmed globally
               if vim.fn.executable 'bin/spring' == 1 then
-                return { vim.fs.normalize '~/.asdf/shims/bundle', 'exec', 'spring', 'rspec' }
+                return { 'bundle', 'exec', 'spring', 'rspec' }
               else
-                return { vim.fs.normalize '~/.asdf/shims/bundle', 'exec', 'rspec' }
+                return { 'bundle', 'exec', 'rspec' }
               end
             end,
           },
