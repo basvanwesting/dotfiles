@@ -1,0 +1,36 @@
+#!/bin/sh
+# Omarchy owns ~/.bashrc; this only appends the chezmoi shell block to whatever
+# Omarchy currently ships, so upstream changes to the file keep flowing through.
+# stdin = current ~/.bashrc, empty when the file does not exist yet.
+
+set -eu
+
+marker='.config/shell/aliases.sh'
+current=$(cat)
+
+# Fresh machine: no ~/.bashrc yet. Seed from Omarchy's stock so the block never
+# lands on its own without the env-bootstrap / OMARCHY_PATH setup above it.
+if [ -z "$current" ]; then
+  for seed in /usr/share/omarchy/default/bashrc /etc/skel/.bashrc; do
+    if [ -r "$seed" ]; then
+      current=$(cat "$seed")
+      break
+    fi
+  done
+fi
+
+printf '%s\n' "$current"
+
+# Already appended: emit the file unchanged so repeated applies are a no-op.
+case $current in
+*"$marker"*) exit 0 ;;
+esac
+
+cat <<'BLOCK'
+
+# Shared with zsh on macOS, managed by chezmoi (~/.local/share/chezmoi).
+# Last so these win over Omarchy's rc layer where names overlap (g, gg, e).
+source ~/.config/shell/env.sh
+source ~/.config/shell/aliases.sh
+source ~/.config/shell/functions.sh
+BLOCK

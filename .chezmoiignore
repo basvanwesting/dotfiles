@@ -8,3 +8,7 @@ README.md
 .config/git/config
 .config/starship.toml
 {{ end }}
+{{ if eq .chezmoi.os "darwin" }}
+# macOS uses zsh; dot_zshrc.tmpl already sources ~/.config/shell/*.
+.bashrc
+{{ end }}
