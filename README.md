@@ -44,13 +44,7 @@ git config --file ~/.gitconfig user.name "..."               # identity is per m
 git config --file ~/.gitconfig user.email "..."
 ```
 
-Then add to the "your own exports, aliases, and functions" section of `~/.bashrc`:
-
-```sh
-source ~/.config/shell/env.sh
-source ~/.config/shell/aliases.sh
-source ~/.config/shell/functions.sh
-```
+On Omarchy, `modify_dot_bashrc` appends the `~/.config/shell/*` source block to the Omarchy-owned `~/.bashrc` on apply; nothing to paste by hand.
 
 ## Keybinding rules
 
