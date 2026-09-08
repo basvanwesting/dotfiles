@@ -3,4 +3,8 @@ README.md
 .zshrc
 .Brewfile
 .config/nvim
+# Omarchy ships these and keeps improving them; let it own them here.
+# macOS has no Omarchy, so the shared copies still apply there.
+.config/git/config
+.config/starship.toml
 {{ end }}
