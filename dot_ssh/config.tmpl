@@ -1,30 +1,24 @@
 Host *
+{{- if eq .chezmoi.os "darwin" }}
+  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
   UseKeychain yes
-  AddKeysToAgent yes
+{{- else }}
+  IdentityAgent ~/.1password/agent.sock
+{{- end }}
   IdentitiesOnly yes
-#   TCPKeepAlive yes
-#   ServerAliveInterval 300
-#   ServerAliveCountMax 3
-#   UseRoaming no
-
 Host github.com
-  AddKeysToAgent yes
-  UseKeychain yes
-  IdentityFile ~/.ssh/github/id_ed25519
-
+  IdentityFile ~/.ssh/github/id_ed25519.pub
 Host *.4stack.nl
   ForwardAgent yes
   User deploy
+  IdentityFile ~/.ssh/personal.pub
   IdentityFile ~/.ssh/id_rsa
-
 Host *.fourstack.nl
   ForwardAgent yes
   User deploy
+  IdentityFile ~/.ssh/personal.pub
   IdentityFile ~/.ssh/id_rsa
-
 Host bas-macbook-pro-2018.local bas-macbook-air.local
   ForwardAgent yes
+  IdentityFile ~/.ssh/personal.pub
   IdentityFile ~/.ssh/id_rsa
-
-Host *
-  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
