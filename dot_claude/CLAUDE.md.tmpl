@@ -28,6 +28,15 @@ When a framework generator exists for an artifact (Rails migrations/models/contr
 
 Vim user — reflexively hits Esc as a "reset to normal mode" gesture with no intent to cancel. Esc is unbound from `chat:cancel` in `~/.claude/keybindings.json` (Chat context). Ctrl-C is the interrupt key. Editor mode stays on `normal` (not vim mode), because vim mode makes slash commands trigger search.
 
+## Secrets: 1Password Environments
+
+Never read key files, paste secrets, or put secret values in config/env blocks. All API keys and tokens live in 1Password Environments, one per service (`mailgun`, `transip`, ...); project-only secrets go in an environment named after the project. Account `agilerbv.1password.com`; two accounts are linked, so `--account` is mandatory.
+
+- Run anything that needs a secret under op: `op run --account agilerbv.1password.com --environment <id>[,<id>] -- <cmd>`. Expand variables inside `sh -c '...'`, never in the parent shell. op conceals values in output; never print or decode them.
+- MCP servers in `~/.claude.json`: `command` is the absolute `op` path (`command -v op`), args `run --account ... --environment <id> -- <absolute cmd> ...`. No `env` block, no shell wrapper.
+- Creating environments / adding variables happens only in the desktop app (Environments link on the app home). CLI (beta cask `1password-cli@beta`) can only `read`. Ask the user for the environment ID.
+- Known IDs: mailgun `xzujn7lmhr2yii5m5yh7wcow4y` (`MAILGUN_API_KEY`, `MAILGUN_API_REGION`), transip `otpsuldmhf27h3r2uvgc74zcpq` (`TRANSIP_TOKEN`, `TRANSIP_API_URL`).
+
 {{ if eq .chezmoi.os "darwin" -}}
 ## Environment: macOS with Modern Toolchain
 
