@@ -12,13 +12,19 @@ Host *.4stack.nl
   ForwardAgent yes
   User deploy
   IdentityFile ~/.ssh/personal.pub
+{{- if eq .chezmoi.os "darwin" }}
   IdentityFile ~/.ssh/id_rsa
+{{- end }}
 Host *.fourstack.nl
   ForwardAgent yes
   User deploy
   IdentityFile ~/.ssh/personal.pub
+{{- if eq .chezmoi.os "darwin" }}
   IdentityFile ~/.ssh/id_rsa
+{{- end }}
 Host bas-macbook-pro-2018.local bas-macbook-air.local
   ForwardAgent yes
   IdentityFile ~/.ssh/personal.pub
+{{- if eq .chezmoi.os "darwin" }}
   IdentityFile ~/.ssh/id_rsa
+{{- end }}

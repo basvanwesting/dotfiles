@@ -46,6 +46,17 @@ git config --file ~/.gitconfig user.email "..."
 
 On Omarchy, `modify_dot_bashrc` appends the `~/.config/shell/*` source block to the Omarchy-owned `~/.bashrc` on apply; nothing to paste by hand.
 
+## Tailscale
+
+Not managed here: Omarchy and the macOS installer own it, and the node keys are machine state.
+
+```sh
+omarchy-install-service-tailscale   # Omarchy: package, tailscaled, --operator, Taildrop, bar plugin, admin webapp
+tailscale set --ssh                 # only on machines that should accept Tailscale SSH (Linux-only feature)
+```
+
+macOS: standalone pkg from pkgs.tailscale.com (brew cask `tailscale-app` exists as an alternative, not used). The Mac is a client only.
+
 ## Keybinding rules
 
 - Prefix/leader keys are identical on both: herdr `ctrl+b` (stock), nvim leader `space`. `prefix+ctrl+b` (prefix twice) sends a literal `ctrl+b`, built in.
