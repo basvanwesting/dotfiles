@@ -1,30 +1,48 @@
+{{- $darwin := eq .chezmoi.os "darwin" -}}
+{{- $server := eq .role "server" -}}
 Host *
-{{- if eq .chezmoi.os "darwin" }}
+{{- if $darwin }}
   IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
   UseKeychain yes
-{{- else }}
+{{- else if not $server }}
   IdentityAgent ~/.1password/agent.sock
 {{- end }}
   IdentitiesOnly yes
 Host github.com
+{{- if $server }}
+  IdentityFile ~/.ssh/id_ed25519
+{{- else }}
   IdentityFile ~/.ssh/github.pub
+{{- end }}
 Host *.4stack.nl
   ForwardAgent yes
   User deploy
+{{- if $server }}
+  IdentityFile ~/.ssh/id_ed25519
+{{- else }}
   IdentityFile ~/.ssh/personal.pub
-{{- if eq .chezmoi.os "darwin" }}
+{{- end }}
+{{- if $darwin }}
   IdentityFile ~/.ssh/id_rsa
 {{- end }}
 Host *.fourstack.nl
   ForwardAgent yes
   User deploy
+{{- if $server }}
+  IdentityFile ~/.ssh/id_ed25519
+{{- else }}
   IdentityFile ~/.ssh/personal.pub
-{{- if eq .chezmoi.os "darwin" }}
+{{- end }}
+{{- if $darwin }}
   IdentityFile ~/.ssh/id_rsa
 {{- end }}
 Host bas-macbook-pro-2018.local bas-macbook-air.local
   ForwardAgent yes
+{{- if $server }}
+  IdentityFile ~/.ssh/id_ed25519
+{{- else }}
   IdentityFile ~/.ssh/personal.pub
-{{- if eq .chezmoi.os "darwin" }}
+{{- end }}
+{{- if $darwin }}
   IdentityFile ~/.ssh/id_rsa
 {{- end }}

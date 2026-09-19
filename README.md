@@ -17,6 +17,8 @@ autoPush = true     # public repo: nothing should leave a machine unasked
 have_nerd_font = true #boolean, use fancy fonts or not
 personal = true       #boolean, whether machine is authenticated (e.g. github, copilot, docker)
 offline = false       #boolean, has access to internet (e.g. disable auto-installs, auto-updates, github)
+role = "desktop"      #"desktop" (GUI, 1Password SSH agent) or "server" (headless, key on disk)
+                      # defaults to "desktop" via .chezmoidata.toml, so existing machines need no change
 ```
 
 ## Install (macOS)
@@ -45,6 +47,42 @@ git config --file ~/.gitconfig user.email "..."
 ```
 
 On Omarchy, `modify_dot_bashrc` appends the `~/.config/shell/*` source block to the Omarchy-owned `~/.bashrc` on apply; nothing to paste by hand.
+
+## Server role (ser8)
+
+`role = "server"` marks a headless, always-on machine reached over Tailscale/SSH.
+There is no GUI 1Password there, so `~/.1password/agent.sock` never exists and the
+agent-based SSH config cannot work. Instead the server renders a private key to disk
+from 1Password, and `.chezmoiignore` keeps that key off every desktop.
+
+Secrets come from 1Password service accounts (Agiler BV; the Family plan has none),
+each scoped read-only to one vault:
+
+| Vault | Holds | Read by |
+|-------|-------|---------|
+| `ser8-host` | ser8's ed25519 SSH key | provisioning (`chezmoi apply`) |
+| `ser8-agents` | scoped tokens for agents/services | agent runtime |
+
+Split deliberately: an agent on this box must not be able to read the SSH key.
+
+The server's `~/.config/chezmoi/chezmoi.toml` must also declare service-account mode,
+or chezmoi refuses to use the token:
+
+```toml
+[onepassword]
+mode = "service"
+```
+
+Tokens live in 0600 files and are injected per process -- never exported from
+`~/.config/shell/local.sh`, which every interactive shell (and every agent) inherits:
+
+```sh
+OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
+```
+
+For systemd units use `LoadCredential=` rather than `EnvironmentFile=`.
+
+ser8's key is a distinct GitHub identity, so revoking it never touches the laptops.
 
 ## Tailscale
 

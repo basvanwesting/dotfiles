@@ -1,0 +1,7 @@
+# Repo-wide defaults. Machines override these in ~/.config/chezmoi/chezmoi.toml.
+# Keeping a default here means adding a new variable never breaks existing machines.
+
+# "desktop" = interactive workstation with a GUI and the 1Password desktop app.
+# "server"  = headless, always-on, reached over Tailscale/SSH. No GUI 1Password,
+#             so no SSH agent socket: keys are on disk, sourced from 1Password.
+role = "desktop"

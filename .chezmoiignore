@@ -12,3 +12,8 @@ README.md
 # macOS uses zsh; dot_zshrc.tmpl already sources ~/.config/shell/*.
 .bashrc
 {{ end }}
+{{ if ne .role "server" }}
+# Only the headless server keeps a private key on disk. Desktops use the
+# 1Password SSH agent, so this must never materialize there.
+.ssh/id_ed25519
+{{ end }}
