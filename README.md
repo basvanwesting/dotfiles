@@ -91,9 +91,9 @@ unattended-boot server (a LUKS prompt blocks boot until someone types; see git l
 Hostname `ser8`. Unencrypted installs get no SDDM autologin, which is what a server wants.
 
 ```sh
-omarchy pkg add chezmoi ripgrep fd sd lazygit
+omarchy pkg add chezmoi ripgrep fd sd lazygit 1password-cli   # cli is not on a fresh install; `chezmoi apply` needs it
 omarchy install service tailscale && sudo tailscale set --ssh   # delete the old ser8 node in the admin console first
-omarchy toggle idle stay-awake
+omarchy toggle idle stay-awake     # always pass the mode: bare `toggle idle` flips it. Verify: omarchy toggle idle status
 sudo loginctl enable-linger "$USER"
 sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 install -d -m 700 ~/.config/op      # then place ser8-provision.token + ser8-agent.token, 0600, from 1Password
@@ -109,7 +109,10 @@ Manual, outside chezmoi:
   Fetch the release into `~/.local/bin/herdr`, verify sha256 from https://herdr.dev/latest.json, then `sudo pacman -Rns herdr`.
   `omarchy update` may reinstall the package; check `herdr --version` afterwards.
 - Tailscale ACL: `ssh` rule `action: accept`, `users: [autogroup:nonroot]` (default `check` re-auths every 12h).
-- 1Password GUI off: `rm ~/.config/autostart/com.onepassword.OnePassword.desktop`, `omarchy pkg drop 1password` (keeps 1password-cli).
+- 1Password GUI off, only if the installer put it there (a fresh 3.x install had neither GUI nor cli):
+  `rm ~/.config/autostart/com.onepassword.OnePassword.desktop`, `omarchy pkg drop 1password` (keeps 1password-cli).
+- Git identity: the Omarchy first-run wizard already wrote it to `~/.config/git/config`; no `~/.gitconfig` needed.
+- `chezmoi init` works against a pre-existing clone in `~/.local/share/chezmoi` (no repo arg, nothing re-cloned).
 - BIOS: restore power on AC loss. Unplug the install USB.
 - If the install was encrypted anyway: `/etc/sddm.conf.d/zz-server.conf` with `[Autologin]` + empty `User=`.
 
