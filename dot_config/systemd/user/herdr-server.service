@@ -1,0 +1,16 @@
+[Unit]
+Description=Herdr terminal workspace server
+Documentation=https://herdr.dev/docs/persistence-remote/
+
+[Service]
+Type=simple
+# Login shell on purpose: panes inherit the server's environment. At boot the
+# lingering user manager has no graphical session to import PATH from, so
+# without -l every pane would start without mise shims or ~/.local/bin.
+ExecStart=/bin/bash -lc 'exec %h/.local/bin/herdr server'
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

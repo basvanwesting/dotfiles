@@ -84,6 +84,35 @@ For systemd units use `LoadCredential=` rather than `EnvironmentFile=`.
 
 ser8's key is a distinct GitHub identity, so revoking it never touches the laptops.
 
+### Bootstrap runbook
+
+Omarchy ISO: Ctrl+C in the install form toggles disk encryption -- leave it OFF for an
+unattended-boot server (a LUKS prompt blocks boot until someone types; see git log).
+Hostname `ser8`. Unencrypted installs get no SDDM autologin, which is what a server wants.
+
+```sh
+omarchy pkg add chezmoi ripgrep fd sd lazygit
+omarchy install service tailscale && sudo tailscale set --ssh   # delete the old ser8 node in the admin console first
+omarchy toggle idle stay-awake
+sudo loginctl enable-linger "$USER"
+sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+install -d -m 700 ~/.config/op      # then place ser8-provision.token + ser8-agent.token, 0600, from 1Password
+chezmoi init https://github.com/basvanwesting/dotfiles.git      # https: no SSH key yet
+# write ~/.config/chezmoi/chezmoi.toml: role = "server", [onepassword] mode = "service", autoCommit/autoPush = false
+OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
+chezmoi git remote set-url origin git@github.com:basvanwesting/dotfiles.git
+systemctl --user enable --now herdr-server.service             # unit file comes from this repo
+```
+
+Manual, outside chezmoi:
+- herdr: the omarchy repo lags (0.8.2) and `/usr/bin` shadows `~/.local/bin` in both interactive and PAM PATH.
+  Fetch the release into `~/.local/bin/herdr`, verify sha256 from https://herdr.dev/latest.json, then `sudo pacman -Rns herdr`.
+  `omarchy update` may reinstall the package; check `herdr --version` afterwards.
+- Tailscale ACL: `ssh` rule `action: accept`, `users: [autogroup:nonroot]` (default `check` re-auths every 12h).
+- 1Password GUI off: `rm ~/.config/autostart/com.onepassword.OnePassword.desktop`, `omarchy pkg drop 1password` (keeps 1password-cli).
+- BIOS: restore power on AC loss. Unplug the install USB.
+- If the install was encrypted anyway: `/etc/sddm.conf.d/zz-server.conf` with `[Autologin]` + empty `User=`.
+
 ## Tailscale
 
 Not managed here: Omarchy and the macOS installer own it, and the node keys are machine state.
