@@ -1,10 +1,12 @@
 README.md
 {{ if ne .chezmoi.os "darwin" }}
-.zshrc
 .Brewfile
-.config/nvim
+{{ end }}
+{{ if and (ne .chezmoi.os "darwin") (ne .role "container") }}
 # Omarchy ships these and keeps improving them; let it own them here.
-# macOS has no Omarchy, so the shared copies still apply there.
+# macOS has no Omarchy, and a container has no Omarchy either, so the shared copies apply there.
+.zshrc
+.config/nvim
 .config/git/config
 .config/starship.toml
 {{ end }}

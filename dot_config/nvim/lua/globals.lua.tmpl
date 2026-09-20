@@ -4,11 +4,10 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
--- chezmoi template data, set here so no .tmpl is needed further down the road
---
-vim.g.have_nerd_font = {{ .have_nerd_font }}
-vim.g.personal = {{ .personal }}
-vim.g.offline = {{ .offline }}
+-- chezmoi template data, set here so no .tmpl is needed further down the road.
+-- Derived from role: a container has no nerd font on the far end and no internet.
+vim.g.have_nerd_font = {{ ne .role "container" }}
+vim.g.offline = {{ eq .role "container" }}
 
 -- No remote plugins in use: disable the language hosts (quiet :checkhealth, faster startup)
 vim.g.loaded_perl_provider = 0

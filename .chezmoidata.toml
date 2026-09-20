@@ -4,4 +4,7 @@
 # "desktop" = interactive workstation with a GUI and the 1Password desktop app.
 # "server"  = headless, always-on, reached over Tailscale/SSH. No GUI 1Password,
 #             so no SSH agent socket: keys are on disk, sourced from 1Password.
+# "container" = throwaway shell image built from this repo: assumed offline and
+#             viewed through someone else's terminal, so no nerd font, no
+#             auto-updates, no 1Password; zsh + nvim + starship ship even on Linux.
 role = "desktop"

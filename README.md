@@ -2,7 +2,7 @@
 
 Near-identical setup on macOS (zsh + oh-my-zsh, Homebrew) and Omarchy (bash + Omarchy's rc layer).
 Shared, in this repo: herdr, ghostty, git, starship, `~/.config/shell/{env,aliases,functions}.sh`, `~/.claude/CLAUDE.md`.
-nvim (kickstart) is macOS-only: Omarchy keeps its own LazyVim with theme hot-reload and remote clipboard, so `.config/nvim` is ignored on Linux.
+nvim (kickstart) is for macOS and the container role: Omarchy keeps its own LazyVim with theme hot-reload and remote clipboard, so `.config/nvim` is ignored on Omarchy machines.
 Machine-local and unmanaged: `~/.config/shell/local.sh` (client project shortcuts; sourced by aliases.sh if present), `~/.gitconfig` (identity).
 OS layer, not in this repo: Hyprland/omarchy on Linux; `~/.gitconfig` (identity, credential helpers) per machine.
 
@@ -10,16 +10,16 @@ OS layer, not in this repo: Hyprland/omarchy on Linux; `~/.gitconfig` (identity,
 
 ```toml
 [git]
-autoCommit = true   # true on the machine where edits are made (macOS), false on Omarchy
-autoPush = true     # public repo: nothing should leave a machine unasked
+autoCommit = false  # every machine commits with plain git in ~/.local/share/chezmoi
+autoPush = false    # public repo, several writers: fetch before editing, push by hand
 
 [data]
-have_nerd_font = true #boolean, use fancy fonts or not
-personal = true       #boolean, whether machine is authenticated (e.g. github, copilot, docker)
-offline = false       #boolean, has access to internet (e.g. disable auto-installs, auto-updates, github)
-role = "desktop"      #"desktop" (GUI, 1Password SSH agent) or "server" (headless, key on disk)
-                      # defaults to "desktop" via .chezmoidata.toml, so existing machines need no change
+role = "desktop"    # "desktop" (GUI, 1Password SSH agent) | "server" (headless, key on disk)
+                    # | "container" (shell image: offline, no nerd font, no 1Password)
+                    # defaults to "desktop" via .chezmoidata.toml, so existing machines need no change
 ```
+
+`role` is the only switch. Older `have_nerd_font`, `personal`, `offline`, `remote` keys in a machine's chezmoi.toml are ignored and can be dropped.
 
 ## Install (macOS)
 
