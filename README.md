@@ -100,6 +100,8 @@ omarchy install service tailscale && sudo tailscale set --ssh   # delete the old
 omarchy toggle idle stay-awake     # always pass the mode: bare `toggle idle` flips it. Verify: omarchy toggle idle status
 sudo loginctl enable-linger "$USER"
 sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+sudo systemctl enable --now btrfs-scrub@-.timer   # monthly checksum verify; unclean power cuts are the norm here
+omarchy pkg add smartmontools                       # drive health: smartctl -a /dev/nvme0
 install -d -m 700 ~/.config/op      # then place ser8-provision.token + ser8-agent.token, 0600, from 1Password
 chezmoi init https://github.com/basvanwesting/dotfiles.git      # https: no SSH key yet
 # write ~/.config/chezmoi/chezmoi.toml: role = "server", [onepassword] mode = "service", autoCommit/autoPush = false
