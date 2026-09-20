@@ -2,6 +2,12 @@
 
 # Git
 alias g='git status'
+alias gd='git diff'
+alias gapa='git add --patch'
+alias gaa='git add --all'
+alias gc='git commit --verbose'
+alias gl='git pull'
+alias gp='git push'
 alias gdc='git diff --cached'
 alias gr="git log --graph --pretty=format:'%C(yellow)%h %ad %an%Cgreen%d %Creset%s' --date=short"
 alias gt="git log --graph --simplify-by-decoration --pretty=format:'%d' --date=short --all"

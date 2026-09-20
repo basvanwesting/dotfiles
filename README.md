@@ -13,7 +13,7 @@ aliases.sh if present) and git identity (see the OS layer table). Hyprland/Omarc
 
 | Layer | Shell stack | Owned by Omarchy, so ignored here | Git identity |
 |-------|-------------|-----------------------------------|--------------|
-| macOS | zsh + oh-my-zsh, starship, nvim, `~/.Brewfile` | -- | `~/.gitconfig` |
+| macOS | zsh, starship, nvim, `~/.Brewfile` | -- | `~/.gitconfig` |
 | Omarchy | bash + Omarchy's rc layer; we only hook `~/.config/shell/*` into its `~/.bashrc` (`modify_dot_bashrc`) | `.zshrc`, `.config/nvim` (Omarchy's LazyVim has theme hot-reload and remote clipboard), `.config/git/config`, `.config/starship.toml` | `~/.config/git/config`, written by Omarchy's first-run wizard |
 | bare Linux | same as macOS minus `~/.Brewfile` | -- | none needed |
 
@@ -27,7 +27,7 @@ Bare Linux has nothing to stay downstream of, so it gets the full macOS-style st
 |------|----------|--------|
 | `desktop` | laptops, Omarchy desktop | 1Password app authenticates; SSH via the 1Password agent, only `.pub` selector files on disk |
 | `server` | ser8 | headless: ed25519 key rendered to disk from 1Password and every `~/.ssh/config` Host block uses it (no `IdentityAgent`), `op-agent` uses a service-account token, `.config/systemd/user/herdr-server.service` installed, server-specific rules in `~/.claude/CLAUDE.md` |
-| `container` | shell image | assumed offline and viewed through someone else's terminal: no nerd-font glyphs, oh-my-zsh auto-update off, nvim treesitter auto-install and gitsigns off, no 1Password |
+| `container` | shell image | assumed offline and viewed through someone else's terminal: no nerd-font glyphs, nvim treesitter auto-install and gitsigns off, no 1Password |
 
 `role` is the only data variable. Older `have_nerd_font`, `personal`, `offline`, `remote` keys in a
 machine's chezmoi.toml are ignored and can be dropped.
@@ -77,8 +77,6 @@ on a machine with that OS (the Mac cannot render the Linux side of `.chezmoi.os`
 brew install chezmoi
 chezmoi init --apply https://github.com/basvanwesting/dotfiles.git   # desktop role needs no chezmoi.toml
 brew bundle --global                                          # ~/.Brewfile
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 mise install                                                  # runtimes from ~/.tool-versions
 sh -c "$(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs)"
 git config --file ~/.gitconfig user.name "..."               # identity is per machine, not in this repo
@@ -105,7 +103,7 @@ printf '[data]\nrole = "container"\n' > ~/.config/chezmoi/chezmoi.toml
 chezmoi apply
 ```
 
-Then install oh-my-zsh and zsh-autosuggestions as on macOS and pre-sync nvim plugins at build time
+Then `git clone https://github.com/zsh-users/zsh-autosuggestions ~/.local/share/zsh-autosuggestions` and pre-sync nvim plugins at build time
 (`nvim --headless "+Lazy! sync" +qa`), because at run time the image is assumed offline.
 
 ## Secrets (1Password)
