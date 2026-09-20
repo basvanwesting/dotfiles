@@ -61,7 +61,7 @@ each scoped read-only to one vault:
 | Vault | Holds | Read by |
 |-------|-------|---------|
 | `ser8-host` | ser8's ed25519 SSH key | provisioning (`chezmoi apply`) |
-| `ser8-agents` | scoped tokens for agents/services | agent runtime |
+| `agents` | service tokens for every agent and dev shell, all machines | agent runtime (`op-agent`) |
 
 Split deliberately: an agent on this box must not be able to read the SSH key.
 
@@ -82,9 +82,10 @@ OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
 
 For systemd units use `LoadCredential=` rather than `EnvironmentFile=`.
 
-Agents reach the vault through `~/.local/bin/op-agent` (server-only, from this repo): `op` with
-the agent token injected for that one process. `~/.claude/CLAUDE.md` carries the rules for it
-on the server. `.env` files hold only `op://ser8-agents/<item>/<field>` references.
+All machines reach the vault through `~/.local/bin/op-agent` (from this repo, role-templated):
+on the server it injects the agent token for that one process, on desktops it adds `--account`.
+Same command surface everywhere, so project `.env` files hold only `op://agents/<item>/<field>`
+references and never name a machine. `~/.claude/CLAUDE.md` carries the rules.
 
 ser8's key is a distinct GitHub identity, so revoking it never touches the laptops.
 

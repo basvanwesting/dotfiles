@@ -28,30 +28,25 @@ When a framework generator exists for an artifact (Rails migrations/models/contr
 
 Vim user — reflexively hits Esc as a "reset to normal mode" gesture with no intent to cancel. Esc is unbound from `chat:cancel` in `~/.claude/keybindings.json` (Chat context). Ctrl-C is the interrupt key. Editor mode stays on `normal` (not vim mode), because vim mode makes slash commands trigger search.
 
-## Secrets: 1Password Environments
+## Secrets: 1Password `agents` vault via op-agent
 
-Never read key files, paste secrets, or put secret values in config/env blocks. All API keys and tokens live in 1Password Environments, one per service (`mailgun`, `transip`, ...); project-only secrets go in an environment named after the project. Account `agilerbv.1password.com`; two accounts are linked, so `--account` is mandatory.
+Never read key files, paste secrets, or put secret values in config/env blocks. Every API key and token an agent or a dev shell needs is an item in the `agents` vault (account `agilerbv.1password.com`): one item per service (`mailgun`, `transip`, ...), one field per variable, field named like the variable; project-only secrets go in an item named after the project.
 
-- Run anything that needs a secret under op: `op run --account agilerbv.1password.com --environment <id>[,<id>] -- <cmd>`. Expand variables inside `sh -c '...'`, never in the parent shell. op conceals values in output; never print or decode them.
-- MCP servers in `~/.claude.json`: `command` is the absolute `op` path (`command -v op`), args `run --account ... --environment <id> -- <absolute cmd> ...`. No `env` block, no shell wrapper.
-- Creating environments / adding variables happens only in the desktop app (Environments link on the app home). CLI (beta cask `1password-cli@beta`) can only `read`. Ask the user for the environment ID.
-- Prod-only secrets (e.g. engage AWS S3 keys) stay as vault items + Fly secrets, never in an Environment used for dev; dev reaches prod resources only through the app's API.
-- SSH: keys live in 1Password (SSH agent via `IdentityAgent` in chezmoi-managed `~/.ssh/config`); only `.pub` selector files on disk. `~/.ssh/id_rsa` is a temporary fallback until all servers accept the `Personal` key.
-- Assume every 1Password Environment points at production (transip, mailgun, engage, schoolbieb, ...): real data, only the changes the user asks for, no exploratory writes. The exception is a variable with `DEMO` in its name: a demo account on a production system, free to exercise. Dev credentials are not in 1Password at all; make them or pass them inline, throwaway data and key.
-- Known IDs: mailgun `xzujn7lmhr2yii5m5yh7wcow4y` (`MAILGUN_API_KEY`, `MAILGUN_API_REGION`), transip `otpsuldmhf27h3r2uvgc74zcpq` (`TRANSIP_TOKEN`, `TRANSIP_API_URL`), engage `ml4gmn42swyb3uj2td6ickma44` (`ANTHROPIC_API_KEY`, `ENGAGE_API_KEY`, `ENGAGE_BASE_URL`; dev server + data_analysis/engage scripts), group_planner `4cjt5taho2s5x2ljaqstoajeou` (`KLASSENPLANNER_API_URL`, `SPORTTEAMPLANNER_API_URL`, `KLASSENPLANNER_DEMO_API_TOKEN`, `SPORTTEAMPLANNER_DEMO_API_TOKEN`, `KLASSENPLANNER_NVR_API_TOKEN`; prod coordinator tokens, DEMO orgs free to exercise, NVR is the real school: maintain it on request only), schoolbieb `ktuhe7xjsblvjplqzvztew5jkm` (`SCHOOLBIEB_NVR_API_KEY`, `SCHOOLBIEB_NVR_URL`; prod API as agent, same NVR rule).
-
+- `op-agent` (`~/.local/bin`, from dotfiles) is `op` already authenticated for this machine. Use it for everything op, never bare `op`.
+- Projects keep a committed dotenv of references, no values: `MAILGUN_API_KEY=op://agents/mailgun/MAILGUN_API_KEY`. Run the consumer under it: `op-agent run --env-file .env -- <cmd>`. Only `<cmd>` sees the values; expand variables inside `sh -c '...'`, never in the parent shell. op conceals values in output; never print or decode them.
+- Single value straight into a consumer: `op-agent read op://agents/<item>/<field> | <consumer>`, never echoed.
+- MCP servers in `~/.claude.json`: `command` is the absolute path of `op-agent`, args `run --env-file <absolute dotenv> -- <absolute cmd> ...`. No `env` block, no shell wrapper.
+- Items and fields are created in the desktop app on a laptop. Ask the user for names; `op-agent item list --vault agents` shows what exists.
+- Prod-only secrets (e.g. engage AWS S3 keys) stay as items in other vaults + Fly secrets, never in `agents`; dev reaches prod resources only through the app's API.
+- Assume every item points at production (transip, mailgun, engage, schoolbieb, ...): real data, only the changes the user asks for, no exploratory writes. The exception is a field with `DEMO` in its name: a demo account on a production system, free to exercise. Dev credentials are not in 1Password at all; make them or pass them inline, throwaway data and key.
 {{ if eq .role "server" -}}
-## Secrets on this server (overrides the Environments section above)
-
-Headless box: no 1Password app, no Environments, no SSH agent. Secrets are items in the `ser8-agents` vault, read by a service account whose token sits in `~/.config/op/ser8-agent.token` (0600). Never read that file, never export `OP_SERVICE_ACCOUNT_TOKEN`, never put it in a unit's `Environment=`/`EnvironmentFile=`.
-
-- `op-agent` (`~/.local/bin`, from dotfiles) is `op` with the token injected for that single process. Use it for everything op: `op-agent run --env-file <dotenv> -- <cmd>` where the dotenv holds only `op://ser8-agents/<item>/<field>` references (safe to commit), or `op-agent read op://ser8-agents/<item>/<field>` piped straight into the consumer, never echoed.
-- The token sees one vault: `op-agent vault list` shows only `ser8-agents`. The SSH key vault is unreachable by design; do not try to work around it.
-- Items and fields are created in the desktop app on a laptop. Ask the user for the item/field names; `op-agent item list --vault ser8-agents` shows what exists.
-- Same production rule as Environments: every item is prod unless `DEMO` is in its name.
+- This machine: headless, no 1Password app, no SSH agent. `op-agent` injects the service-account token from `~/.config/op/ser8-agent.token` (0600) into that single process. Never read that file, never export `OP_SERVICE_ACCOUNT_TOKEN`, never put it in a unit's `Environment=`/`EnvironmentFile=`. The token sees only `agents`; the SSH key vault is unreachable by design, do not work around it.
 - systemd user units: `LoadCredential=op-token:%h/.config/op/ser8-agent.token`, then `OP_SERVICE_ACCOUNT_TOKEN="$(cat $CREDENTIALS_DIRECTORY/op-token)"` inside a `sh -c` ExecStart.
+{{- else -}}
+- This machine: the 1Password app authenticates; `op-agent` adds `--account agilerbv.1password.com` (two accounts are linked, so it is mandatory). SSH: keys live in 1Password (SSH agent via `IdentityAgent` in chezmoi-managed `~/.ssh/config`); only `.pub` selector files on disk. `~/.ssh/id_rsa` is a temporary fallback until all servers accept the `Personal` key.
+- Legacy until migrated into `agents` items: 1Password Environments, `op run --account agilerbv.1password.com --environment <id>[,<id>] -- <cmd>` (needs the `1password-cli@beta` cask; Environments are created only in the desktop app). Known IDs: mailgun `xzujn7lmhr2yii5m5yh7wcow4y` (`MAILGUN_API_KEY`, `MAILGUN_API_REGION`), transip `otpsuldmhf27h3r2uvgc74zcpq` (`TRANSIP_TOKEN`, `TRANSIP_API_URL`), engage `ml4gmn42swyb3uj2td6ickma44` (`ANTHROPIC_API_KEY`, `ENGAGE_API_KEY`, `ENGAGE_BASE_URL`; dev server + data_analysis/engage scripts), group_planner `4cjt5taho2s5x2ljaqstoajeou` (`KLASSENPLANNER_API_URL`, `SPORTTEAMPLANNER_API_URL`, `KLASSENPLANNER_DEMO_API_TOKEN`, `SPORTTEAMPLANNER_DEMO_API_TOKEN`, `KLASSENPLANNER_NVR_API_TOKEN`; prod coordinator tokens, DEMO orgs free to exercise, NVR is the real school: maintain it on request only), schoolbieb `ktuhe7xjsblvjplqzvztew5jkm` (`SCHOOLBIEB_NVR_API_KEY`, `SCHOOLBIEB_NVR_URL`; prod API as agent, same NVR rule).
+{{- end }}
 
-{{ end -}}
 {{ if eq .chezmoi.os "darwin" -}}
 ## Environment: macOS with Modern Toolchain
 

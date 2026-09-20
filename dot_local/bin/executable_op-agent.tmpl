@@ -1,0 +1,27 @@
+#!/bin/sh
+# op, already authenticated for this machine. Same command surface on every
+# machine, so project instructions never name one.
+# Usage: op-agent run --env-file <dotenv with op:// refs> -- <cmd>
+#        op-agent read op://agents/<item>/<field> | <consumer>
+{{- if eq .role "server" }}
+# Server: service account scoped to the `agents` vault, read-only. The token
+# is read here and handed only to the op process: it never enters a shell
+# environment, so nothing an agent spawns can inherit it.
+if [ "$1" = run ]; then
+  # `op run` forwards its whole environment to <cmd>, token included.
+  # Rebuild argv with `env -u OP_SERVICE_ACCOUNT_TOKEN` right after the first `--`.
+  n=$#; i=0; done_=
+  while [ "$i" -lt "$n" ]; do
+    a=$1; shift; i=$((i + 1))
+    set -- "$@" "$a"
+    if [ -z "$done_" ] && [ "$a" = -- ]; then
+      set -- "$@" env -u OP_SERVICE_ACCOUNT_TOKEN; done_=1
+    fi
+  done
+fi
+OP_SERVICE_ACCOUNT_TOKEN="$(cat "$HOME/.config/op/ser8-agent.token")" exec op "$@"
+{{- else }}
+# Desktop: the 1Password app authenticates. Two accounts are linked, so
+# --account is mandatory.
+exec op --account agilerbv.1password.com "$@"
+{{- end }}
