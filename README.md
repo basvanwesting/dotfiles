@@ -1,93 +1,139 @@
 # Dotfiles managed by chezmoi
 
-Near-identical setup on macOS (zsh + oh-my-zsh, Homebrew) and Omarchy (bash + Omarchy's rc layer).
-Shared, in this repo: herdr, ghostty, git, starship, `~/.config/shell/{env,aliases,functions}.sh`, `~/.claude/CLAUDE.md`.
-nvim (kickstart) is for macOS and the container role: Omarchy keeps its own LazyVim with theme hot-reload and remote clipboard, so `.config/nvim` is ignored on Omarchy machines.
-Machine-local and unmanaged: `~/.config/shell/local.sh` (client project shortcuts; sourced by aliases.sh if present), `~/.gitconfig` (identity).
-OS layer, not in this repo: Hyprland/omarchy on Linux; `~/.gitconfig` (identity, credential helpers) per machine.
+One repo for every machine: macOS laptops, Omarchy desktops, a headless Omarchy server, and a
+throwaway Linux shell image. Shared here: herdr, ghostty, git defaults, starship, nvim (kickstart),
+`~/.config/shell/{env,aliases,functions}.sh`, `~/.claude/CLAUDE.md`, `~/.local/bin/op-agent`.
+Machine-local and unmanaged: `~/.config/shell/local.sh` (client project shortcuts; sourced by
+aliases.sh if present) and git identity (see the OS layer table). Hyprland/Omarchy config is Omarchy's.
+
+## Two axes
+
+**OS layer** is detected, never configured. `.chezmoi.os` separates macOS; on Linux
+`.chezmoi.osRelease.id == "omarchy"` separates Omarchy from bare Linux.
+
+| Layer | Shell stack | Owned by Omarchy, so ignored here | Git identity |
+|-------|-------------|-----------------------------------|--------------|
+| macOS | zsh + oh-my-zsh, starship, nvim, `~/.Brewfile` | -- | `~/.gitconfig` |
+| Omarchy | bash + Omarchy's rc layer; we only hook `~/.config/shell/*` into its `~/.bashrc` (`modify_dot_bashrc`) | `.zshrc`, `.config/nvim` (Omarchy's LazyVim has theme hot-reload and remote clipboard), `.config/git/config`, `.config/starship.toml` | `~/.config/git/config`, written by Omarchy's first-run wizard |
+| bare Linux | same as macOS minus `~/.Brewfile` | -- | none needed |
+
+Omarchy is a managed Linux: stay downstream of it and hook in, do not replace its files.
+Bare Linux has nothing to stay downstream of, so it gets the full macOS-style stack.
+
+**Role** is configured in chezmoi.toml and says what the machine is for. Default `desktop`
+(from `.chezmoidata.toml`), so a desktop needs no chezmoi.toml at all.
+
+| Role | Machines | Effect |
+|------|----------|--------|
+| `desktop` | laptops, Omarchy desktop | 1Password app authenticates; SSH via the 1Password agent, only `.pub` selector files on disk |
+| `server` | ser8 | headless: ed25519 key rendered to disk from 1Password, `op-agent` uses a service-account token, `herdr-server.service` installed |
+| `container` | shell image | assumed offline and viewed through someone else's terminal: no nerd-font glyphs, oh-my-zsh auto-update off, nvim treesitter auto-install and gitsigns off, no 1Password |
+
+`role` is the only data variable. Older `have_nerd_font`, `personal`, `offline`, `remote` keys in a
+machine's chezmoi.toml are ignored and can be dropped.
 
 ## ~/.config/chezmoi/chezmoi.toml
 
-```toml
-[git]
-autoCommit = false  # every machine commits with plain git in ~/.local/share/chezmoi
-autoPush = false    # public repo, several writers: fetch before editing, push by hand
+Only non-desktop roles need one. `autoCommit`/`autoPush` stay at chezmoi's default (off) everywhere.
 
+```toml
 [data]
-role = "desktop"    # "desktop" (GUI, 1Password SSH agent) | "server" (headless, key on disk)
-                    # | "container" (shell image: offline, no nerd font, no 1Password)
-                    # defaults to "desktop" via .chezmoidata.toml, so existing machines need no change
+role = "server"     # or "container"
+
+[onepassword]       # server only: chezmoi refuses a service-account token without it
+mode = "service"
 ```
 
-`role` is the only switch. Older `have_nerd_font`, `personal`, `offline`, `remote` keys in a machine's chezmoi.toml are ignored and can be dropped.
+## Workflow
+
+Several machines commit to this public repo (the Mac and ser8 both did on the same day and
+produced a rebase conflict), so:
+
+```sh
+chezmoi git pull -- --ff-only          # before editing, every time
+chezmoi source-path ~/.config/foo      # find the source file, edit that, never the target
+chezmoi diff && chezmoi apply
+chezmoi git -- commit -am "..."        # plain git in ~/.local/share/chezmoi, no autoCommit
+chezmoi git push                       # by hand, nothing leaves a machine unasked
+```
+
+Other machines: `chezmoi update` (pull + apply). If apply says a target "has changed since chezmoi
+last wrote it" and the content is what you expect, `chezmoi apply --force`. To check what another
+role or OS would render without that machine: `chezmoi --config <toml with that role> execute-template < <file>.tmpl`
+on a machine with that OS (the Mac cannot render the Linux side of `.chezmoi.os`).
 
 ## Install (macOS)
 
 ```sh
 brew install chezmoi
-chezmoi init https://github.com/basvanwesting/dotfiles.git   # no --apply: write chezmoi.toml first, then `chezmoi diff`
-chezmoi apply
+chezmoi init --apply https://github.com/basvanwesting/dotfiles.git   # desktop role needs no chezmoi.toml
 brew bundle --global                                          # ~/.Brewfile
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 mise install                                                  # runtimes from ~/.tool-versions
 sh -c "$(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs)"
-```
-
-## Install (Omarchy)
-
-```sh
-omarchy pkg add chezmoi ripgrep fd sd lazygit
-chezmoi init https://github.com/basvanwesting/dotfiles.git   # no --apply
-# write ~/.config/chezmoi/chezmoi.toml, then:
-chezmoi diff
-chezmoi apply
 git config --file ~/.gitconfig user.name "..."               # identity is per machine, not in this repo
 git config --file ~/.gitconfig user.email "..."
 ```
 
-On Omarchy (detected from `/etc/os-release`, independent of `role`), `modify_dot_bashrc` appends the `~/.config/shell/*` source block to the Omarchy-owned `~/.bashrc` on apply; nothing to paste by hand. Omarchy also keeps its own zsh-less shell, starship, git config and nvim, so those are ignored there. Any other Linux gets the full macOS-style zsh stack.
+## Install (Omarchy desktop)
 
-## Server role (ser8)
+```sh
+omarchy pkg add chezmoi ripgrep fd sd lazygit
+chezmoi init --apply https://github.com/basvanwesting/dotfiles.git   # desktop role needs no chezmoi.toml
+```
 
-`role = "server"` marks a headless, always-on machine reached over Tailscale/SSH.
-There is no GUI 1Password there, so `~/.1password/agent.sock` never exists and the
-agent-based SSH config cannot work. Instead the server renders a private key to disk
-from 1Password, and `.chezmoiignore` keeps that key off every desktop.
+Git identity is already in `~/.config/git/config` from Omarchy's first-run wizard. The shell source
+block lands in Omarchy's `~/.bashrc` on apply; nothing to paste by hand. For a server see below.
 
-Secrets come from 1Password service accounts (Agiler BV; the Family plan has none),
-each scoped read-only to one vault:
+## Install (container)
+
+In the image's Dockerfile, after installing `chezmoi`, `git`, `zsh`, `neovim`:
+
+```sh
+chezmoi init https://github.com/basvanwesting/dotfiles.git
+printf '[data]\nrole = "container"\n' > ~/.config/chezmoi/chezmoi.toml
+chezmoi apply
+```
+
+Then install oh-my-zsh and zsh-autosuggestions as on macOS and pre-sync nvim plugins at build time
+(`nvim --headless "+Lazy! sync" +qa`), because at run time the image is assumed offline.
+
+## Secrets (1Password)
+
+Every API key or token an agent or dev shell needs is a field on an item in the `agents` vault
+(Agiler BV account). Projects commit a dotenv of references, never values
+(`MAILGUN_API_KEY=op://agents/mailgun/MAILGUN_API_KEY`), and run the consumer under
+`op-agent run --env-file .env -- <cmd>`. `~/.local/bin/op-agent` comes from this repo and is
+role-templated so the command surface is the same on every machine and no project names a machine:
+
+- desktop: the 1Password app authenticates; `op-agent` adds `--account` (two accounts are linked, so it is mandatory).
+  SSH keys also live in 1Password: `IdentityAgent` in `~/.ssh/config`, only `.pub` selector files on disk.
+- server: no GUI, so service accounts (Agiler BV; the Family plan has none), each scoped read-only to one vault:
 
 | Vault | Holds | Read by |
 |-------|-------|---------|
 | `ser8-host` | ser8's ed25519 SSH key | provisioning (`chezmoi apply`) |
 | `agents` | service tokens for every agent and dev shell, all machines | agent runtime (`op-agent`) |
 
-Split deliberately: an agent on this box must not be able to read the SSH key.
-
-The server's `~/.config/chezmoi/chezmoi.toml` must also declare service-account mode,
-or chezmoi refuses to use the token:
-
-```toml
-[onepassword]
-mode = "service"
-```
-
-Tokens live in 0600 files and are injected per process -- never exported from
-`~/.config/shell/local.sh`, which every interactive shell (and every agent) inherits:
+Split deliberately: an agent on the server must not be able to read the SSH key. Tokens live in
+0600 files and are injected per process, never exported from `~/.config/shell/local.sh`, which
+every interactive shell (and every agent) inherits:
 
 ```sh
 OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
 ```
 
-For systemd units use `LoadCredential=` rather than `EnvironmentFile=`.
+For systemd units use `LoadCredential=` rather than `EnvironmentFile=`. `~/.claude/CLAUDE.md`
+carries the day-to-day rules for agents.
 
-All machines reach the vault through `~/.local/bin/op-agent` (from this repo, role-templated):
-on the server it injects the agent token for that one process, on desktops it adds `--account`.
-Same command surface everywhere, so project `.env` files hold only `op://agents/<item>/<field>`
-references and never name a machine. `~/.claude/CLAUDE.md` carries the rules.
+## Server role (ser8)
 
-ser8's key is a distinct GitHub identity, so revoking it never touches the laptops.
+`role = "server"` marks a headless, always-on machine reached over Tailscale/SSH. There is no GUI
+1Password there, so `~/.1password/agent.sock` never exists and the agent-based SSH config cannot
+work. Instead the server renders a private key to disk from the `ser8-host` vault, and
+`.chezmoiignore` keeps that key off every other role. ser8's key is a distinct GitHub identity, so
+revoking it never touches the laptops.
 
 ### Bootstrap runbook
 
@@ -105,7 +151,7 @@ sudo systemctl enable --now btrfs-scrub@-.timer   # monthly checksum verify; unc
 omarchy pkg add smartmontools                       # drive health: smartctl -a /dev/nvme0
 install -d -m 700 ~/.config/op      # then place ser8-provision.token + ser8-agent.token, 0600, from 1Password
 chezmoi init https://github.com/basvanwesting/dotfiles.git      # https: no SSH key yet
-# write ~/.config/chezmoi/chezmoi.toml: role = "server", [onepassword] mode = "service", autoCommit/autoPush = false
+# write ~/.config/chezmoi/chezmoi.toml: role = "server", [onepassword] mode = "service"
 OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
 chezmoi git remote set-url origin git@github.com:basvanwesting/dotfiles.git
 systemctl --user enable --now herdr-server.service             # unit file comes from this repo
