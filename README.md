@@ -46,7 +46,7 @@ git config --file ~/.gitconfig user.name "..."               # identity is per m
 git config --file ~/.gitconfig user.email "..."
 ```
 
-On Omarchy, `modify_dot_bashrc` appends the `~/.config/shell/*` source block to the Omarchy-owned `~/.bashrc` on apply; nothing to paste by hand.
+On Omarchy (detected from `/etc/os-release`, independent of `role`), `modify_dot_bashrc` appends the `~/.config/shell/*` source block to the Omarchy-owned `~/.bashrc` on apply; nothing to paste by hand. Omarchy also keeps its own zsh-less shell, starship, git config and nvim, so those are ignored there. Any other Linux gets the full macOS-style zsh stack.
 
 ## Server role (ser8)
 

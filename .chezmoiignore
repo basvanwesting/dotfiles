@@ -1,17 +1,22 @@
 README.md
-{{ if ne .chezmoi.os "darwin" }}
+{{- /* Three OS layers: macOS (zsh stack, Homebrew), Omarchy (a managed Linux that
+       owns bash, starship, git config and nvim; we stay downstream and only hook
+       in), and bare Linux (nothing to stay downstream of, so the zsh stack applies).
+       Omarchy is detected from /etc/os-release, not from the role. */ -}}
+{{- $darwin := eq .chezmoi.os "darwin" -}}
+{{- $omarchy := eq (get .chezmoi.osRelease "id") "omarchy" -}}
+{{ if not $darwin }}
 .Brewfile
 {{ end }}
-{{ if and (ne .chezmoi.os "darwin") (ne .role "container") }}
+{{ if $omarchy }}
 # Omarchy ships these and keeps improving them; let it own them here.
-# macOS has no Omarchy, and a container has no Omarchy either, so the shared copies apply there.
 .zshrc
 .config/nvim
 .config/git/config
 .config/starship.toml
-{{ end }}
-{{ if eq .chezmoi.os "darwin" }}
-# macOS uses zsh; dot_zshrc.tmpl already sources ~/.config/shell/*.
+{{ else }}
+# modify_dot_bashrc only exists to hook ~/.config/shell/* into Omarchy's bashrc.
+# Everywhere else zsh is the shell and dot_zshrc.tmpl sources them.
 .bashrc
 {{ end }}
 {{ if ne .role "server" }}
