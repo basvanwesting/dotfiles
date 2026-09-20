@@ -113,6 +113,7 @@ Manual, outside chezmoi:
   Fetch the release into `~/.local/bin/herdr`, verify sha256 from https://herdr.dev/latest.json, then `sudo pacman -Rns herdr`.
   `omarchy update` may reinstall the package; check `herdr --version` afterwards.
 - Tailscale ACL: `ssh` rule `action: accept`, `users: [autogroup:nonroot]` (default `check` re-auths every 12h).
+- Tailscale admin console, ser8 node: Disable key expiry. Node keys expire after 180 days; a headless box then drops off the tailnet until someone re-auths it locally. Independent of the ACL: expiry is node membership, the ACL is per-session login friction.
 - 1Password GUI off, only if the installer put it there (a fresh 3.x install had neither GUI nor cli):
   `rm ~/.config/autostart/com.onepassword.OnePassword.desktop`, `omarchy pkg drop 1password` (keeps 1password-cli).
 - Git identity: the Omarchy first-run wizard already wrote it to `~/.config/git/config`; no `~/.gitconfig` needed.
