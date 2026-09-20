@@ -114,7 +114,10 @@ systemctl --user enable --now herdr-server.service             # unit file comes
 Manual, outside chezmoi:
 - herdr: the omarchy repo lags (0.8.2) and `/usr/bin` shadows `~/.local/bin` in both interactive and PAM PATH.
   Fetch the release into `~/.local/bin/herdr`, verify sha256 from https://herdr.dev/latest.json, then `sudo pacman -Rns herdr`.
-  `omarchy update` may reinstall the package; check `herdr --version` afterwards.
+  After `omarchy update`: `pacman -Q herdr` must say "not found" and `command -v herdr` must be `~/.local/bin/herdr`;
+  if the package came back, `sudo pacman -Rns herdr` again.
+  Updating: Mac client and ser8 server must run a compatible protocol (`herdr status server` shows it), so update both together.
+  On ser8 replace the binary, then `systemctl --user restart herdr-server`; that restarts every pane, so do it when nothing runs there.
 - Tailscale ACL: `ssh` rule `action: accept`, `users: [autogroup:nonroot]` (default `check` re-auths every 12h).
 - Tailscale admin console, ser8 node: Disable key expiry. Node keys expire after 180 days; a headless box then drops off the tailnet until someone re-auths it locally. Independent of the ACL: expiry is node membership, the ACL is per-session login friction.
 - 1Password GUI off, only if the installer put it there (a fresh 3.x install had neither GUI nor cli):

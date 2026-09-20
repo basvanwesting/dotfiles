@@ -17,5 +17,7 @@ README.md
 # 1Password SSH agent, so this must never materialize there.
 .ssh/id_ed25519
 # herdr as a lingering user service is a server thing; desktops start herdr on demand.
-.config/systemd/user/herdr-server.service
+# Whole tree, not just the unit: otherwise the empty directories still materialize.
+.config/systemd
+.config/systemd/**
 {{ end }}
