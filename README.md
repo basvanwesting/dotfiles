@@ -26,7 +26,7 @@ Bare Linux has nothing to stay downstream of, so it gets the full macOS-style st
 | Role | Machines | Effect |
 |------|----------|--------|
 | `desktop` | laptops, Omarchy desktop | 1Password app authenticates; SSH via the 1Password agent, only `.pub` selector files on disk |
-| `server` | ser8 | headless: ed25519 key rendered to disk from 1Password, `op-agent` uses a service-account token, `herdr-server.service` installed |
+| `server` | ser8 | headless: ed25519 key rendered to disk from 1Password and every `~/.ssh/config` Host block uses it (no `IdentityAgent`), `op-agent` uses a service-account token, `.config/systemd/user/herdr-server.service` installed, server-specific rules in `~/.claude/CLAUDE.md` |
 | `container` | shell image | assumed offline and viewed through someone else's terminal: no nerd-font glyphs, oh-my-zsh auto-update off, nvim treesitter auto-install and gitsigns off, no 1Password |
 
 `role` is the only data variable. Older `have_nerd_font`, `personal`, `offline`, `remote` keys in a
@@ -57,8 +57,17 @@ chezmoi git -- commit -am "..."        # plain git in ~/.local/share/chezmoi, no
 chezmoi git push                       # by hand, nothing leaves a machine unasked
 ```
 
-Other machines: `chezmoi update` (pull + apply). If apply says a target "has changed since chezmoi
-last wrote it" and the content is what you expect, `chezmoi apply --force`. To check what another
+Other machines: `chezmoi update` (pull + apply). On the server every chezmoi command that renders
+templates (`update`, `apply`, `diff`, `verify`) needs the provisioning token, because the key template
+calls `onepasswordRead` unconditionally; `chezmoi git ...` does not:
+
+```sh
+OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi update
+systemctl --user is-active herdr-server          # post-update check on ser8
+```
+
+If apply says a target "has changed since chezmoi last wrote it" and the content is what you
+expect, `chezmoi apply --force`. To check what another
 role or OS would render without that machine: `chezmoi --config <toml with that role> execute-template < <file>.tmpl`
 on a machine with that OS (the Mac cannot render the Linux side of `.chezmoi.os`).
 
@@ -116,23 +125,25 @@ role-templated so the command surface is the same on every machine and no projec
 | `ser8-host` | ser8's ed25519 SSH key | provisioning (`chezmoi apply`) |
 | `agents` | service tokens for every agent and dev shell, all machines | agent runtime (`op-agent`) |
 
-Split deliberately: an agent on the server must not be able to read the SSH key. Tokens live in
-0600 files and are injected per process, never exported from `~/.config/shell/local.sh`, which
-every interactive shell (and every agent) inherits:
+Split deliberately: an agent on the server must not be able to read the SSH key. The two tokens
+live as 0600 files in `~/.config/op` (next to op's own `config`) and are injected per process, never
+exported from a shell rc file such as `~/.config/shell/local.sh`, which every interactive shell (and
+every agent) would inherit:
 
 ```sh
 OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
 ```
 
-For systemd units use `LoadCredential=` rather than `EnvironmentFile=`. `~/.claude/CLAUDE.md`
-carries the day-to-day rules for agents.
+Rule for any future systemd unit that needs a secret (none does today; `herdr-server.service` has
+none): `LoadCredential=` rather than `EnvironmentFile=`. `~/.claude/CLAUDE.md` carries the
+day-to-day rules for agents.
 
 ## Server role (ser8)
 
 `role = "server"` marks a headless, always-on machine reached over Tailscale/SSH. There is no GUI
 1Password there, so `~/.1password/agent.sock` never exists and the agent-based SSH config cannot
 work. Instead the server renders a private key to disk from the `ser8-host` vault, and
-`.chezmoiignore` keeps that key off every other role. ser8's key is a distinct GitHub identity, so
+`.chezmoiignore` keeps that key off every other role. ser8's key is its own key on the GitHub account, so
 revoking it never touches the laptops.
 
 ### Bootstrap runbook
