@@ -82,6 +82,10 @@ OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
 
 For systemd units use `LoadCredential=` rather than `EnvironmentFile=`.
 
+Agents reach the vault through `~/.local/bin/op-agent` (server-only, from this repo): `op` with
+the agent token injected for that one process. `~/.claude/CLAUDE.md` carries the rules for it
+on the server. `.env` files hold only `op://ser8-agents/<item>/<field>` references.
+
 ser8's key is a distinct GitHub identity, so revoking it never touches the laptops.
 
 ### Bootstrap runbook

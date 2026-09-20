@@ -40,6 +40,18 @@ Never read key files, paste secrets, or put secret values in config/env blocks. 
 - Assume every 1Password Environment points at production (transip, mailgun, engage, schoolbieb, ...): real data, only the changes the user asks for, no exploratory writes. The exception is a variable with `DEMO` in its name: a demo account on a production system, free to exercise. Dev credentials are not in 1Password at all; make them or pass them inline, throwaway data and key.
 - Known IDs: mailgun `xzujn7lmhr2yii5m5yh7wcow4y` (`MAILGUN_API_KEY`, `MAILGUN_API_REGION`), transip `otpsuldmhf27h3r2uvgc74zcpq` (`TRANSIP_TOKEN`, `TRANSIP_API_URL`), engage `ml4gmn42swyb3uj2td6ickma44` (`ANTHROPIC_API_KEY`, `ENGAGE_API_KEY`, `ENGAGE_BASE_URL`; dev server + data_analysis/engage scripts), group_planner `4cjt5taho2s5x2ljaqstoajeou` (`KLASSENPLANNER_API_URL`, `SPORTTEAMPLANNER_API_URL`, `KLASSENPLANNER_DEMO_API_TOKEN`, `SPORTTEAMPLANNER_DEMO_API_TOKEN`, `KLASSENPLANNER_NVR_API_TOKEN`; prod coordinator tokens, DEMO orgs free to exercise, NVR is the real school: maintain it on request only), schoolbieb `ktuhe7xjsblvjplqzvztew5jkm` (`SCHOOLBIEB_NVR_API_KEY`, `SCHOOLBIEB_NVR_URL`; prod API as agent, same NVR rule).
 
+{{ if eq .role "server" -}}
+## Secrets on this server (overrides the Environments section above)
+
+Headless box: no 1Password app, no Environments, no SSH agent. Secrets are items in the `ser8-agents` vault, read by a service account whose token sits in `~/.config/op/ser8-agent.token` (0600). Never read that file, never export `OP_SERVICE_ACCOUNT_TOKEN`, never put it in a unit's `Environment=`/`EnvironmentFile=`.
+
+- `op-agent` (`~/.local/bin`, from dotfiles) is `op` with the token injected for that single process. Use it for everything op: `op-agent run --env-file <dotenv> -- <cmd>` where the dotenv holds only `op://ser8-agents/<item>/<field>` references (safe to commit), or `op-agent read op://ser8-agents/<item>/<field>` piped straight into the consumer, never echoed.
+- The token sees one vault: `op-agent vault list` shows only `ser8-agents`. The SSH key vault is unreachable by design; do not try to work around it.
+- Items and fields are created in the desktop app on a laptop. Ask the user for the item/field names; `op-agent item list --vault ser8-agents` shows what exists.
+- Same production rule as Environments: every item is prod unless `DEMO` is in its name.
+- systemd user units: `LoadCredential=op-token:%h/.config/op/ser8-agent.token`, then `OP_SERVICE_ACCOUNT_TOKEN="$(cat $CREDENTIALS_DIRECTORY/op-token)"` inside a `sh -c` ExecStart.
+
+{{ end -}}
 {{ if eq .chezmoi.os "darwin" -}}
 ## Environment: macOS with Modern Toolchain
 
