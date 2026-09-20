@@ -22,8 +22,19 @@ autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 zstyle ':completion:*' menu select
 HISTFILE="$HOME/.zsh_history" HISTSIZE=50000 SAVEHIST=50000
-setopt share_history hist_ignore_all_dups hist_ignore_space
-setopt auto_cd auto_pushd pushd_ignore_dups
+setopt share_history extended_history hist_ignore_all_dups hist_ignore_space hist_verify
+setopt auto_cd auto_pushd pushd_ignore_dups interactive_comments always_to_end complete_in_word
+
+# Line editor: emacs keys (EDITOR=nvim would make zsh default to vi mode) and
+# prefix history search on the arrows, both as oh-my-zsh had them.
+bindkey -e
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+bindkey '^[[A' up-line-or-beginning-search
+bindkey '^[[B' down-line-or-beginning-search
+bindkey '^[OA' up-line-or-beginning-search
+bindkey '^[OB' down-line-or-beginning-search
 
 # zsh-autosuggestions: brew on macOS, git clone to ~/.local/share elsewhere
 for f in "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
@@ -44,6 +55,7 @@ source "$HOME/.config/shell/env.sh"
 source "$HOME/.config/shell/aliases.sh"
 source "$HOME/.config/shell/functions.sh"
 
-# zsh only
+# zsh only (Omarchy's bash has its own eza-based ls aliases)
+alias ll='ls -lh' la='ls -lAh' l='ls -lah'
 bindkey '^y' forward-word
 alias reload='exec zsh'
