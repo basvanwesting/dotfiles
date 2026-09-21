@@ -35,3 +35,7 @@ alias wiki='e ~/bin/wiki'
 
 # Machine-local, unmanaged (client project shortcuts etc.): not in the public repo.
 [ -r "$HOME/.config/shell/local.sh" ] && . "$HOME/.config/shell/local.sh"
+
+# Shell
+# Restart the current shell in place: bash sets $BASH, zsh does not.
+alias reload='exec "${BASH:-zsh}"'
