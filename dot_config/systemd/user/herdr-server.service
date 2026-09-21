@@ -7,7 +7,9 @@ Type=simple
 # Login shell on purpose: panes inherit the server's environment. At boot the
 # lingering user manager has no graphical session to import PATH from, so
 # without -l every pane would start without mise shims or ~/.local/bin.
-ExecStart=/bin/bash -lc 'exec %h/.local/bin/herdr server'
+# `herdr` via PATH, not a fixed path: /usr/bin/herdr from the Omarchy edge
+# package normally, ~/.local/bin/herdr if a direct install is ever needed.
+ExecStart=/bin/bash -lc 'exec herdr server'
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30

@@ -167,12 +167,9 @@ systemctl --user enable --now herdr-server.service             # unit file comes
 ```
 
 Manual, outside chezmoi:
-- herdr: the omarchy repo lags (0.8.2) and `/usr/bin` shadows `~/.local/bin` in both interactive and PAM PATH.
-  Fetch the release into `~/.local/bin/herdr`, verify sha256 from https://herdr.dev/latest.json, then `sudo pacman -Rns herdr`.
-  After `omarchy update`: `pacman -Q herdr` must say "not found" and `command -v herdr` must be `~/.local/bin/herdr`;
-  if the package came back, `sudo pacman -Rns herdr` again.
-  Updating: Mac client and ser8 server must run a compatible protocol (`herdr status server` shows it), so update both together.
-  On ser8 replace the binary, then `systemctl --user restart herdr-server`; that restarts every pane, so do it when nothing runs there.
+- herdr: Omarchy stable lags upstream (0.8.2 vs 0.9.1 on 2026-09-21); install the same package from
+  Omarchy's edge channel instead, see "herdr ahead of Omarchy stable" below. Never a hand-copied binary in
+  `~/.local/bin`: Omarchy's herdr migration deletes it and re-adds the package on purpose.
 - Tailscale ACL: `ssh` rule `action: accept`, `users: [autogroup:nonroot]` (default `check` re-auths every 12h).
 - Tailscale admin console, ser8 node: Disable key expiry. Node keys expire after 180 days; a headless box then drops off the tailnet until someone re-auths it locally. Independent of the ACL: expiry is node membership, the ACL is per-session login friction.
 - 1Password GUI off, only if the installer put it there (a fresh 3.x install had neither GUI nor cli):
@@ -182,39 +179,39 @@ Manual, outside chezmoi:
 - BIOS (Beelink SER8, AMI Aptio): Del at boot, Advanced > AMD CBS > FCH Common Options > AC Power Loss Options > Always On, F4 to save. Not under any Power/Chipset menu. Test: unplug while off, replug, it should boot. Unplug the install USB.
 - If the install was encrypted anyway: `/etc/sddm.conf.d/zz-server.conf` with `[Autologin]` + empty `User=`.
 
-### Open: herdr ahead of Omarchy stable (decide when ser8 is back, week of 2026-09-28)
+### herdr ahead of Omarchy stable (decided 2026-09-21, ser8 to pick up when back online)
 
-Two ways have been tried; ser8 runs A, the Omarchy test laptop runs B. Not implemented, pending a
-discussion on ser8 itself.
+Decision: **Omarchy edge package** (B), not a direct binary (A). Reasons: Omarchy's herdr migration
+(`/usr/share/omarchy/migrations/1786273938.sh`) and `omarchy-reinstall-pkgs` both delete
+`~/.local/bin/herdr` and re-add the package on purpose, so A is undone by every Omarchy update; edge is
+signed, pacman-tracked, and `omarchy update` never downgrades, so stable takes over by itself once it
+passes edge. Tested on the Omarchy laptop since 2026-09-18 (downgrade with `pacman -S omarchy/herdr`,
+back up with `-U` from edge).
 
-**A. Direct binary (ser8 today, the bullet above).** `~/.local/bin/herdr` + `pacman -Rns herdr`.
-Works against Omarchy: its herdr migration (`/usr/share/omarchy/migrations/1786273938.sh`) deletes
-`~/.local/bin/herdr` and runs `omarchy-pkg-add herdr`, on purpose, so a stale client cannot shadow
-`/usr/bin/herdr`; `omarchy-reinstall-pkgs` re-adds it too; `/usr/bin` precedes `~/.local/bin` in PATH,
-so it only holds while the package stays absent. Also, the README's fetch + sha256 by hand duplicates
-`herdr update`, which is the supported updater for a direct install and should replace the manual fetch
-if A stays.
+The unit is path-agnostic since this decision: `ExecStart=/bin/bash -lc 'exec herdr server'` resolves
+to `/usr/bin/herdr` under B and to `~/.local/bin/herdr` under A (the package is absent then), so no
+dotfiles change is needed if A is ever required again. A stays the escape hatch for a version edge
+lacks; then use `herdr update`, the supported updater for a direct install, not a manual fetch.
 
-**B. Omarchy edge package (test laptop since 2026-09-18).** Omarchy publishes the same package on
-its edge channel ahead of stable, signed:
+What edge has right now:
 
 ```sh
-sudo pacman -U https://pkgs.omarchy.org/edge/x86_64/herdr-0.9.1-1-x86_64.pkg.tar.zst
-systemctl --user restart herdr-server      # ser8 only, restarts every pane
+curl -fsSL https://pkgs.omarchy.org/edge/x86_64/omarchy.db | bsdtar -tf - | grep '^herdr'
 ```
 
-pacman-tracked, no PATH shadowing, nothing for a migration to undo. `omarchy update` never
-downgrades, so it stays until stable passes it, then stable takes over with no manual step. Tested:
-`pacman -S omarchy/herdr` downgrades to stable, `-U` from edge brings it back. Then the unit's
-ExecStart goes back to `/usr/bin/herdr server`. Check what edge has:
-`curl -fsSL https://pkgs.omarchy.org/edge/x86_64/omarchy.db | bsdtar -tf - | grep '^herdr'`.
+ser8, on its first day back:
 
-**Caveats for B.** Edge can lag upstream by days. The Mac client is a direct install (`herdr update`)
-and must share a protocol with ser8's server, so hold the Mac update until edge has that version.
-If a version is ever needed that edge lacks, A is the only route.
+```sh
+OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi update   # brings the new unit
+sudo pacman -U https://pkgs.omarchy.org/edge/x86_64/herdr-0.9.1-1-x86_64.pkg.tar.zst
+rm ~/.local/bin/herdr                                # /usr/bin/herdr wins on PATH anyway; keep it tidy
+systemctl --user daemon-reload && systemctl --user restart herdr-server   # restarts every pane
+herdr status server && command -v herdr              # protocol must match the Mac client; /usr/bin/herdr
+```
 
-**Not proposed:** a chezmoi external with a pinned version + sha256. More machinery than a one-line
-pacman command justifies.
+Mac side: the client is a direct install (`herdr update`) and must share a protocol with ser8's server.
+Before updating the Mac, check that edge already has that version; if it does not, wait. Both sides
+are on 0.9.1 / protocol 22 as of 2026-09-21.
 
 ## Tailscale
 
