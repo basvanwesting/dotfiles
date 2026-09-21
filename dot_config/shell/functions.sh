@@ -40,17 +40,18 @@ unmig() {
   bundle exec rake db:rollback RAILS_ENV="${1:-development}"
 }
 
-# Reload every idle shell pane in herdr (skips agents and panes running a program).
+# Reload every idle shell pane in herdr; panes running a program (incl. agents) are skipped.
 # reload_all [machine]  -> reload_all ser8 acts on that saved machine's server.
+# herdr only prints JSON; grep/cut keep this free of jq or python.
 reload_all() {
-  h="herdr${1:+ --machine $1}"
-  $h pane list | python3 -c "import json,sys;[print(p['pane_id']) for p in json.load(sys.stdin)['result']['panes'] if not p.get('agent')]" |
-  while read -r id; do
-    fg=$($h pane process-info --pane "$id" | python3 -c "import json,sys;p=json.load(sys.stdin)['result']['process_info']['foreground_processes'];print(p[0]['argv0'] if p else '')")
-    case "$fg" in
-      zsh|bash) $h pane run "$id" reload >/dev/null && echo "reloaded $id" ;;
-      *) echo "skipped  $id (running: ${fg:-?})" ;;
+  _m=$1
+  _herdr() { if [ -n "$_m" ]; then herdr --machine "$_m" "$@"; else herdr "$@"; fi; }
+  for _id in $(_herdr pane list | grep -o '"pane_id":"[^"]*"' | cut -d'"' -f4); do
+    _fg=$(_herdr pane process-info --pane "$_id" | grep -o '"argv0":"[^"]*"' | head -1 | cut -d'"' -f4)
+    case "$_fg" in
+      zsh|bash) _herdr pane run "$_id" reload >/dev/null && echo "reloaded $_id" ;;
+      *) echo "skipped  $_id (running: ${_fg:-?})" ;;
     esac
   done
-  unset h fg
+  unset -f _herdr; unset _m _id _fg
 }
