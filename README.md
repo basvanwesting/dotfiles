@@ -182,6 +182,40 @@ Manual, outside chezmoi:
 - BIOS (Beelink SER8, AMI Aptio): Del at boot, Advanced > AMD CBS > FCH Common Options > AC Power Loss Options > Always On, F4 to save. Not under any Power/Chipset menu. Test: unplug while off, replug, it should boot. Unplug the install USB.
 - If the install was encrypted anyway: `/etc/sddm.conf.d/zz-server.conf` with `[Autologin]` + empty `User=`.
 
+### Open: herdr ahead of Omarchy stable (decide when ser8 is back, week of 2026-09-28)
+
+Two ways have been tried; ser8 runs A, the Omarchy test laptop runs B. Not implemented, pending a
+discussion on ser8 itself.
+
+**A. Direct binary (ser8 today, the bullet above).** `~/.local/bin/herdr` + `pacman -Rns herdr`.
+Works against Omarchy: its herdr migration (`/usr/share/omarchy/migrations/1786273938.sh`) deletes
+`~/.local/bin/herdr` and runs `omarchy-pkg-add herdr`, on purpose, so a stale client cannot shadow
+`/usr/bin/herdr`; `omarchy-reinstall-pkgs` re-adds it too; `/usr/bin` precedes `~/.local/bin` in PATH,
+so it only holds while the package stays absent. Also, the README's fetch + sha256 by hand duplicates
+`herdr update`, which is the supported updater for a direct install and should replace the manual fetch
+if A stays.
+
+**B. Omarchy edge package (test laptop since 2026-09-18).** Omarchy publishes the same package on
+its edge channel ahead of stable, signed:
+
+```sh
+sudo pacman -U https://pkgs.omarchy.org/edge/x86_64/herdr-0.9.1-1-x86_64.pkg.tar.zst
+systemctl --user restart herdr-server      # ser8 only, restarts every pane
+```
+
+pacman-tracked, no PATH shadowing, nothing for a migration to undo. `omarchy update` never
+downgrades, so it stays until stable passes it, then stable takes over with no manual step. Tested:
+`pacman -S omarchy/herdr` downgrades to stable, `-U` from edge brings it back. Then the unit's
+ExecStart goes back to `/usr/bin/herdr server`. Check what edge has:
+`curl -fsSL https://pkgs.omarchy.org/edge/x86_64/omarchy.db | bsdtar -tf - | grep '^herdr'`.
+
+**Caveats for B.** Edge can lag upstream by days. The Mac client is a direct install (`herdr update`)
+and must share a protocol with ser8's server, so hold the Mac update until edge has that version.
+If a version is ever needed that edge lacks, A is the only route.
+
+**Not proposed:** a chezmoi external with a pinned version + sha256. More machinery than a one-line
+pacman command justifies.
+
 ## Tailscale
 
 Not managed here: Omarchy and the macOS installer own it, and the node keys are machine state.
