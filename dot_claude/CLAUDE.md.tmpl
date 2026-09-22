@@ -28,6 +28,14 @@ When a framework generator exists for an artifact (Rails migrations/models/contr
 
 Vim user — reflexively hits Esc as a "reset to normal mode" gesture with no intent to cancel. Esc is unbound from `chat:cancel` in `~/.claude/keybindings.json` (Chat context). Ctrl-C is the interrupt key. Editor mode stays on `normal` (not vim mode), because vim mode makes slash commands trigger search.
 
+**Commits are mine.** Never offer to commit or ask "want me to commit?" — I review the working tree and commit through lazygit. Finish a change by leaving a clean, verified tree, a concise summary of what changed, and the commit message(s) ready to paste; one message per logical commit when the work splits. Commit only when explicitly asked (trunk pattern, straight to `main`). Message format: one-line summary (~60 chars), blank line, 3–6 line body. The body carries only what the diff can't show and the docs don't already record — the one insight that makes the diff make sense, operational consequences ("no data migration needed"), rejected alternatives someone might "fix" back. No file lists, no UI enumeration, no rationale already in code comments or CLAUDE.md. Never a giant single-line message: the commit overview shows first lines only.
+
+**Intent beats mechanical rules.** A lint/format rule is a proxy for readability; when the proxy and the goal conflict, the goal wins. Before enabling a style check, ask whether it can tell an intentional idiom from a mistake — if it can't (Credo `SinglePipe` judging "prepare `|>` execute" by arity), keep it as a documented convention plus review instead of machine enforcement, and say explicitly in the docs which rules are enforced and which are conventions. When a formatter or linter blocks a deliberate readability choice, surface the tradeoff rather than silently complying.
+
+## Claude Code Harness
+
+A `Bash` call with `run_in_background: true` lives in the runtime's task list (TaskList/TaskStop id like `b2k34a8ns`), not as a job of any later shell — `kill %1` from a later Bash call sees no jobs and does nothing. The runtime counts itself "still working" while any background task is alive, so an orphan shows as endless processing dots and prompts that have to be force-sent. Before spawning one, prefer `Monitor` or a one-shot foreground `until … done`; after spawning one, keep the returned task id and `TaskStop` it when done. On stuck dots or forced prompts, check for live tasks first.
+
 ## Secrets: 1Password `agents` vault via op-agent
 
 Never read key files, paste secrets, or put secret values in config/env blocks. Every API key and token an agent or a dev shell needs is an item in the `agents` vault (account `agilerbv.1password.com`): one item per service (`mailgun`, `transip`, ...), one field per variable, field named like the variable; project-only secrets go in an item named after the project.
@@ -62,6 +70,7 @@ Never read key files, paste secrets, or put secret values in config/env blocks. 
 - BSD sed requires: `sed -i '' 's/old/new/g' file`
 - BSD grep lacks `-P` flag (no PCRE)
 - Prefer modern tools (rg/fd/sd) - they're faster and cross-platform
+- Toolchains (Erlang/Elixir/Node, …) come from `mise`, not asdf (`~/.asdf` is gone; `.tool-versions` in each repo still drives versions; shims in `~/.local/share/mise/shims`). If `mix`/`elixir`/`node` is "command not found" in a Bash call, the session shell has a stale PATH: run `mise exec -- <cmd>` or prefix `export PATH="$HOME/.local/share/mise/shims:$PATH"`. Never suggest reinstalling asdf.
 {{- else -}}
 ## Environment: Omarchy (Arch Linux + Hyprland) with Modern Toolchain
 
