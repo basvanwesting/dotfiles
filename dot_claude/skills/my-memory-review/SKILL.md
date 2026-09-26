@@ -1,5 +1,5 @@
 ---
-name: memory-review
+name: my-memory-review
 description: Review this project's auto-memory against CLAUDE.md. Promote durable learnings into CLAUDE.md, delete duplicates and shipped transient notes, keep live state. Run at end of a feature or before a PR.
 disable-model-invocation: true
 ---
@@ -12,6 +12,7 @@ Memory is a staging area, CLAUDE.md is the committed team knowledge. Move durabl
 
 - Memory dir: the path named in the system prompt ("persistent file-based memory at ..."). Read every `*.md` in it, including `MEMORY.md`.
 - Instruction files: `CLAUDE.md`, every `@import` it references, `.claude/rules/*.md`, `AGENTS.md` if present. Read them all.
+- User rules: `~/.claude/rules/*.md` (chezmoi source `~/.local/share/chezmoi/dot_claude/rules/`). Read them too; section 3b reviews them.
 - If no CLAUDE.md exists, say so and propose creating one from the durable memories (section 3 still applies).
 
 ## 2. Classify every memory file
@@ -24,7 +25,7 @@ Grep the instruction files for each memory's key terms before deciding. One verd
 | promote | durable rule, decision, or gotcha the team must know, missing from instruction files | add to CLAUDE.md (or the import that owns the topic), then delete memory |
 | live | transient state still true: in-progress plan, pending prod work, status as of a date | keep; refresh the date if verified |
 | stale | transient state whose work has shipped or been abandoned | verify against code/git first, then delete |
-| global | personal working style, not project-specific | do NOT edit `~/.claude/CLAUDE.md` (chezmoi-managed); list as candidate for the user |
+| global | lesson that holds in every project, not just this one | do not edit `~/.claude/` directly (chezmoi-managed); list as a `/my-learn` candidate with a one-line draft |
 | ref | pointer to URL, bucket, dashboard, recipe | promote if team-relevant and secret-free, else keep |
 
 Rules for promoted text:
@@ -37,9 +38,13 @@ Rules for promoted text:
 
 Flag clauses that read as changelog ("removed 2026-09-11", "since 2026-09-17", "now shipped"). Instruction files state the current truth; git history holds the past. Propose removing the date or the whole clause.
 
+## 3b. Retire user rules past their shelf life
+
+Rules in `~/.claude/rules/` record mistakes a past agent made; agents change, so a rule is a hypothesis with a date. For each rule file read `filed:`/`learned:` from its frontmatter and ask: has this failure recurred since? Evidence: memories in this project, the git log of the rule's `project:`, the current diff. A rule older than six months with no recurrence is a retirement candidate; list it with the date and the evidence checked. Retiring is a one-file revert if wrong, carrying dead rules costs every session. Do not delete here: `/my-learn` section 3 does the chezmoi pull/rm/push.
+
 ## 4. Propose, then apply
 
-Show one table: file, verdict, target section, one-line gist. Plus the CLAUDE.md prune list and the global candidates. Wait for approval. Deleting memories and editing committed team files is not reversible without git, so no edits before the user confirms.
+Show one table: file, verdict, target section, one-line gist. Plus the CLAUDE.md prune list, the `/my-learn` candidates, and the rule retirement candidates. Wait for approval. Deleting memories and editing committed team files is not reversible without git, so no edits before the user confirms.
 
 After approval:
 1. Edit instruction files.
