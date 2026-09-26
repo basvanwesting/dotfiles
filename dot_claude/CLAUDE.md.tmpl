@@ -26,6 +26,12 @@ When a fix compensates at the point of use (an offset, a `+1`/`-1`, a filter, a 
 
 Example failure: point crossover could pick point 0 (swaps whole parents). The PR sampled from `1..n` with a `.map(|i| i + 1)` and `n - 1` in three places plus a `genes_size < 2` guard; I asked only for a preloaded sampler. The right fix was MultiUnique's existing structure: derive a `crossover_points` array in `try_from` and sample its indices.
 
+## Name Siblings at the Same Level
+
+When a second variant of something appears, the first one loses its generic name: siblings are named for what distinguishes them, and the generic word becomes the family (the module, the doc heading, the UI group label) — never one sibling's name. Adding a variant therefore includes renaming the existing one, with the data migration / snapshot bump that costs; leaving `foo` beside `foo_bar` to save that rename is the failure. Tell: a parenthetical or a suffix needed to explain the old name ("`:speed_duel` (year)"). Same rule for functions, fields, CSS classes and catalog atoms.
+
+Example failure: title mode added as `:title_duel` beside the existing `:speed_duel`, so the family name stood in for the year variant; caught in review ("this naming sucks obviously") and renamed to `:year_duel` / `:title_duel` with `SpeedDuel` as the family module.
+
 ## Always Use Generators
 
 When a framework generator exists for an artifact (Rails migrations/models/controllers, `cargo new`, `npm create`, etc.), run the generator first and rework its output with Edit. Generators carry the framework's current conventions (canonical timestamps, naming, placement, base classes); hand-written files carry invented ones. Example failure: hand-rounded Rails migration timestamps caused a silent master/feature version collision.
