@@ -179,7 +179,7 @@ Manual, outside chezmoi:
 - BIOS (Beelink SER8, AMI Aptio): Del at boot, Advanced > AMD CBS > FCH Common Options > AC Power Loss Options > Always On, F4 to save. Not under any Power/Chipset menu. Test: unplug while off, replug, it should boot. Unplug the install USB.
 - If the install was encrypted anyway: `/etc/sddm.conf.d/zz-server.conf` with `[Autologin]` + empty `User=`.
 
-### herdr ahead of Omarchy stable (decided 2026-09-21, ser8 to pick up when back online)
+### herdr ahead of Omarchy stable (decided 2026-09-21, ser8 on edge since 2026-09-26)
 
 Decision: **Omarchy edge package** (B), not a direct binary (A). Reasons: Omarchy's herdr migration
 (`/usr/share/omarchy/migrations/1786273938.sh`) and `omarchy-reinstall-pkgs` both delete
@@ -193,19 +193,12 @@ to `/usr/bin/herdr` under B and to `~/.local/bin/herdr` under A (the package is 
 dotfiles change is needed if A is ever required again. A stays the escape hatch for a version edge
 lacks; then use `herdr update`, the supported updater for a direct install, not a manual fetch.
 
-What edge has right now:
+Check what edge has, then install or bump (restarts every pane):
 
 ```sh
 curl -fsSL https://pkgs.omarchy.org/edge/x86_64/omarchy.db | bsdtar -tf - | grep '^herdr'
-```
-
-ser8, on its first day back:
-
-```sh
-OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi update   # brings the new unit
-sudo pacman -U https://pkgs.omarchy.org/edge/x86_64/herdr-0.9.1-1-x86_64.pkg.tar.zst
-rm ~/.local/bin/herdr                                # /usr/bin/herdr wins on PATH anyway; keep it tidy
-systemctl --user daemon-reload && systemctl --user restart herdr-server   # restarts every pane
+sudo pacman -U https://pkgs.omarchy.org/edge/x86_64/herdr-<version>-1-x86_64.pkg.tar.zst
+systemctl --user restart herdr-server
 herdr status server && command -v herdr              # protocol must match the Mac client; /usr/bin/herdr
 ```
 
