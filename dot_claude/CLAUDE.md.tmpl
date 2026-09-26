@@ -20,6 +20,12 @@ A feature's cost is itself PLUS every piece of supporting machinery it drags in 
 
 Example failure: a vague "reward fast answers" idea (`speed_bonus_values`) dragged in an order-tracking state field on two structs, a widened scoring signature, a generic UI component, and config/API surface — never used by any stored design; removal touched 12+ files.
 
+## Fix the Definition, Not the Consumer
+
+When a fix compensates at the point of use (an offset, a `+1`/`-1`, a filter, a clamp, a `< 2` special case), the error is usually in the definition of the data being consumed. Fix it there, once, so every consumer gets it right and no call site carries special knowledge. Tells: the same compensation repeated at several sites; a sibling that already does it right by construction. Applies to reviewing PRs as much as to writing code — accept the diagnosis, redirect the fix.
+
+Example failure: point crossover could pick point 0 (swaps whole parents). The PR sampled from `1..n` with a `.map(|i| i + 1)` and `n - 1` in three places plus a `genes_size < 2` guard; I asked only for a preloaded sampler. The right fix was MultiUnique's existing structure: derive a `crossover_points` array in `try_from` and sample its indices.
+
 ## Always Use Generators
 
 When a framework generator exists for an artifact (Rails migrations/models/controllers, `cargo new`, `npm create`, etc.), run the generator first and rework its output with Edit. Generators carry the framework's current conventions (canonical timestamps, naming, placement, base classes); hand-written files carry invented ones. Example failure: hand-rounded Rails migration timestamps caused a silent master/feature version collision.
