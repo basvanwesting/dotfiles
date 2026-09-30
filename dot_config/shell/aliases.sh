@@ -15,7 +15,7 @@ alias gt="git log --graph --simplify-by-decoration --pretty=format:'%d' --date=s
 alias gg='lazygit'
 
 # Processes
-alias psp='ps aux | egrep -v "Evernote|Dropbox" | egrep -i --color "ruby|rails|rake|spring|puma|unicorn|delayed|vbox|python|neovim|phantomjs|beam|erlang|elixir|vim|coc"'
+alias psp='ps aux | grep -Ev "Evernote|Dropbox" | grep -Ei --color "ruby|rails|rake|spring|puma|unicorn|delayed|vbox|python|neovim|phantomjs|beam|erlang|elixir|vim|coc"'
 
 # Rails: bundle exec rspec
 alias btmo='git ls-files --modified --others spec | grep _spec.rb | tee /dev/tty | xargs bundle exec rspec'
