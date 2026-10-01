@@ -11,8 +11,9 @@ Memory is a staging area, CLAUDE.md is the committed team knowledge. Move durabl
 ## 1. Inventory
 
 - Memory dir: the path named in the system prompt ("persistent file-based memory at ..."). Read every `*.md` in it, including `MEMORY.md`.
-- Instruction files: `CLAUDE.md`, every `@import` it references, `.claude/rules/*.md`, `AGENTS.md` if present. Read them all.
-- User rules: `~/.claude/rules/*.md` (chezmoi source `~/.local/share/chezmoi/dot_claude/rules/`). Read them too; section 3b reviews them.
+- Instruction files: `CLAUDE.md`, every `@import` it references, `.claude/rules/*.md`, `AGENTS.md` if present. Read them all. Project rules (`.claude/rules/*.md` in the repo) are committed team docs, parts of CLAUDE.md that load only for their `paths:`; everything below that says CLAUDE.md covers them too.
+- Size: `wc -c` all of the above plus `~/.claude/CLAUDE.md` and `~/.claude/rules/*.md` (path-scoped project rules excluded). Claude Code warns past 150k chars; report the total.
+- User rules: `~/.claude/rules/*.md` (chezmoi source `~/.local/share/chezmoi/dot_claude/rules/`). Read them too; section 3c reviews them.
 - If no CLAUDE.md exists, say so and propose creating one from the durable memories (section 3 still applies).
 
 ## 2. Classify every memory file
@@ -22,7 +23,7 @@ Grep the instruction files for each memory's key terms before deciding. One verd
 | verdict | meaning | action |
 |---|---|---|
 | dup | already in an instruction file | delete memory |
-| promote | durable rule, decision, or gotcha the team must know, missing from instruction files | add to CLAUDE.md (or the import that owns the topic), then delete memory |
+| promote | durable rule, decision, or gotcha the team must know, missing from instruction files, and passing the 3b test | add to the instruction file that owns the topic (root CLAUDE.md for cross-cutting facts, the project rule for its area), then delete memory |
 | live | transient state still true: in-progress plan, pending prod work, status as of a date | keep; refresh the date if verified |
 | stale | transient state whose work has shipped or been abandoned | verify against code/git first, then delete |
 | global | lesson that holds in every project, not just this one | do not edit `~/.claude/` directly (chezmoi-managed); list as a `/my-learn` candidate with a one-line draft |
@@ -30,21 +31,33 @@ Grep the instruction files for each memory's key terms before deciding. One verd
 
 Rules for promoted text:
 - Rewrite as instruction or fact, not narrative. Drop "user said", session context, dates unless the date is the fact.
-- Put it under the existing section that owns the topic. Create a section only if none fits.
+- Put it under the existing section that owns the topic. Create a section only if none fits. An area-specific lesson with no owning rule gets a new project rule with `paths:`, not a root section.
 - No secret values, only `op://` refs or variable names.
 - `Why` and `How to apply` lines from feedback memories usually carry the real content; keep that, drop the frame.
 
-## 3. Prune CLAUDE.md while there
+## 3. Prune CLAUDE.md and project rules while there
 
 Flag clauses that read as changelog ("removed 2026-09-11", "since 2026-09-17", "now shipped"). Instruction files state the current truth; git history holds the past. Propose removing the date or the whole clause.
 
-## 3b. Retire user rules past their shelf life
+## 3b. Sanity-check CLAUDE.md and project rules: let go of what a capable agent does anyway
 
-Rules in `~/.claude/rules/` record mistakes a past agent made; agents change, so a rule is a hypothesis with a date. For each rule file read `filed:`/`learned:` from its frontmatter and ask: has this failure recurred since? Evidence: memories in this project, the git log of the rule's `project:`, the current diff. A rule older than six months with no recurrence is a retirement candidate; list it with the date and the evidence checked. Retiring is a one-file revert if wrong, carrying dead rules costs every session. Do not delete here: `/my-learn` section 3 does the chezmoi pull/rm/push.
+Instruction files decay the other way too: advice a better model follows unprompted is noise that dilutes the lines that matter. For each guidance line (patterns, conventions, notes; not domain facts) ask: would a capable agent get this wrong without it? Keep only:
+- facts the code can't show (external contracts, environment, why-not-X)
+- decisions with a rejected alternative ("never propose ...")
+- preferences that contradict the default (explicit in-lists over between, a banned term)
+- gotchas with a burn behind them (a silent skip, a prod incident)
+
+Propose removal for generic best practice (efficient SQL, naming, error handling), anything readable straight from the code (file tables, pattern descriptions), and duplicates of global rules. Age comes from `git blame`, not inline dates: an old guidance line whose failure hasn't recurred is a candidate. Apply the same test before promoting a memory in section 2: a memory that fails it is deleted, not promoted.
+
+Also flag root CLAUDE.md sections that concern one area only (a CSS look, one designer, one program): propose moving them verbatim to a project rule with `paths:` covering that area, plus a line in the root's rule index. Mandatory when the section 1 total nears 150k.
+
+## 3c. Retire user rules past their shelf life
+
+User rules only; project rules are documentation, reviewed by 3 and 3b, never retired here. Rules in `~/.claude/rules/` record mistakes a past agent made; agents change, so a rule is a hypothesis with a date. For each rule file read `filed:`/`learned:` from its frontmatter and ask: has this failure recurred since? Evidence: memories in this project, the git log of the rule's `project:`, the current diff. A rule older than six months with no recurrence is a retirement candidate; list it with the date and the evidence checked. Retiring is a one-file revert if wrong, carrying dead rules costs every session. Do not delete here: `/my-learn` section 3 does the chezmoi pull/rm/push.
 
 ## 4. Propose, then apply
 
-Show one table: file, verdict, target section, one-line gist. Plus the CLAUDE.md prune list, the `/my-learn` candidates, and the rule retirement candidates. Wait for approval. Deleting memories and editing committed team files is not reversible without git, so no edits before the user confirms.
+Show one table: file, verdict, target section, one-line gist. Plus the instruction-size total, the prune and move-to-rule list (sections 3 and 3b), the `/my-learn` candidates, and the rule retirement candidates. Wait for approval. Deleting memories and editing committed team files is not reversible without git, so no edits before the user confirms.
 
 After approval:
 1. Edit instruction files.
