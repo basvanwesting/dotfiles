@@ -13,7 +13,7 @@ Memory is a staging area, CLAUDE.md is the committed team knowledge. Move durabl
 - Memory dir: the path named in the system prompt ("persistent file-based memory at ..."). Read every `*.md` in it, including `MEMORY.md`.
 - Instruction files: `CLAUDE.md`, every `@import` it references, `.claude/rules/*.md`, `AGENTS.md` if present. Read them all. Project rules (`.claude/rules/*.md` in the repo) are committed team docs, parts of CLAUDE.md that load only for their `paths:`; everything below that says CLAUDE.md covers them too.
 - Size: `wc -c` all of the above plus `~/.claude/CLAUDE.md` and `~/.claude/rules/*.md` (path-scoped project rules excluded). Claude Code warns past 150k chars; report the total.
-- User rules: `~/.claude/rules/*.md` (chezmoi source `~/.local/share/chezmoi/dot_claude/rules/`). Read them too; section 3c reviews them.
+- User rules: `~/.claude/rules/*.md` (chezmoi source `~/.local/share/chezmoi/dot_claude/exact_rules/`) and the unloaded `~/.claude/rules-probation/*.md`. Read them too; section 3c reviews them.
 - If no CLAUDE.md exists, say so and propose creating one from the durable memories (section 3 still applies).
 
 ## 2. Classify every memory file
@@ -51,13 +51,17 @@ Propose removal for generic best practice (efficient SQL, naming, error handling
 
 Also flag root CLAUDE.md sections that concern one area only (a CSS look, one designer, one program): propose moving them verbatim to a project rule with `paths:` covering that area, plus a line in the root's rule index. Mandatory when the section 1 total nears 150k.
 
-## 3c. Retire user rules past their shelf life
+## 3c. Move user rules toward retirement
 
-User rules only; project rules are documentation, reviewed by 3 and 3b, never retired here. Rules in `~/.claude/rules/` record mistakes a past agent made; agents change, so a rule is a hypothesis with a date. For each rule file read `filed:`/`learned:` from its frontmatter and ask: has this failure recurred since? Evidence: memories in this project, the git log of the rule's `project:`, the current diff. A rule older than six months with no recurrence is a retirement candidate; list it with the date and the evidence checked. Retiring is a one-file revert if wrong, carrying dead rules costs every session. Do not delete here: `/my-learn` section 3 does the chezmoi pull/rm/push.
+User rules only; project rules are documentation, reviewed by 3 and 3b, never retired here. Rules in `~/.claude/rules/` record mistakes a past agent made; agents change, so a rule is a hypothesis with a date. A loaded rule that never recurs proves nothing (the rule may be what prevents it), so rules leave through probation: unloaded, and only absence there counts. Evidence of recurrence: memories in this project, the git log of the rule's `project:`, `Restore rule:` commits in the chezmoi log, the current diff.
+- Probation candidate: a loaded rule, two months or more since `filed:`/`learned:`/`restored:`, no recurrence, whose failure shows in a diff, so the fresh-eyes review can catch it. Rules that act before code exists (process, requirements) stay.
+- Retirement candidate: a probation rule two months or more since `probation:`, no recurrence.
+
+List each with its dates and the evidence checked. Move nothing here: `/my-learn` section 3 does the chezmoi moves.
 
 ## 4. Propose, then apply
 
-Show one table: file, verdict, target section, one-line gist. Plus the instruction-size total, the prune and move-to-rule list (sections 3 and 3b), the `/my-learn` candidates, and the rule retirement candidates. Wait for approval. Deleting memories and editing committed team files is not reversible without git, so no edits before the user confirms.
+Show one table: file, verdict, target section, one-line gist. Plus the instruction-size total, the prune and move-to-rule list (sections 3 and 3b), the `/my-learn` candidates, and the rule probation and retirement candidates. Wait for approval. Deleting memories and editing committed team files is not reversible without git, so no edits before the user confirms.
 
 After approval:
 1. Edit instruction files.
