@@ -27,4 +27,9 @@ README.md
 # Whole tree, not just the unit: otherwise the empty directories still materialize.
 .config/systemd
 .config/systemd/**
+{{ else if not (env "OP_SERVICE_ACCOUNT_TOKEN") }}
+# The key template reads the ser8-host vault, which only the provisioning token
+# can see. Without a token in the environment the key is left as it is on disk,
+# so a plain apply/diff/update needs none. Provisioning: see README.
+.ssh/id_ed25519
 {{ end }}

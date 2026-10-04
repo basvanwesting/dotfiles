@@ -57,12 +57,13 @@ chezmoi git -- commit -am "..."        # plain git in ~/.local/share/chezmoi, no
 chezmoi git push                       # by hand, nothing leaves a machine unasked
 ```
 
-Other machines: `chezmoi update` (pull + apply). On the server every chezmoi command that renders
-templates (`update`, `apply`, `diff`, `verify`) needs the provisioning token, because the key template
-calls `onepasswordRead` unconditionally; `chezmoi git ...` does not:
+Other machines: `chezmoi update` (pull + apply). On the server too, without a token: `.chezmoiignore`
+skips the SSH key template unless `OP_SERVICE_ACCOUNT_TOKEN` is set, so day-to-day commands never
+touch 1Password and leave the key on disk alone. Writing the key is a provisioning action, see
+"Server role (ser8)".
 
 ```sh
-OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi update
+chezmoi update
 systemctl --user is-active herdr-server          # post-update check on ser8
 ```
 
@@ -120,16 +121,17 @@ role-templated so the command surface is the same on every machine and no projec
 
 | Vault | Holds | Read by |
 |-------|-------|---------|
-| `ser8-host` | ser8's ed25519 SSH key | provisioning (`chezmoi apply`) |
+| `ser8-host` | ser8's ed25519 SSH key | provisioning only (`chezmoi apply` with the provisioning token) |
 | `agents` | service tokens for every agent and dev shell, all machines | agent runtime (`op-agent`) |
 
 Split deliberately: an agent on the server must not be able to read the SSH key. The two tokens
 live as 0600 files in `~/.config/op` (next to op's own `config`) and are injected per process, never
 exported from a shell rc file such as `~/.config/shell/local.sh`, which every interactive shell (and
-every agent) would inherit:
+every agent) would inherit. The provisioning token is used for one thing, writing or rotating the
+SSH key (bootstrap, or after the key changed in the vault); a plain `chezmoi apply` skips the key:
 
 ```sh
-OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
+OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply ~/.ssh/id_ed25519
 ```
 
 Rule for any future systemd unit that needs a secret (none does today; `herdr-server.service` has
