@@ -127,7 +127,9 @@ whole account, a service account is scoped read-only to one vault and never prom
 
 - every machine: its own `agents` service account (revocable per machine), token in
   `~/.config/op/agent.token`. A new secret is a new item or field in `agents`, made in the app; a
-  service account's vault list is fixed at creation.
+  service account's vault list is fixed at creation. A backup copy of a token never goes into
+  `agents` (every other machine's token could read it, which defeats revoking one machine): ser8's
+  sits in `ser8-host`.
   By hand, once per machine, or `op-agent` refuses to run (bare `op` here is the app, so one
   whole-account prompt):
 
