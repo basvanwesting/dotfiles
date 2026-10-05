@@ -14,6 +14,8 @@ Source: the remark and the instance in this conversation, or the argument given.
 - A probation rule matches the remark's failure: restore it (section 3), don't draft a new one.
 - A loaded rule already covers it: propose sharpening that file instead of adding a sibling.
 
+Then ask whether a check in the project can carry it. If so, propose that instead of a rule, and stop: a rule is only hoped for, a check is enforced, costs no context and holds for humans too. In order of preference: a generator or schema, so the wrong shape can't be made; then a lint rule, test or verifier script whose failure message names the fix. Only when the check can tell the mistake from an intentional idiom, and the failure belongs to that project or its stack. It is a project artefact, built in that repo's commit loop, not a harness hook.
+
 Otherwise write the rule in this shape, nothing more:
 
 ```markdown
