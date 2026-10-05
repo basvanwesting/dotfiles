@@ -25,8 +25,8 @@ Bare Linux has nothing to stay downstream of, so it gets the full macOS-style st
 
 | Role | Machines | Effect |
 |------|----------|--------|
-| `desktop` | laptops, Omarchy desktop | 1Password app authenticates; SSH via the 1Password agent, only `.pub` selector files on disk |
-| `server` | ser8 | headless: ed25519 key rendered to disk from 1Password and every `~/.ssh/config` Host block uses it (no `IdentityAgent`), `op-agent` uses a service-account token, `.config/systemd/user/herdr-server.service` installed, server-specific rules in `~/.claude/CLAUDE.md` |
+| `desktop` | laptops, Omarchy desktop | SSH via the 1Password agent, only `.pub` selector files on disk |
+| `server` | ser8 | headless: ed25519 key rendered to disk from 1Password and every `~/.ssh/config` Host block uses it (no `IdentityAgent`), `.config/systemd/user/herdr-server.service` installed, server-specific rules in `~/.claude/CLAUDE.md` |
 | `container` | shell image | assumed offline and viewed through someone else's terminal: no nerd-font glyphs, nvim treesitter auto-install and gitsigns off, no 1Password |
 
 `role` is the only data variable. Older `have_nerd_font`, `personal`, `offline`, `remote` keys in a
@@ -84,6 +84,8 @@ git config --file ~/.gitconfig user.name "..."               # identity is per m
 git config --file ~/.gitconfig user.email "..."
 ```
 
+Then give the machine its `op-agent` token, see [Secrets](#secrets-1password).
+
 ## Install (Omarchy desktop)
 
 ```sh
@@ -93,6 +95,7 @@ chezmoi init --apply https://github.com/basvanwesting/dotfiles.git   # desktop r
 
 Git identity is already in `~/.config/git/config` from Omarchy's first-run wizard. The shell source
 block lands in Omarchy's `~/.bashrc` on apply; nothing to paste by hand. For a server see below.
+Then give the machine its `op-agent` token, see [Secrets](#secrets-1password).
 
 ## Install (container)
 
@@ -112,19 +115,30 @@ Then `git clone https://github.com/zsh-users/zsh-autosuggestions ~/.local/share/
 Every API key or token an agent or dev shell needs is a field on an item in the `agents` vault
 (Agiler BV account). Projects commit a dotenv of references, never values
 (`MAILGUN_API_KEY=op://agents/mailgun/MAILGUN_API_KEY`), and run the consumer under
-`op-agent run --env-file .env -- <cmd>`. `~/.local/bin/op-agent` comes from this repo and is
-role-templated so the command surface is the same on every machine and no project names a machine:
-
-- desktop: the 1Password app authenticates; `op-agent` adds `--account` (two accounts are linked, so it is mandatory).
-  SSH keys also live in 1Password: `IdentityAgent` in `~/.ssh/config`, only `.pub` selector files on disk.
-- server: no GUI, so service accounts (Agiler BV; the Family plan has none), each scoped read-only to one vault:
+`op-agent run --env-file .env -- <cmd>`. `~/.local/bin/op-agent` comes from this repo and is the
+same on every machine, so no project names a machine. It authenticates with a service account
+(Agiler BV; the Family plan has none), never with the desktop app: the app authorizes a CLI for the
+whole account, a service account is scoped read-only to one vault and never prompts.
 
 | Vault | Holds | Read by |
 |-------|-------|---------|
 | `ser8-host` | ser8's ed25519 SSH key | provisioning only (`chezmoi apply` with the provisioning token) |
 | `agents` | service tokens for every agent and dev shell, all machines | agent runtime (`op-agent`) |
 
-Split deliberately: an agent on the server must not be able to read the SSH key. The two tokens
+- every machine: its own `agents` service account (revocable per machine), token in
+  `~/.config/op/agent.token`. A new secret is a new item or field in `agents`, made in the app; a
+  service account's vault list is fixed at creation.
+  By hand, once per machine, or `op-agent` refuses to run (bare `op` here is the app, so one
+  whole-account prompt):
+
+  ```sh
+  (umask 077; op --account agilerbv.1password.com service-account create "$(hostname -s)-agent service account" --vault agents:read_items --raw > ~/.config/op/agent.token)
+  ```
+- desktop: SSH keys also live in 1Password: `IdentityAgent` in `~/.ssh/config`, only `.pub` selector
+  files on disk. Bare `op` is still the app, for the user's own whole-account use.
+- server: no GUI, so a second service account for `ser8-host`, token in `~/.config/op/ser8-provision.token`.
+
+Split deliberately: an agent on the server must not be able to read the SSH key. Tokens
 live as 0600 files in `~/.config/op` (next to op's own `config`) and are injected per process, never
 exported from a shell rc file such as `~/.config/shell/local.sh`, which every interactive shell (and
 every agent) would inherit. The provisioning token is used for one thing, writing or rotating the
@@ -160,7 +174,7 @@ sudo loginctl enable-linger "$USER"
 sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 sudo systemctl enable --now btrfs-scrub@-.timer   # monthly checksum verify; unclean power cuts are the norm here
 omarchy pkg add smartmontools                       # drive health: smartctl -a /dev/nvme0
-install -d -m 700 ~/.config/op      # then place ser8-provision.token + ser8-agent.token, 0600, from 1Password
+install -d -m 700 ~/.config/op      # then place ser8-provision.token + agent.token, 0600, from 1Password
 chezmoi init https://github.com/basvanwesting/dotfiles.git      # https: no SSH key yet
 # write ~/.config/chezmoi/chezmoi.toml: role = "server", [onepassword] mode = "service"
 OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
