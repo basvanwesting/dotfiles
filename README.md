@@ -150,6 +150,19 @@ SSH key (bootstrap, or after the key changed in the vault); a plain `chezmoi app
 OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply ~/.ssh/id_ed25519
 ```
 
+GitHub over https uses the same vault: item `github` holds one fine-grained PAT per repo owner
+(`GH_TOKEN_FOURSTACK`, `GH_TOKEN_PERSONAL`; a fine-grained PAT covers a single owner), and
+`~/.local/bin/git-credential-op-agent` hands git the one matching the owner in the URL. A new owner is
+a new field plus a line in that script. A passkey cannot do this: it signs in a browser, not git.
+Wiring, by hand once per machine (git config is not managed on Omarchy). The empty entry drops
+helpers from system config (osxkeychain on macOS), so the vault stays the only copy:
+
+```sh
+git config --global credential.https://github.com.useHttpPath true
+git config --global credential.https://github.com.helper ''
+git config --global --add credential.https://github.com.helper '!~/.local/bin/git-credential-op-agent'
+```
+
 Rule for any future systemd unit that needs a secret (none does today; `herdr-server.service` has
 none): `LoadCredential=` rather than `EnvironmentFile=`. `~/.claude/CLAUDE.md` carries the
 day-to-day rules for agents.
