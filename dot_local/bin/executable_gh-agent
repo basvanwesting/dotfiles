@@ -4,21 +4,13 @@
 # per process (GH_TOKEN), so the owner is settled here, first hit wins:
 #   1. -R/--repo on the command line, then GH_REPO
 #   2. the first argument spelling a known owner as OWNER/...
-#      (`gh repo clone fourstack/x`, `gh api repos/fourstack/x/...`, a PR URL)
+#      (`gh-agent repo clone fourstack/x`, `gh-agent api repos/fourstack/x/...`,
+#      a PR URL)
 #   3. the `origin` remote of the current repo
 # A bare owner name (`--author basvanwesting`, `--owner fourstack`) settles
 # nothing: it says who, not where. Prefix GH_REPO=OWNER/x to force a PAT.
 # No known owner, or GH_TOKEN already set by the caller: plain gh.
-real=
-old_ifs=$IFS; IFS=:
-for dir in $PATH; do
-  # Skip this wrapper however PATH spells its directory, or it execs itself.
-  [ "$dir/gh" -ef "$0" ] && continue
-  [ -x "$dir/gh" ] && { real=$dir/gh; break; }
-done
-IFS=$old_ifs
-[ -n "$real" ] || { echo "gh: no gh behind this wrapper on PATH" >&2; exit 127; }
-[ -z "$GH_TOKEN" ] || exec "$real" "$@"
+[ -z "$GH_TOKEN" ] || exec gh "$@"
 
 # Field for the first known owner among the segments of $1 that a `/` follows:
 # OWNER/REPO, HOST/OWNER/REPO, https://github.com/OWNER/REPO,
@@ -60,7 +52,7 @@ else
   done
   [ -n "$field" ] || field=$(field_of "$(git remote get-url origin 2>/dev/null)")
 fi
-[ -n "$field" ] || exec "$real" "$@"
+[ -n "$field" ] || exec gh "$@"
 
 token=$("$HOME/.local/bin/op-agent" read "op://agents/github/$field") || exit 1
-GH_TOKEN=$token exec "$real" "$@"
+GH_TOKEN=$token exec gh "$@"

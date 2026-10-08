@@ -152,9 +152,11 @@ OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply 
 
 GitHub over https uses the same vault: item `github` holds one fine-grained PAT per repo owner
 (`GH_TOKEN_FOURSTACK`, `GH_TOKEN_PERSONAL`; a fine-grained PAT covers a single owner), and
-`~/.local/bin/git-credential-op-agent` hands git the one matching the owner in the URL. The `gh`
-wrapper in `~/.local/bin` does the same for `gh` (owner from `-R`/`GH_REPO`, else an `OWNER/...`
-argument, else the `origin` remote), so `~/.local/bin` must stay ahead of the real `gh` on `PATH`.
+`~/.local/bin/git-credential-op-agent` hands git the one matching the owner in the URL. `~/.local/bin/gh-agent`
+does the same for `gh` (owner from `-R`/`GH_REPO`, else an `OWNER/...` argument, else the `origin`
+remote); it is its own command, not a shadow of `gh`, so it does not depend on `PATH` order.
+Bare `gh` gets no vault PAT: whatever calls it directly (ghui, a tool's built-in `gh` use) runs with
+gh's own login, or unauthenticated on a machine without one (ser8).
 A new owner is a new field plus a line in `~/.local/bin/github-pat-field`, the map both share.
 A passkey cannot do this: it signs in a browser, not git.
 Wiring for git, by hand once per machine (git config is not managed on Omarchy). The empty entry drops
