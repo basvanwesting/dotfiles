@@ -1,0 +1,66 @@
+#!/bin/sh
+# gh with the fine-grained PAT from the `agents` vault that matches the repo
+# owner, the way git-credential-op-agent does it for git. gh takes one token
+# per process (GH_TOKEN), so the owner is settled here, first hit wins:
+#   1. -R/--repo on the command line, then GH_REPO
+#   2. the first argument spelling a known owner as OWNER/...
+#      (`gh repo clone fourstack/x`, `gh api repos/fourstack/x/...`, a PR URL)
+#   3. the `origin` remote of the current repo
+# A bare owner name (`--author basvanwesting`, `--owner fourstack`) settles
+# nothing: it says who, not where. Prefix GH_REPO=OWNER/x to force a PAT.
+# No known owner, or GH_TOKEN already set by the caller: plain gh.
+real=
+old_ifs=$IFS; IFS=:
+for dir in $PATH; do
+  # Skip this wrapper however PATH spells its directory, or it execs itself.
+  [ "$dir/gh" -ef "$0" ] && continue
+  [ -x "$dir/gh" ] && { real=$dir/gh; break; }
+done
+IFS=$old_ifs
+[ -n "$real" ] || { echo "gh: no gh behind this wrapper on PATH" >&2; exit 127; }
+[ -z "$GH_TOKEN" ] || exec "$real" "$@"
+
+# Field for the first known owner among the segments of $1 that a `/` follows:
+# OWNER/REPO, HOST/OWNER/REPO, https://github.com/OWNER/REPO,
+# git@github.com:OWNER/REPO, repos/OWNER/REPO/pulls.
+field_of() {
+  rest=$1
+  while :; do
+    case $rest in
+      */*) segment=${rest%%/*}; rest=${rest#*/} ;;
+      *) return 1 ;;
+    esac
+    "$HOME/.local/bin/github-pat-field" "${segment##*:}" && return
+  done
+}
+
+repo=; prev=
+for arg in "$@"; do
+  case $prev in
+    -R|--repo) repo=$arg; break ;;
+  esac
+  case $arg in
+    --repo=*) repo=${arg#--repo=}; break ;;
+    -R?*) repo=${arg#-R}; break ;;
+  esac
+  prev=$arg
+done
+: "${repo:=$GH_REPO}"
+
+field=
+if [ -n "$repo" ]; then
+  field=$(field_of "$repo")
+else
+  for arg in "$@"; do
+    case $arg in
+      # Prose (a title, a body) is not a repo reference.
+      *[[:space:]]*) continue ;;
+    esac
+    field=$(field_of "$arg") && break
+  done
+  [ -n "$field" ] || field=$(field_of "$(git remote get-url origin 2>/dev/null)")
+fi
+[ -n "$field" ] || exec "$real" "$@"
+
+token=$("$HOME/.local/bin/op-agent" read "op://agents/github/$field") || exit 1
+GH_TOKEN=$token exec "$real" "$@"

@@ -1,0 +1,12 @@
+#!/bin/sh
+# Vault field (item `github` in `agents`) holding the fine-grained PAT for a
+# GitHub owner. A fine-grained PAT covers one resource owner, so git
+# (git-credential-op-agent) and gh (the gh wrapper) both pick by owner here.
+# A new owner is a new vault field plus a line below.
+# Usage: github-pat-field <owner>   prints the field name; exit 1 if no PAT applies.
+# GitHub owners are case-insensitive.
+case $(printf %s "$1" | tr '[:upper:]' '[:lower:]') in
+  fourstack) echo GH_TOKEN_FOURSTACK ;;
+  basvanwesting) echo GH_TOKEN_PERSONAL ;;
+  *) exit 1 ;;
+esac
