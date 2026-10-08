@@ -1,2 +1,0 @@
-# Migration: the gh shadow became gh-agent. Drop once the Mac has applied.
-.local/bin/gh
