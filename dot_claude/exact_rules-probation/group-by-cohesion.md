@@ -1,5 +1,8 @@
 ---
 filed: 2026-09-29
+kind: patch
+probation: 2026-10-15
+model: claude-opus-5-5
 learned: 2026-09-29
 project: engage
 ---
