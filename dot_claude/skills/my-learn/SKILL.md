@@ -21,6 +21,7 @@ Otherwise write the rule in this shape, nothing more:
 ```markdown
 ---
 filed: <today, ISO date>
+kind: <knowledge | patch: would a senior colleague, new to the codebase, need to be told? yes = knowledge>
 learned: <ISO date of the incident, if different from today>
 project: <repo name the incident happened in>
 model: <model id of the session that made the mistake, if known>
@@ -35,6 +36,8 @@ Example failure: <the instance, concrete: names, numbers, what was asked, what t
 ```
 
 - Only `paths` is read from the frontmatter by Claude Code; the other fields are for review tooling and are stripped before loading.
+- `kind:` per `knowledge-lives-in-the-codebase`: a patch needs `model:`, and goes to probation at the next model release.
+- State the reason, not only the instruction: a reason carries to cases the incident didn't show.
 - Principle, tell, one example. No compliance instructions, no lists of situations: a long rule matches more than the failure it came from and starts hampering.
 - Filename: kebab-case slug of the title, `dot_claude/exact_rules/<slug>.md`.
 
@@ -54,8 +57,8 @@ Report the commit hash and the target path.
 
 ## 3. Probation, restore, retire
 
-`/my-memory-review` lists candidates; act only when asked. Each step: same pull, the move below, `chezmoi apply ~/.claude`, `chezmoi diff ~/.claude` empty, check the target is where the step says, commit only that rule, push.
+`/my-memory-review` lists candidates; act only when asked. At every model release, every `kind: patch` rule goes to probation regardless of age (one commit per rule); recurrence is noticed by the fresh-eyes review or the user and restores it. Each step: same pull, the move below, `chezmoi apply ~/.claude`, `chezmoi diff ~/.claude` empty, check the target is where the step says, commit only that rule, push.
 
 - **Probation**: `git mv dot_claude/exact_rules/<slug>.md dot_claude/exact_rules-probation/`, add `probation: <today>` to the frontmatter. Target moves to `~/.claude/rules-probation/`, which Claude Code does not load. Commit `Probation rule: <title>`, body: why the review should catch it unaided.
-- **Restore**: when a review remark matches a probation rule's tell. Move it back to `dot_claude/exact_rules/`, replace `probation:` with `restored: <today>`. Commit `Restore rule: <title>`, body: the recurrence (project, what slipped). No new probation for it before the next model generation.
+- **Restore**: when a review remark matches a probation rule's tell. Move it back to `dot_claude/exact_rules/`, replace `probation:` with `restored: <today>`. Commit `Restore rule: <title>`, body: the recurrence (project, what slipped). No new probation for it before the next model release.
 - **Retire**: a probation rule two months or more on probation with no matching remark: `git rm`. Commit `Retire rule: <title>`, body: no recurrence since <probation date>, or superseded by <rule>. A loaded rule is never retired directly; it goes through probation first.
