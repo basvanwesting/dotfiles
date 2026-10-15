@@ -1,5 +1,8 @@
 ---
 filed: 2026-09-26
+kind: patch
+probation: 2026-10-15
+model: unknown (filed before model tracking)
 ---
 
 # Always Use Generators
