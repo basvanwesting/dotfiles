@@ -1,5 +1,6 @@
 ---
 filed: 2026-10-12
+kind: knowledge
 learned: 2026-10-12
 project: engage
 model: claude-opus-5-5

@@ -1,5 +1,6 @@
 ---
 filed: 2026-10-01
+kind: knowledge
 project: engage
 model: claude-opus-5-5
 ---

@@ -1,5 +1,6 @@
 ---
 filed: 2026-09-26
+kind: knowledge
 learned: 2026-09-26
 project: engage
 ---

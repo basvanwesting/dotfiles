@@ -1,5 +1,6 @@
 ---
 filed: 2026-10-04
+kind: knowledge
 learned: 2026-09-27
 project: ser8-home
 ---
