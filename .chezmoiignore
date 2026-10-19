@@ -7,6 +7,7 @@ README.md
 {{- $omarchy := eq (get .chezmoi.osRelease "id") "omarchy" -}}
 {{ if not $darwin }}
 .Brewfile
+.livebookdesktop.sh
 {{ end }}
 {{ if $omarchy }}
 # Omarchy ships these and keeps improving them; let it own them here.
