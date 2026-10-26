@@ -13,7 +13,7 @@ aliases.sh if present) and git identity (see the OS layer table). Hyprland/Omarc
 
 | Layer | Shell stack | Owned by Omarchy, so ignored here | Git identity |
 |-------|-------------|-----------------------------------|--------------|
-| macOS | zsh, starship, nvim, `~/.Brewfile` | -- | `~/.gitconfig` |
+| macOS | zsh, starship, nvim, `~/.Brewfile`, himalaya | -- | `~/.gitconfig` |
 | Omarchy | bash + Omarchy's rc layer; we only hook `~/.config/shell/*` into its `~/.bashrc` (`modify_dot_bashrc`) | `.zshrc`, `.config/nvim` (Omarchy's LazyVim has theme hot-reload and remote clipboard), `.config/git/config`, `.config/starship.toml` | `~/.config/git/config`, written by Omarchy's first-run wizard |
 | bare Linux | same as macOS minus `~/.Brewfile` | -- | none needed |
 

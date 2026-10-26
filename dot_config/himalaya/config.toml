@@ -1,0 +1,21 @@
+# himalaya v2: mail from the terminal for me, not for agents. Passwords come from bare `op`
+# (1Password app, Touch ID per session), never op-agent: a mailbox password can reset other
+# accounts, so it stays out of the agents vault. Gmail refuses the account password over
+# IMAP/SMTP, hence a per-account app password. Items are referenced by ID: secret references
+# reject the `@` in an item named after its address.
+#
+# No mailbox aliases: Gmail reports the special-use roles itself and localizes folder names.
+# No message.send.save-copy: Gmail files SMTP sends in Sent already, a copy would duplicate.
+
+[accounts.fourstack]
+default = true
+email = "bas@fourstack.nl"
+display-name = "Bas van Westing"
+
+imap.server = "imaps://imap.gmail.com:993"
+imap.sasl.plain.username = "bas@fourstack.nl"
+imap.sasl.plain.password.command = "op read --account agilerbv.1password.com op://Employee/ifu4qysbxna3ndgv45fi25x3sa/app-password"
+
+smtp.server = "smtps://smtp.gmail.com:465"
+smtp.sasl.plain.username = "bas@fourstack.nl"
+smtp.sasl.plain.password.command = "op read --account agilerbv.1password.com op://Employee/ifu4qysbxna3ndgv45fi25x3sa/app-password"

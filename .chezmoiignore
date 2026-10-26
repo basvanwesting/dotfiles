@@ -8,6 +8,8 @@ README.md
 {{ if not $darwin }}
 .Brewfile
 .livebookdesktop.sh
+# Its password commands need the 1Password app, wired on macOS only.
+.config/himalaya
 {{ end }}
 {{ if $omarchy }}
 # Omarchy ships these and keeps improving them; let it own them here.
