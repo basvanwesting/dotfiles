@@ -17,6 +17,7 @@ From José Valim, "Evolving programming languages in the AI era" (dashbit.co/blo
 - **An invariant only written down is not enforced.** If a machine can tell it from a slip, give it a check. A test over the compiled code (call graph, attributes) sees through aliases and pipes where grep doesn't. If no check can tell intent (a team's red vs a raw colour), it stays a convention (rule `intent-beats-mechanical-rules`).
 - **Trace-test stateful processes.** Random interleavings of what the outside sends (user actions, joins/leaves/disconnects, timers), invariants after every step. Example tests only walk the orders someone thought of. Drive the process through its public interface and existing simulators, so a refactor inside passes the test by.
 - **Prove a check isn't vacuous.** Break the invariant once and watch it fail. A generated test asserts its traces got deep: a renamed action answered by a catch-all stays green otherwise. Measure the flake rate over many seeds before committing.
+- **Ask the running system and the compiled code, not the text.** Runtime state (a process's state, its queue, what is registered) comes from evaluating in the running app, not from guessing at logs or stepping through a debugger. Structure (who calls what, where a module or doc lives) comes from the compiled code or a language-aware tool, not from grep.
 - **Locality.** Behaviour injected by macros or hooks hides from readers and from call-graph checks; keep it rare.
 
 ## User Habits
