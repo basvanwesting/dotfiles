@@ -10,6 +10,15 @@ description: Deliver complete, consistent changes even if it takes longer. Parti
 Be concise in all interactions and commit messages. Sacrifice grammar for brevity.
 End each plan with a list of unresolved questions (if any). Keep questions brief.
 
+## Quality: Guarantees Over Prose
+
+From José Valim, "Evolving programming languages in the AI era" (dashbit.co/blog/evolving-ai-era, 2026). Agents don't mind tedium, so spend it on guarantees, in four layers: correct by construction (invalid states can't be expressed: enforced structs, nonce-fenced timers), checked before running (types, lint, checks over the compiled code), enforced at runtime (isolation, supervision), validated by tests (examples, properties, traces).
+
+- **An invariant only written down is not enforced.** If a machine can tell it from a slip, give it a check. A test over the compiled code (call graph, attributes) sees through aliases and pipes where grep doesn't. If no check can tell intent (a team's red vs a raw colour), it stays a convention (rule `intent-beats-mechanical-rules`).
+- **Trace-test stateful processes.** Random interleavings of what the outside sends (user actions, joins/leaves/disconnects, timers), invariants after every step. Example tests only walk the orders someone thought of. Drive the process through its public interface and existing simulators, so a refactor inside passes the test by.
+- **Prove a check isn't vacuous.** Break the invariant once and watch it fail. A generated test asserts its traces got deep: a renamed action answered by a catch-all stays green otherwise. Measure the flake rate over many seeds before committing.
+- **Locality.** Behaviour injected by macros or hooks hides from readers and from call-graph checks; keep it rare.
+
 ## User Habits
 
 Vim user — reflexively hits Esc as a "reset to normal mode" gesture with no intent to cancel. Esc is unbound from `chat:cancel` in `~/.claude/keybindings.json` (Chat context). Ctrl-C is the interrupt key. Editor mode stays on `normal` (not vim mode), because vim mode makes slash commands trigger search.
