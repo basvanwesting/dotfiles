@@ -102,6 +102,10 @@ show_agent_labels_on_pane_borders = false
 [ui.sidebar.spaces]
 rows = [["state_icon", "workspace", "git_status"]]
 
+# Every agent is claude, so the stock second row naming the agent says nothing.
+[ui.sidebar.agents]
+rows = [["state_icon", "machine", "workspace", "tab"]]
+
 [ui.toast]
 delivery = "system"
 
