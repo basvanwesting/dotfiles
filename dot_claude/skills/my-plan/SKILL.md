@@ -26,6 +26,7 @@ The worker is the peer named like this session with `-work` for `-plan` (`cu-pla
 - `queue/NN-<slug>.md`: approved briefs, NN = send order (the user's priority, then dependencies).
 - `sent/`: the brief in flight, at most one. The worker's inbox is not a queue: a message drains at its next tool call, so a second brief would land in the middle of the first.
 - `done/`: briefs whose commits are verified.
+- `yours.md`: the user's own actions that briefs leave behind (PROD rehearsals and deletes, hand fixes, pushes, things to judge after deploy), grouped by when. Every "not doable by the worker" lands here when its brief is verified; the user says when one is done and the planner removes it. The backlog is work for briefs; this is work for the user. The user asks for either at any time.
 
 ## Loop
 
@@ -41,7 +42,7 @@ The worker is the peer named like this session with `-work` for `-plan` (`cu-pla
 The conversation with the user is a design conversation; worker traffic arrives in the middle of it and must not split it. Each worker message forces a turn, so:
 
 - Handle `done` reports and idle notices quietly: verify, move, file, send the next brief. The visible reply is at most one line (`08 done, verified, filed.`), never a summary that buries the design thread.
-- At a pause (a design is approved or parked, or the user asks), give one block, headed `Since last time`: per finished brief its SHA and one line, what is the user's to do (PROD rehearsals, hand fixes, pushes), and what went into the backlog. Nothing that needs no action.
+- At a pause (a design is approved or parked, or the user asks), give one block, headed `Since last time`: per finished brief its SHA and one line, what was added to `yours.md`, and what went into the backlog. Nothing that needs no action.
 - A `blocked` question for the user cannot wait: the worker is idle on it. Ask at once, in its own block headed `Worker blocked on NN-<slug>`, separate from any design thread, with the options and a recommendation.
 - A decision the user makes while a brief is in flight goes to the worker and is appended to the sent brief as an `## Amendments` section, so the brief in `done/` matches what was built.
 
