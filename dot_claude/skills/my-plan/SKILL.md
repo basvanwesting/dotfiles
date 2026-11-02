@@ -76,7 +76,7 @@ base: <sha>
 - Implement under the commit loop of the global CLAUDE.md. Non-trivial Design decisions get a decision comment in the code.
 - Fresh-eyes review: give the reviewer only the Task section verbatim, the diff and the repo path, not the Design. The decisions are in the code; the reviewer judges the code against the user's words.
 - Commit when green, without asking. One brief may be several commits. Never commit red, even when the cause predates the brief: report `blocked` instead.
-- A check that needs the dev server (visual, Tidewave, probes) is not skipped because none runs: check its port, otherwise start `bin/dev` in the background and stop it after (global CLAUDE.md).
+- A check that needs the dev server (visual checks through Playwright with the machine's installed Chrome or Chromium, Tidewave's runtime tools, probes) is not skipped because none runs: check its port, otherwise start `bin/dev` in the background and stop it after (global CLAUDE.md).
 - Out-of-scope findings: don't fix them, list them in the report.
 - Report to the planner by `SendMessage` (reply to the brief's sender): `done: <sha> …` with the checks run (command and result), what you could not do, and out-of-scope findings. Or `blocked: <question>`, then wait for the answer.
 ```
