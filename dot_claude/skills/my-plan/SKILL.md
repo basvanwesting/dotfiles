@@ -32,9 +32,18 @@ The worker is the peer named like this session with `-work` for `-plan` (`cu-pla
 1. Design with the user. A brief is written only once the user approves the design.
 2. Write it to `queue/` (template below), `base:` = HEAD now.
 3. Send automatically when `sent/` is empty. First re-check the brief's premises against HEAD: the previous brief may have moved them. Fix the brief, or ask the user if the design changes. Move it to `sent/`, then `SendMessage` to the worker with `notify_when_idle: true`. First line: `Brief NN-<slug>: <absolute path>. Read it and follow its Worker protocol.`
-4. Report `done`: verify each SHA with `git log` (the repository, not the report), move the brief to `done/`, tell the user in one line, plus anything the worker could not do (PROD checks). Then step 3 for the next brief.
-5. Report `blocked`: answer if the approved design covers the question, otherwise ask the user. Reply to the worker (`to` = the message's `from`). It waits meanwhile, and nothing else is sent.
-6. Idle notice without a report: check `git log`, then ask the worker what happened. Silence is not done.
+4. Report `done`: verify each SHA with `git log` (the repository, not the report), move the brief to `done/`, file the out-of-scope findings in `backlog.md`. Then step 3 for the next brief. The user hears about it at the next pause (below).
+5. Report `blocked`: answer if the approved design covers the question, otherwise ask the user at once (below). Reply to the worker (`to` = the message's `from`). It waits meanwhile, and nothing else is sent.
+6. Idle notice: after a report it says nothing new, so it is a no-op. Without a report: check `git log`, then ask the worker what happened. Silence is not done.
+
+## Talking to the user
+
+The conversation with the user is a design conversation; worker traffic arrives in the middle of it and must not split it. Each worker message forces a turn, so:
+
+- Handle `done` reports and idle notices quietly: verify, move, file, send the next brief. The visible reply is at most one line (`08 done, verified, filed.`), never a summary that buries the design thread.
+- At a pause (a design is approved or parked, or the user asks), give one block, headed `Since last time`: per finished brief its SHA and one line, what is the user's to do (PROD rehearsals, hand fixes, pushes), and what went into the backlog. Nothing that needs no action.
+- A `blocked` question for the user cannot wait: the worker is idle on it. Ask at once, in its own block headed `Worker blocked on NN-<slug>`, separate from any design thread, with the options and a recommendation.
+- A decision the user makes while a brief is in flight goes to the worker and is appended to the sent brief as an `## Amendments` section, so the brief in `done/` matches what was built.
 
 ## Brief template
 
@@ -65,7 +74,8 @@ base: <sha>
 - Start: `git status` is clean and the premises hold at HEAD. Otherwise report `blocked` and don't improvise: the design was approved against those premises.
 - Implement under the commit loop of the global CLAUDE.md. Non-trivial Design decisions get a decision comment in the code.
 - Fresh-eyes review: give the reviewer only the Task section verbatim, the diff and the repo path, not the Design. The decisions are in the code; the reviewer judges the code against the user's words.
-- Commit when green, without asking. One brief may be several commits.
+- Commit when green, without asking. One brief may be several commits. Never commit red, even when the cause predates the brief: report `blocked` instead.
+- A check that needs the dev server (visual, Tidewave, probes) is not skipped because none runs: check its port, otherwise start `bin/dev` in the background and stop it after (global CLAUDE.md).
 - Out-of-scope findings: don't fix them, list them in the report.
 - Report to the planner by `SendMessage` (reply to the brief's sender): `done: <sha> …` with the checks run (command and result), what you could not do, and out-of-scope findings. Or `blocked: <question>`, then wait for the answer.
 ```
