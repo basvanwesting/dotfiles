@@ -97,6 +97,11 @@ agent_panel_sort = "priority"
 status_indicators = "symbols"
 show_agent_labels_on_pane_borders = false
 
+# Most spaces are idle at any time; one line each keeps the list unscrolled
+# (agents panel is the primary navigation). Branch dropped, git status kept.
+[ui.sidebar.spaces]
+rows = [["state_icon", "workspace", "git_status"]]
+
 [ui.toast]
 delivery = "system"
 
