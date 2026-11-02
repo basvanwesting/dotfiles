@@ -26,7 +26,7 @@ The worker is the peer named like this session with `-work` for `-plan` (`cu-pla
 - `queue/NN-<slug>.md`: approved briefs, NN = send order (the user's priority, then dependencies).
 - `sent/`: the brief in flight, at most one. The worker's inbox is not a queue: a message drains at its next tool call, so a second brief would land in the middle of the first.
 - `done/`: briefs whose commits are verified.
-- `chores.md`: the user's own actions that briefs leave behind (PROD rehearsals and deletes, hand fixes, pushes, things to judge after deploy), grouped by when. Every "not doable by the worker" lands here when its brief is verified; the user says when one is done and the planner removes it. The backlog is work for briefs; this is work for the user. The user asks for either at any time.
+- `chores.md`: the user's own actions that briefs leave behind (PROD rehearsals and deletes, hand fixes, pushes, things to judge after deploy), grouped by when. Every "not doable by the worker" lands here when its brief is verified. Chores expire unannounced (a push, a deploy, an edit in another repo), so each names its check (the command or place that shows it done), and before showing the list the planner runs those checks (the git remote, `fly releases`, the other repo) and drops what is done; the user can still say one is done. The backlog is work for briefs; this is work for the user. The user asks for either at any time.
 
 ## Loop
 
