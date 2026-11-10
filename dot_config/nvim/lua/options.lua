@@ -19,6 +19,8 @@ vim.opt.showmode = false
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
 vim.opt.clipboard = 'unnamedplus'
+-- Inside herdr, tmux or ssh: also OSC 52 to the showing terminal, see the module.
+require('remote_clipboard').setup()
 
 -- Enable break indent
 vim.opt.breakindent = true

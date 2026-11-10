@@ -36,7 +36,9 @@ require('lazy').setup({
   require 'kickstart/plugins/lspconfig',
   require 'kickstart/plugins/conform',
   require 'kickstart/plugins/cmp',
-  require 'kickstart/plugins/tokyonight',
+  -- Colorscheme: on Omarchy the desktop theme, imported as a directory so lazy
+  -- watches the theme file for changes; elsewhere a fixed tokyonight.
+  vim.g.omarchy and { import = 'custom.omarchy' } or require 'kickstart/plugins/tokyonight',
   require 'kickstart/plugins/todo-comments',
   require 'kickstart/plugins/mini',
   require 'kickstart/plugins/treesitter',
@@ -49,6 +51,9 @@ require('lazy').setup({
 }, {
   -- No plugin needs luarocks; skip the hererocks/lua 5.1 checkhealth noise
   rocks = { enabled = false },
+  -- Spec files are watched (an Omarchy theme switch rewrites custom/omarchy/theme.lua);
+  -- the multi-line "Config Change Detected" message would be a hit-enter prompt each time.
+  change_detection = { notify = false },
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
     -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table

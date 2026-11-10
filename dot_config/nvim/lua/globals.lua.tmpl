@@ -8,6 +8,8 @@ vim.g.maplocalleader = ' '
 -- Derived from role: a container has no nerd font on the far end and no internet.
 vim.g.have_nerd_font = {{ ne .role "container" }}
 vim.g.offline = {{ eq .role "container" }}
+-- Omarchy desktop: the colorscheme follows the Omarchy theme (lua/custom/omarchy).
+vim.g.omarchy = {{ eq (get .chezmoi.osRelease "id") "omarchy" }}
 
 -- No remote plugins in use: disable the language hosts (quiet :checkhealth, faster startup)
 vim.g.loaded_perl_provider = 0

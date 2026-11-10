@@ -1,6 +1,6 @@
 README.md
 {{- /* Three OS layers: macOS (zsh stack, Homebrew), Omarchy (a managed Linux that
-       owns bash, starship, git config and nvim; we stay downstream and only hook
+       owns bash, starship and git config; we stay downstream and only hook
        in), and bare Linux (nothing to stay downstream of, so the zsh stack applies).
        Omarchy is detected from /etc/os-release, not from the role. */ -}}
 {{- $darwin := eq .chezmoi.os "darwin" -}}
@@ -13,14 +13,17 @@ README.md
 {{ end }}
 {{ if $omarchy }}
 # Omarchy ships these and keeps improving them; let it own them here.
+# nvim is ours (README: Neovim on Omarchy); the omarchy-nvim package is removed.
 .zshrc
-.config/nvim
 .config/git/config
 .config/starship.toml
 {{ else }}
 # modify_dot_bashrc only exists to hook ~/.config/shell/* into Omarchy's bashrc.
 # Everywhere else zsh is the shell and dot_zshrc.tmpl sources them.
 .bashrc
+# nvim's Omarchy hook-ins: the theme symlink points into Omarchy's state dir.
+.config/nvim/lua/custom/omarchy
+.config/nvim/lua/custom/omarchy/**
 {{ end }}
 {{ if ne .role "server" }}
 # Only the headless server keeps a private key on disk. Desktops use the

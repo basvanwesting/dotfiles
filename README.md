@@ -14,11 +14,28 @@ aliases.sh if present) and git identity (see the OS layer table). Hyprland/Omarc
 | Layer | Shell stack | Owned by Omarchy, so ignored here | Git identity |
 |-------|-------------|-----------------------------------|--------------|
 | macOS | zsh, starship, nvim, `~/.Brewfile`, himalaya | -- | `~/.gitconfig` |
-| Omarchy | bash + Omarchy's rc layer; we only hook `~/.config/shell/*` into its `~/.bashrc` (`modify_dot_bashrc`) | `.zshrc`, `.config/nvim` (Omarchy's LazyVim has theme hot-reload and remote clipboard), `.config/git/config`, `.config/starship.toml` | `~/.config/git/config`, written by Omarchy's first-run wizard |
+| Omarchy | bash + Omarchy's rc layer; we only hook `~/.config/shell/*` into its `~/.bashrc` (`modify_dot_bashrc`) | `.zshrc`, `.config/git/config`, `.config/starship.toml` | `~/.config/git/config`, written by Omarchy's first-run wizard |
 | bare Linux | same as macOS minus `~/.Brewfile` | -- | none needed |
 
 Omarchy is a managed Linux: stay downstream of it and hook in, do not replace its files.
 Bare Linux has nothing to stay downstream of, so it gets the full macOS-style stack.
+
+### Neovim on Omarchy (decided 2026-11-10)
+
+The exception to "do not replace": `~/.config/nvim` is our kickstart config on Omarchy too, and the
+`omarchy-nvim` package (a LazyVim starter) is removed. Omarchy's migrations edit whatever
+`~/.config/nvim` they find while that package is installed (they prepended the clipboard provider to
+`options.lua`, dropped in transparency files) and stand off only when it is absent, so "our config,
+package kept" is the one combination that breaks. What Omarchy's LazyVim had is ported, as plain Lua:
+
+- theme follows the desktop theme: `lua/custom/omarchy/` (Omarchy only; the theme symlink into
+  `~/.local/state/omarchy/current/theme/neovim.lua`, every colorscheme an Omarchy theme can name,
+  and the hot reload on theme switch). Imported as a directory because lazy only watches imported
+  spec files for changes. Each file names the `omarchy-nvim` version it was ported from; after an
+  Omarchy update that breaks theming, diff against `/usr/share/omarchy-nvim/config`.
+- remote clipboard (`lua/remote_clipboard.lua`): on every OS, pbcopy added for macOS. Inside herdr,
+  tmux or ssh a yank also goes out as OSC 52, so a yank on ser8 lands on the laptop.
+- not ported: the transparency and lualine tweaks.
 
 **Role** is configured in chezmoi.toml and says what the machine is for. Default `desktop`
 (from `.chezmoidata.toml`), so a desktop needs no chezmoi.toml at all.
@@ -90,6 +107,8 @@ Then give the machine its `op-agent` token, see [Secrets](#secrets-1password).
 
 ```sh
 omarchy pkg add chezmoi ripgrep fd sd lazygit
+# neovim is only a dependency of omarchy-nvim; `pkg drop` is `pacman -Rns` and would take it along.
+sudo pacman -D --asexplicit neovim && omarchy pkg drop omarchy-nvim && mv ~/.config/nvim ~/.config/nvim.omarchy   # see "Neovim on Omarchy"
 chezmoi init --apply https://github.com/basvanwesting/dotfiles.git   # desktop role needs no chezmoi.toml
 ```
 
