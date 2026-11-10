@@ -104,7 +104,7 @@ on a machine with that OS (the Mac cannot render the Linux side of `.chezmoi.os`
 brew install chezmoi
 chezmoi init --apply https://github.com/basvanwesting/dotfiles.git   # desktop role needs no chezmoi.toml
 brew bundle --global                                          # ~/.Brewfile
-mise install                                                  # runtimes from ~/.tool-versions
+mise install                                                  # tools from ~/.config/mise/config.toml
 sh -c "$(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs)"
 git config --file ~/.gitconfig user.name "..."               # identity is per machine, not in this repo
 git config --file ~/.gitconfig user.email "..."
@@ -121,6 +121,7 @@ sudo pacman -D --asexplicit neovim && omarchy pkg drop omarchy-nvim   # see "Neo
 # LazyVim's config and its 260 MB plugin/mason data live in nvim's dirs, which ours reuses; set them aside.
 for d in .config/nvim .local/share/nvim .local/state/nvim .cache/nvim; do mv ~/$d ~/$d.omarchy; done
 chezmoi init --apply https://github.com/basvanwesting/dotfiles.git   # desktop role needs no chezmoi.toml
+mise install                                                  # tools from ~/.config/mise/config.toml
 ```
 
 Git identity is already in `~/.config/git/config` from Omarchy's first-run wizard. The shell source
@@ -253,6 +254,7 @@ install -d -m 700 ~/.config/op      # then place ser8-provision.token + agent.to
 chezmoi init https://github.com/basvanwesting/dotfiles.git      # https: no SSH key yet
 # write ~/.config/chezmoi/chezmoi.toml: role = "server", [onepassword] mode = "service"
 OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
+mise install                                                  # tools from ~/.config/mise/config.toml
 chezmoi git remote set-url origin git@github.com:basvanwesting/dotfiles.git
 systemctl --user enable --now herdr-server.service             # unit file comes from this repo
 ```
