@@ -97,6 +97,24 @@ Git identity is already in `~/.config/git/config` from Omarchy's first-run wizar
 block lands in Omarchy's `~/.bashrc` on apply; nothing to paste by hand. For a server see below.
 Then give the machine its `op-agent` token, see [Secrets](#secrets-1password).
 
+MacBook with an ISO keyboard (e.g. Dutch): `hid_apple` auto-detects ISO and swaps the key left of Z
+(`` `~ ``) with the top-left one (`§±`). Turn the swap off; the module loads from the initramfs, so rebuild it:
+
+```sh
+echo "options hid_apple fnmode=2 iso_layout=0" | sudo tee /etc/modprobe.d/hid_apple.conf
+sudo limine-mkinitcpio
+```
+
+A desktop that runs no agents can skip the `op-agent` token and the https credential helper from
+[Secrets](#secrets-1password); the 1Password app does all auth:
+
+```sh
+omarchy install service 1password        # sign in, then Settings > Developer:
+                                         # "Use the SSH agent" + "Integrate with 1Password CLI"
+chezmoi git -- remote set-url origin git@github.com:basvanwesting/dotfiles.git   # push over the SSH agent
+ssh -T git@github.com                    # check: "Hi basvanwesting!"
+```
+
 ## Install (container)
 
 In the image's Dockerfile, after installing `chezmoi`, `git`, `zsh`, `neovim`:
