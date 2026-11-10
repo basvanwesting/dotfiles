@@ -105,6 +105,13 @@ echo "options hid_apple fnmode=2 iso_layout=0" | sudo tee /etc/modprobe.d/hid_ap
 sudo limine-mkinitcpio
 ```
 
+Caps Lock as Ctrl: Hyprland config is Omarchy's, so append this to `~/.config/hypr/input.lua` by hand.
+It replaces Omarchy's `omarchy:shift_caps_compose` (Shift + Caps Lock = compose), so there is no compose key.
+
+```lua
+hl.config({ input = { kb_options = "ctrl:nocaps" } })
+```
+
 A desktop that runs no agents can skip the `op-agent` token and the https credential helper from
 [Secrets](#secrets-1password); the 1Password app does all auth:
 
