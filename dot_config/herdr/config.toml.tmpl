@@ -16,8 +16,11 @@ name = "terminal"
 
 [theme.custom]
 # The active tab is drawn as panel_bg text on an accent background, so panel_bg
-# has to be dark for it to read - same colors as status-left's "#[fg=black,bg=blue]"
-panel_bg = "black"
+# has to be dark for it to read. "reset" is the terminal background, which
+# every Omarchy theme keeps dark, so the panel follows the theme instead of a
+# fixed black. The dimmed surfaces (sidebar, tab bar) stay black.
+panel_bg = "reset"
+surface_dim = "black"
 {{- end }}
 
 [terminal]
