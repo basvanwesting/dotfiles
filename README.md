@@ -240,7 +240,10 @@ revoking it never touches the laptops.
 
 Omarchy ISO: Ctrl+C in the install form toggles disk encryption -- leave it OFF for an
 unattended-boot server (a LUKS prompt blocks boot until someone types; see git log).
-Hostname `ser8`. Unencrypted installs get no SDDM autologin, which is what a server wants.
+Hostname `ser8`. Unencrypted installs get no SDDM autologin; ser8 adds it (below), since gliff
+(`gliff --headless basvanwesting@ser8`, decided 2026-11-11) needs a running Hyprland session of
+this user and `gliff-server` attaches to one, it never starts one. `Relogin=true` restarts the
+session if Hyprland exits; with BIOS Always On, a power cut ends back in a gliff-ready session.
 
 ```sh
 omarchy pkg add chezmoi ripgrep fd sd lazygit 1password-cli   # cli is not on a fresh install; `chezmoi apply` needs it
@@ -249,6 +252,8 @@ omarchy toggle idle stay-awake     # always pass the mode: bare `toggle idle` fl
 sudo loginctl enable-linger "$USER"
 sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 sudo systemctl enable --now btrfs-scrub@-.timer   # monthly checksum verify; unclean power cuts are the norm here
+printf '[Autologin]\nUser=%s\nSession=hyprland-uwsm\nRelogin=true\n' "$USER" | sudo tee /etc/sddm.conf.d/20-autologin.conf
+sudo systemctl restart sddm                         # Hyprland now runs on seat0: pgrep -u "$USER" Hyprland
 omarchy pkg add smartmontools                       # drive health: smartctl -a /dev/nvme0
 install -d -m 700 ~/.config/op      # then place ser8-provision.token + agent.token, 0600, from 1Password
 chezmoi init https://github.com/basvanwesting/dotfiles.git      # https: no SSH key yet
@@ -270,7 +275,6 @@ Manual, outside chezmoi:
 - Git identity: the Omarchy first-run wizard already wrote it to `~/.config/git/config`; no `~/.gitconfig` needed.
 - `chezmoi init` works against a pre-existing clone in `~/.local/share/chezmoi` (no repo arg, nothing re-cloned).
 - BIOS (Beelink SER8, AMI Aptio): Del at boot, Advanced > AMD CBS > FCH Common Options > AC Power Loss Options > Always On, F4 to save. Not under any Power/Chipset menu. Test: unplug while off, replug, it should boot. Unplug the install USB.
-- If the install was encrypted anyway: `/etc/sddm.conf.d/zz-server.conf` with `[Autologin]` + empty `User=`.
 
 ### herdr ahead of Omarchy stable (decided 2026-09-21, ser8 on edge since 2026-09-26)
 
