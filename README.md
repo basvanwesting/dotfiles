@@ -240,6 +240,9 @@ revoking it never touches the laptops.
 
 Omarchy ISO: Ctrl+C in the install form toggles disk encryption -- leave it OFF for an
 unattended-boot server (a LUKS prompt blocks boot until someone types; see git log).
+Reconsidered 2026-11-11 for gliff, kept OFF: gliff needs ssh + a running Hyprland, so it can't
+answer the prompt. Premise: nothing sensitive on ser8. Rejected: TPM2 auto-unlock (only guards a
+pulled SSD), ssh unlock in the initramfs (dropbear; LAN-only, Tailscale isn't up yet).
 Hostname `ser8`. Unencrypted installs get no SDDM autologin; ser8 adds it (below), since gliff
 (`gliff --headless basvanwesting@ser8`, decided 2026-11-11) needs a running Hyprland session of
 this user and `gliff-server` attaches to one, it never starts one. `Relogin=true` restarts the
