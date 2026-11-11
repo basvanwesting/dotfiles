@@ -167,6 +167,36 @@ hl.on("window.open", function(window)
 end)
 ```
 
+T2 MacBook (Air 2020): S3 deep sleep woke within seconds, and with the lid shut logind re-suspends
+every ~30 s; the loop drained a full battery overnight (2026-11-10, ~1000 cycles). Two wake sources,
+found by bisecting `/proc/acpi/wakeup` (2026-11-11):
+
+- `TXHC` (Thunderbolt xHCI, `00:0d.0`, its own GPE `0x73`): wakes it with the lid open.
+- `ARPT` (BCM4377b Wi-Fi, `73:00.0`, GPE `0x69`): wakes it with the lid shut. brcmfmac re-enables its
+  wake on every resume, so a boot-time udev rule loses; the unit re-disables before every sleep.
+
+Several devices share a GPE (`RP01`/`RP05`/`ARPT` on `0x69`, `LID0`/`EC`/`ADP1` on `0x6F`), which made
+single-device bisecting misleading; the rest keep their wake (lid, keyboard, power button). Not the
+BCM4377b failure from Omarchy discussion #4695 (D3 timeout, suspend aborts with -5): here every suspend
+succeeded and was then woken. Should that one appear, unloading `brcmfmac_wcc brcmfmac` around sleep
+is the reported fix. A unit, not a hook: systemd 262 only runs hooks from `/usr/lib/systemd/system-sleep/`.
+
+```sh
+sudo tee /etc/systemd/system/t2-no-spurious-wake.service <<'EOF'
+[Unit]
+Description=Disable Thunderbolt and Wi-Fi wake before sleep (T2 S3 wake loop)
+Before=sleep.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'for d in 0000:00:0d.0 0000:73:00.0; do echo disabled > /sys/bus/pci/devices/$d/power/wakeup; done'
+
+[Install]
+WantedBy=sleep.target
+EOF
+sudo systemctl enable t2-no-spurious-wake.service
+```
+
 A desktop that runs no agents can skip the `op-agent` token and the https credential helper from
 [Secrets](#secrets-1password); the 1Password app does all auth:
 
