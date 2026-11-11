@@ -279,6 +279,19 @@ Manual, outside chezmoi:
 - `chezmoi init` works against a pre-existing clone in `~/.local/share/chezmoi` (no repo arg, nothing re-cloned).
 - BIOS (Beelink SER8, AMI Aptio): Del at boot, Advanced > AMD CBS > FCH Common Options > AC Power Loss Options > Always On, F4 to save. Not under any Power/Chipset menu. Test: unplug while off, replug, it should boot. Unplug the install USB.
 
+### If ser8 is stolen
+
+The disk is unencrypted (see above), so treat every credential on it as read. No device-side kill
+switch (decided 2026-11-11): it only fires if the thief boots it online, and pulling the SSD
+bypasses it. Revoke from another machine instead; ser8 has its own keys and service accounts so
+this never touches the laptops:
+
+1. 1Password: revoke ser8's service-account tokens. Check their activity log for use after the theft.
+2. Rotate every item in `agents` that ser8's token could read before step 1.
+3. GitHub: delete ser8's SSH key.
+4. Tailscale: remove the ser8 node.
+5. Sign out ser8's sessions of any logged-in tools (agent subscriptions).
+
 ### herdr ahead of Omarchy stable (decided 2026-09-21, ser8 on edge since 2026-09-26)
 
 Decision: **Omarchy edge package** (B), not a direct binary (A). Reasons: Omarchy's herdr migration
