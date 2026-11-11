@@ -242,12 +242,17 @@ revoking it never touches the laptops.
 Omarchy ISO: Ctrl+C in the install form toggles disk encryption -- leave it OFF for an
 unattended-boot server (a LUKS prompt blocks boot until someone types; see git log).
 Reconsidered 2026-11-11 for gliff, kept OFF: gliff needs ssh + a running Hyprland, so it can't
-answer the prompt. Premise: nothing sensitive on ser8. Rejected: TPM2 auto-unlock (only guards a
-pulled SSD), ssh unlock in the initramfs (dropbear; LAN-only, Tailscale isn't up yet).
+answer the prompt. Premise: no sensitive data on ser8 (no personal data, no production exports);
+its credentials are revocable, see "If ser8 is stolen". Reopen if data lands here. Rejected: TPM2
+auto-unlock (only guards a pulled SSD), ssh unlock in the initramfs (dropbear; LAN-only, Tailscale
+isn't up yet).
 Hostname `ser8`. Unencrypted installs get no SDDM autologin; ser8 adds it (below), since gliff
 (`gliff --headless basvanwesting@ser8`, decided 2026-11-11) needs a running Hyprland session of
 this user and `gliff-server` attaches to one, it never starts one. `Relogin=true` restarts the
 session if Hyprland exits; with BIOS Always On, a power cut ends back in a gliff-ready session.
+Accepted: `stay-awake` also disables the idle lock, so the console session is never locked. With an
+unencrypted disk physical access already meant full access; this only lowers the bar from booting
+a USB stick to plugging in a monitor.
 
 ```sh
 omarchy pkg add chezmoi ripgrep fd sd lazygit 1password-cli   # cli is not on a fresh install; `chezmoi apply` needs it
@@ -285,14 +290,19 @@ Manual, outside chezmoi:
 The disk is unencrypted (see above), so treat every credential on it as read. No device-side kill
 switch (decided 2026-11-11): it only fires if the thief boots it online, and pulling the SSD
 bypasses it. Revoke from another machine instead; ser8 has its own keys and service accounts so
-this never touches the laptops:
+this never touches the laptops. The specifics (which services, where to rotate each) are in a
+private 1Password note, not here and not in `agents` (the vault being revoked):
 
-1. 1Password: revoke ser8's service-account tokens. Check their activity log for use after the theft.
-2. Rotate every item in `agents` that ser8's token could read before step 1 (parked items in
-   `agents-disabled` are out of reach and need nothing).
-3. GitHub: delete ser8's SSH key.
-4. Tailscale: remove the ser8 node.
+1. 1Password: revoke ser8's service-account tokens.
+2. GitHub: delete ser8's SSH key. Until then, and before any `chezmoi update` or `git pull`
+   anywhere, review commits pushed after the theft: every machine applies this repo, so a commit
+   pushed with ser8's key or a GitHub token from `agents` would run on the laptops.
+3. Rotate what ser8's token read after the theft, per the service accounts' activity log; rotate
+   all of `agents` if the log can't tell. Items parked in `agents-disabled` need nothing.
+4. Tailscale: remove the ser8 node (key expiry is disabled, so it never drops off by itself).
 5. Sign out ser8's sessions of any logged-in tools (agent subscriptions).
+6. If personal data was on it after all (premise above broken): start the data breach procedure
+   (GDPR: 72 hours to report).
 
 ### herdr ahead of Omarchy stable (decided 2026-09-21, ser8 on edge since 2026-09-26)
 
