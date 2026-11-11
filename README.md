@@ -136,11 +136,35 @@ echo "options hid_apple fnmode=2 iso_layout=0" | sudo tee /etc/modprobe.d/hid_ap
 sudo limine-mkinitcpio
 ```
 
-Caps Lock as Ctrl: Hyprland config is Omarchy's, so append this to `~/.config/hypr/input.lua` by hand.
-It replaces Omarchy's `omarchy:shift_caps_compose` (Shift + Caps Lock = compose), so there is no compose key.
+Hyprland overrides: Hyprland config is Omarchy's, so append these to `~/.config/hypr/input.lua` by hand.
+
+- Caps Lock as Ctrl. Replaces Omarchy's `omarchy:shift_caps_compose` (Shift + Caps Lock = compose), so
+  there is no compose key; both Shifts together still toggle Caps Lock.
+- Laptop only, tap-to-click off: a finger resting on the trackpad otherwise clicks, and a click focuses
+  the window under the pointer.
+- Pointer to the centre of a window that opens with focus (decided 2026-11-11). Focus follows the mouse,
+  so a pointer left over the previous window hands focus back to it at the first movement.
+  `follow_mouse_threshold` was tried first and dropped: it only delays the same steal.
 
 ```lua
-hl.config({ input = { kb_options = "ctrl:nocaps" } })
+hl.config({
+  input = {
+    kb_options = "ctrl:nocaps,shift:both_capslock_cancel",
+    touchpad = { tap_to_click = false },   -- laptop only
+  },
+})
+
+hl.on("window.open", function(window)
+  -- The layout places the window after this event; read its box once it has.
+  hl.timer(function()
+    local active = hl.get_active_window()
+    if not active or active.address ~= window.address then return end
+    hl.dispatch(hl.dsp.cursor.move({
+      x = math.floor(window.at.x + window.size.x / 2),
+      y = math.floor(window.at.y + window.size.y / 2),
+    }))
+  end, { type = "oneshot", timeout = 50 })
+end)
 ```
 
 A desktop that runs no agents can skip the `op-agent` token and the https credential helper from
