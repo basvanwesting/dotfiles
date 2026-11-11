@@ -1,0 +1,25 @@
+{{- /* The omarchy-settings package (its omarchy-tools.toml stands in for the whole
+     package) declares these tools system-wide, lazy and self-updating, and upgrade
+     settings in /etc/mise/conf.d. A user entry outranks the declaration and stops
+     auto_update, so migrations 1791382872 (tool `latest` entries) and 1792343225
+     (auto_prune) strip them from this file. Only machines without the package (the
+     Mac) list them here. node is gated too: Omarchy declares it, so the Mac's pin is
+     not imposed on Omarchy machines; projects pin their own node. Keyed on the file,
+     not the OS: a fresh Omarchy install before omarchy-settings converges after its
+     migrations. */ -}}
+{{- $omarchy := stat "/etc/mise/conf.d/omarchy-tools.toml" -}}
+[tools]
+flyctl = "latest"
+lua-language-server = "latest"
+stylua = "latest"
+{{- if not $omarchy }}
+claude = "latest"
+codex = "latest"
+gh = "latest"
+"http:muse" = { version = "latest", url = "https://api.meta.ai/muse-launcher.sh", bin = "muse", version_list_url = "https://api.meta.ai/muse-code/channels/muse-stable", version_json_path = ".version" }
+node = "26.8.1"
+"npm:playwright" = "latest"
+
+[settings.upgrade]
+auto_prune = false
+{{- end }}
