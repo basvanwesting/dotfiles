@@ -60,6 +60,19 @@ dotup() {
   chezmoi apply
 }
 
+# Code lives in ~/workspace on every machine, not in Omarchy's ~/Work. try's experiment dirs go
+# there too: this replaces Omarchy's lazy wrapper (default/bash/init, hard-coded ~/Work/tries).
+# try init emits code for $SHELL, so pass the shell this file is actually sourced in.
+if command -v try >/dev/null 2>&1; then
+  try() {
+    unset -f try
+    _sh=bash; [ -n "$ZSH_VERSION" ] && _sh=zsh
+    eval "$(SHELL=$(command -v "$_sh") command try init "$HOME/workspace/tries")"
+    unset _sh
+    try "$@"
+  }
+fi
+
 # Reload every idle shell pane in herdr; panes running a program (incl. agents) are skipped.
 # reload_all [machine]  -> reload_all ser8 acts on that saved machine's server.
 # herdr only prints JSON; grep/cut keep this free of jq or python.
