@@ -6,6 +6,16 @@ throwaway Linux shell image. Shared here: herdr, ghostty, git defaults, starship
 Machine-local and unmanaged: `~/.config/shell/local.sh` (client project shortcuts; sourced by
 aliases.sh if present) and git identity (see the OS layer table). Hyprland/Omarchy config is Omarchy's.
 
+## Machines
+
+| Machine | OS / role | Used for |
+|---------|-----------|----------|
+| ser9 | Omarchy, `desktop` (monitor attached) | main development machine at the office; runs agents (since 2026-11-12) |
+| MacBook Pro | macOS, `desktop` | main personal development machine; runs agents. Being phased out, to become an Omarchy gliff thin client |
+| ser8 | Omarchy, `server` (headless) | always-on server over Tailscale/SSH/gliff, see [Server role](#server-role-ser8) |
+
+ser9 and the MacBook Pro are used the same way, so a setup step for one is a setup step for the other.
+
 ## Two axes
 
 **OS layer** is detected, never configured. `.chezmoi.os` separates macOS; on Linux
@@ -51,7 +61,7 @@ What Omarchy's LazyVim had is ported, as plain Lua:
 
 | Role | Machines | Effect |
 |------|----------|--------|
-| `desktop` | laptops, Omarchy desktop | SSH via the 1Password agent, only `.pub` selector files on disk |
+| `desktop` | laptops, ser9 | SSH via the 1Password agent, only `.pub` selector files on disk |
 | `server` | ser8 | headless: ed25519 key rendered to disk from 1Password and every `~/.ssh/config` Host block uses it (no `IdentityAgent`), `.config/systemd/user/herdr-server.service` installed, server-specific rules in `~/.claude/CLAUDE.md` |
 | `container` | shell image | assumed offline and viewed through someone else's terminal: no nerd-font glyphs, nvim treesitter auto-install and gitsigns off, no 1Password |
 
@@ -76,20 +86,29 @@ Several machines commit to this public repo (the Mac and ser8 both did on the sa
 produced a rebase conflict), so:
 
 ```sh
-chezmoi git pull -- --ff-only          # before editing, every time
+dotup                                  # before editing, every time (review + apply, below)
 chezmoi source-path ~/.config/foo      # find the source file, edit that, never the target
 chezmoi diff && chezmoi apply
 chezmoi git -- commit -am "..."        # plain git in ~/.local/share/chezmoi, no autoCommit
 chezmoi git push                       # by hand, nothing leaves a machine unasked
 ```
 
-Other machines: `chezmoi update` (pull + apply). On the server too, without a token: `.chezmoiignore`
-skips the SSH key template unless `OP_SERVICE_ACCOUNT_TOKEN` is set, so day-to-day commands never
-touch 1Password and leave the key on disk alone. Writing the key is a provisioning action, see
-"Server role (ser8)".
+Other machines: `dotup` (in `~/.config/shell/functions.sh`), never `chezmoi update`. Every machine
+applies `main`, and that writes `~/.local/bin/op-agent`, the shell rc layer and the agents' `~/.claude/`
+instructions. A pushed commit is therefore code on all of them, and agents push here too (`/my-learn`).
+`dotup` fetches, shows every incoming commit in full, and fast-forwards plus applies only after a yes.
+Read the diff, not just the subjects. Push access is kept narrow (decided 2026-11-12, security review):
+
+- `GH_TOKEN_PERSONAL` (the `agents` vault, readable by every machine's agent token) has no write
+  access to this repo. Pushes go over SSH through the 1Password agent, which asks for approval.
+- A ruleset on `main` blocks force-pushes and deletion, so history can't be rewritten to hide a commit.
+
+On the server too, without a token: `.chezmoiignore` skips the SSH key template unless
+`OP_SERVICE_ACCOUNT_TOKEN` is set, so day-to-day commands never touch 1Password and leave the key on
+disk alone. Writing the key is a provisioning action, see "Server role (ser8)".
 
 ```sh
-chezmoi update
+dotup
 systemctl --user is-active herdr-server          # post-update check on ser8
 ```
 
@@ -124,9 +143,11 @@ chezmoi init --apply https://github.com/basvanwesting/dotfiles.git   # desktop r
 mise install                                                  # tools from ~/.config/mise/config.toml
 ```
 
-Git identity is already in `~/.config/git/config` from Omarchy's first-run wizard. The shell source
-block lands in Omarchy's `~/.bashrc` on apply; nothing to paste by hand. For a server see below.
-Then give the machine its `op-agent` token, see [Secrets](#secrets-1password).
+Git identity normally comes from Omarchy's first-run wizard and lives in `~/.config/git/config`. If
+`git config user.name` is empty, set it there. The shell source block lands in Omarchy's `~/.bashrc`
+on apply; nothing to paste by hand. `chezmoi apply` replaces Omarchy's stock ghostty and herdr configs
+(herdr's prefix goes from Omarchy's `ctrl+space` to stock `ctrl+b`). Optionally pre-sync the nvim plugins
+with `nvim --headless "+Lazy! sync" +qa`. For a server see below.
 
 MacBook with an ISO keyboard (e.g. Dutch): `hid_apple` auto-detects ISO and swaps the key left of Z
 (`` `~ ``) with the top-left one (`§±`). Turn the swap off; the module loads from the initramfs, so rebuild it:
@@ -197,15 +218,21 @@ EOF
 sudo systemctl enable t2-no-spurious-wake.service
 ```
 
-A desktop that runs no agents can skip the `op-agent` token and the https credential helper from
-[Secrets](#secrets-1password); the 1Password app does all auth:
+Every Omarchy desktop then sets up the 1Password app for SSH and the user's own `op`:
 
 ```sh
 omarchy install service 1password        # sign in, then Settings > Developer:
                                          # "Use the SSH agent" + "Integrate with 1Password CLI"
 chezmoi git -- remote set-url origin git@github.com:basvanwesting/dotfiles.git   # push over the SSH agent
-ssh -T git@github.com                    # check: "Hi basvanwesting!"
+# Omarchy has no ssh-askpass, so the first connection can't prompt for the host key
+# ("Host key verification failed"); accept it on first use.
+ssh -o StrictHostKeyChecking=accept-new -T git@github.com   # check: "Hi basvanwesting!"
+op --account agilerbv.1password.com vault list   # two accounts, so bare `op` needs --account
 ```
+
+A desktop that runs agents (ser9, like the MacBook Pro) also needs its `op-agent` token and the https
+credential helper, see [Secrets](#secrets-1password). A desktop without agents skips both; the
+1Password app handles all auth.
 
 ## Install (container)
 
@@ -245,8 +272,12 @@ whole account, a service account is scoped read-only to one vault and never prom
   whole-account prompt):
 
   ```sh
-  (umask 077; op --account agilerbv.1password.com service-account create "$(hostname -s)-agent service account" --vault agents:read_items --raw > ~/.config/op/agent.token)
+  (umask 077; install -d -m 700 ~/.config/op; op --account agilerbv.1password.com service-account create "$(hostname -s)-agent service account" --vault agents:read_items --raw > ~/.config/op/agent.token)
+  op-agent vault list                     # check: only `agents`
   ```
+
+  The desktop app doesn't show service accounts. To find or revoke one, go to agilerbv.1password.com >
+  Developer > Directory.
 - desktop: SSH keys also live in 1Password: `IdentityAgent` in `~/.ssh/config`, only `.pub` selector
   files on disk. Bare `op` is still the app, for the user's own whole-account use.
 - server: no GUI, so a second service account for `ser8-host`, token in `~/.config/op/ser8-provision.token`.
@@ -271,12 +302,17 @@ gh's own login, or unauthenticated on a machine without one (ser8).
 A new owner is a new field plus a line in `~/.local/bin/github-pat-field`, the map both share.
 A passkey cannot do this: it signs in a browser, not git.
 Wiring for git, by hand once per machine (git config is not managed on Omarchy). The empty entry drops
-helpers from system config (osxkeychain on macOS), so the vault stays the only copy:
+helpers from system config (osxkeychain on macOS), so the vault stays the only copy. `--replace-all`
+also clears the helper that `gh auth login` / `gh auth setup-git` adds for github.com. On Omarchy that
+helper also points at a version-pinned mise path, which breaks on the next gh upgrade. Its gist.github.com
+entry can stay:
 
 ```sh
 git config --global credential.https://github.com.useHttpPath true
-git config --global credential.https://github.com.helper ''
+git config --global --replace-all credential.https://github.com.helper ''
 git config --global --add credential.https://github.com.helper '!~/.local/bin/git-credential-op-agent'
+printf 'protocol=https\nhost=github.com\npath=basvanwesting/dotfiles.git\n\n' | git credential fill | grep -c '^password='   # check: 1
+gh-agent repo view basvanwesting/dotfiles --json viewerPermission   # check: ADMIN
 ```
 
 Rule for any future systemd unit that needs a secret (none does today; `herdr-server.service` has
@@ -348,7 +384,7 @@ this never touches the laptops. The specifics (which services, where to rotate e
 private 1Password note, not here and not in `agents` (the vault being revoked):
 
 1. 1Password: revoke ser8's service-account tokens.
-2. GitHub: delete ser8's SSH key. Until then, and before any `chezmoi update` or `git pull`
+2. GitHub: delete ser8's SSH key. Until then, and before any `dotup` or `git pull`
    anywhere, review commits pushed after the theft: every machine applies this repo, so a commit
    pushed with ser8's key or a GitHub token from `agents` would run on the laptops.
 3. Rotate what ser8's token read after the theft, per the service accounts' activity log; rotate

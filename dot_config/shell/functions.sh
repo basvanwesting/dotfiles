@@ -40,6 +40,26 @@ unmig() {
   bundle exec rake db:rollback RAILS_ENV="${1:-development}"
 }
 
+# Pull and apply the dotfiles only after reading what came in. This repo is public and
+# every machine applies it, so a pushed commit is code on all of them (README "Workflow").
+# Shows each incoming commit in full (author, committer, diff), then asks.
+dotup() {
+  chezmoi git -- fetch --quiet || return
+  if [ -z "$(chezmoi git -- log --oneline 'HEAD..@{u}')" ]; then
+    echo "dotfiles: no new commits"
+  else
+    chezmoi git -- log --reverse --format=fuller -p 'HEAD..@{u}'
+    printf 'Apply these commits? [y/N] '
+    read -r _a
+    case $_a in
+      y | Y) chezmoi git -- merge --ff-only --quiet '@{u}' || { unset _a; return 1; } ;;
+      *) echo "dotfiles: nothing applied"; unset _a; return 1 ;;
+    esac
+    unset _a
+  fi
+  chezmoi apply
+}
+
 # Reload every idle shell pane in herdr; panes running a program (incl. agents) are skipped.
 # reload_all [machine]  -> reload_all ser8 acts on that saved machine's server.
 # herdr only prints JSON; grep/cut keep this free of jq or python.

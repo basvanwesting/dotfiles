@@ -51,7 +51,7 @@ Source is `~/.local/share/chezmoi`; the target `~/.claude/rules/` is never edite
 2. Write the file under `dot_claude/exact_rules/`.
 3. `chezmoi apply ~/.claude/rules/<slug>.md`, then `chezmoi diff ~/.claude/rules/<slug>.md` must be empty and the target must exist.
 4. Commit only that file: summary `Add rule: <lowercased title>` (~60 chars), blank line, 3–6 line body with the lesson and the incident in one sentence each.
-5. `git push`. This is the one place an agent pushes: the dotfiles repo has no CI or deploy to gate, the text was approved in step 1, and an unpushed rule is what turns the next machine's pull into a rebase. Other machines pick the rule up with `chezmoi update`, not a plain pull: the target under `~/.claude/rules/` only changes on apply.
+5. `git push`. This is the one place an agent pushes: the dotfiles repo has no CI or deploy to gate, the text was approved in step 1, and an unpushed rule is what turns the next machine's pull into a rebase. Other machines pick the rule up when the user runs `dotup`, which shows the incoming commits and applies them only after the user approves. Never run `chezmoi update` there: the target under `~/.claude/rules/` only changes on apply, and that apply is the user's review.
 
 Report the commit hash and the target path.
 
