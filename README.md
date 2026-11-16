@@ -297,17 +297,19 @@ GitHub over https uses the same vault: item `github` holds one fine-grained PAT 
 `~/.local/bin/git-credential-op-agent` hands git the one matching the owner in the URL. `~/.local/bin/gh-agent`
 does the same for `gh` (owner from `-R`/`GH_REPO`, else an `OWNER/...` argument, else the `origin`
 remote); it is its own command, not a shadow of `gh`, so it does not depend on `PATH` order.
-Bare `gh` gets no vault PAT: whatever calls it directly (ghui, a tool's built-in `gh` use) runs with
-gh's own login, or unauthenticated on a machine without one (ser8).
+Bare `gh` gets no vault PAT and stays logged out on every machine: its login is a classic token for
+every repo, readable by any process, which would undo the per-owner PATs. Whatever calls it directly
+(ghui, a tool's built-in `gh` use) runs unauthenticated.
 A new owner is a new field plus a line in `~/.local/bin/github-pat-field`, the map both share.
 A passkey cannot do this: it signs in a browser, not git.
 Wiring for git, by hand once per machine (git config is not managed on Omarchy). The empty entry drops
 helpers from system config (osxkeychain on macOS), so the vault stays the only copy. `--replace-all`
 also clears the helper that `gh auth login` / `gh auth setup-git` adds for github.com. On Omarchy that
 helper also points at a version-pinned mise path, which breaks on the next gh upgrade. Its gist.github.com
-entry can stay:
+entry goes too: it hands gists to the logged-out `gh`:
 
 ```sh
+git config --global --remove-section credential.https://gist.github.com   # absent: error, fine
 git config --global credential.https://github.com.useHttpPath true
 git config --global --replace-all credential.https://github.com.helper ''
 git config --global --add credential.https://github.com.helper '!~/.local/bin/git-credential-op-agent'
