@@ -101,8 +101,11 @@ Read the diff, not just the subjects. Push access is kept narrow (decided 2026-1
 
 - `GH_TOKEN_PERSONAL` (the `agents` vault, readable by every machine's agent token) has no write
   access to this repo. Pushes go over SSH through the 1Password agent, which asks for approval.
-  The push URL is spelled `ssh://git@github.com/...`: `~/.gitconfig` rewrites `git@github.com:`
-  to https (`url.insteadOf`), where the token gets a 403 and no prompt appears.
+  Fetch goes over https with that token, so an agent's fetch never touches my key.
+  The push URL is spelled `ssh://git@github.com/...`: a machine whose git config rewrites
+  `git@github.com:` to https (`url.insteadOf`; the MacBook Pro's `~/.gitconfig` does, ser8 and ser9
+  have none) would send the scp spelling out over https, where the token gets a 403 and no prompt
+  appears.
 - A ruleset on `main` blocks force-pushes and deletion, so history can't be rewritten to hide a commit.
 
 The server has no key and no agent, so it cannot push by itself: it fetches over https and its push
