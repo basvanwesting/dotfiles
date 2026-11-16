@@ -20,7 +20,7 @@
 # every helper set before this point (system config, a `gh auth setup-git` line), so the
 # vault stays the only copy and a stale token can't answer. It cannot drop one set later:
 # in ~/.gitconfig, which git reads after this file, or appended below the include.
-# fleet-check fails on any helper set outside this file.
+# fleet-check fails on any helper outside this file that could answer for GitHub.
 [credential "https://github.com"]
 	useHttpPath = true
 	helper =

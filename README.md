@@ -320,7 +320,7 @@ clone (`~/.config/git/github.inc`, included from `~/.config/git/config`; desktop
 - The credential part of the same file sends the repo path to the helper (the owner picks the PAT) and
   starts with an empty helper, which drops every helper set before it. It cannot drop one set later:
   in `~/.gitconfig`, which git reads after this file (the Mac has one), or appended below the include
-  by `gh auth setup-git`. So helpers live in `github.inc` only, and `fleet-check` fails on any other.
+  by `gh auth setup-git`. So helpers for GitHub live in `github.inc` only, and `fleet-check` fails on any other that could answer for it (one scoped to another host, like Heroku's, is left alone).
 - On Omarchy `~/.config/git/config` is Omarchy's, and `git config --global` writes into it, so chezmoi
   only appends the include once (`modify_config`, as `modify_dot_bashrc` does for the shell).
 - A `client` gets the push half only: no vault token there, so fetch is not rewritten and a
@@ -496,7 +496,7 @@ and prints no secret.
 | git over https uses the vault PATs; Claude `Read` deny rules | yes | yes | not checked |
 | GitHub push goes over ssh; the dotfiles clone's push URL is `ssh://` | yes | yes | yes |
 | GitHub fetch rewritten to https | yes | yes | no |
-| credential helpers set outside `github.inc` (system config exempt: the reset drops it) | none | none | none |
+| credential helpers that can answer for GitHub, set outside `github.inc` (exempt: system config, which the reset drops, and a helper scoped to another host such as `git.heroku.com`) | none | none | none |
 | 24h release cooldown in a fresh shell | yes | yes | yes |
 | Tailscale SSH server / shields up (Linux) | on / down | on / down | off / up |
 | tagged `tag:server` | no | yes | no |
