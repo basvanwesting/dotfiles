@@ -2,8 +2,8 @@
 {{- $server := eq .role "server" -}}
 {{- /* The .pub files only select a key that an agent holds. Desktops ask the
        1Password agent; the server has no key and no agent of its own, so ssh works
-       there only through one forwarded by the user (ssh -A). The Macs' id_rsa is a
-       fallback kept outside this repo. */ -}}
+       there only through one forwarded by the user (ssh -A). No machine
+       keeps a private key on disk. */ -}}
 Host *
 {{- if $darwin }}
   IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
@@ -18,19 +18,10 @@ Host *.4stack.nl
   ForwardAgent yes
   User deploy
   IdentityFile ~/.ssh/personal.pub
-{{- if $darwin }}
-  IdentityFile ~/.ssh/id_rsa
-{{- end }}
 Host *.fourstack.nl
   ForwardAgent yes
   User deploy
   IdentityFile ~/.ssh/personal.pub
-{{- if $darwin }}
-  IdentityFile ~/.ssh/id_rsa
-{{- end }}
 Host bas-macbook-pro-2018.local bas-macbook-air.local
   ForwardAgent yes
   IdentityFile ~/.ssh/personal.pub
-{{- if $darwin }}
-  IdentityFile ~/.ssh/id_rsa
-{{- end }}

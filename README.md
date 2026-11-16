@@ -12,7 +12,9 @@ aliases.sh if present) and git identity (see the OS layer table). Hyprland/Omarc
 |---------|-----------|----------|
 | ser9 | Omarchy, `desktop` (monitor attached) | main development machine at the office; runs agents (since 2026-11-12) |
 | MacBook Pro | macOS, `desktop` | main personal development machine; runs agents. Being phased out, to become an Omarchy gliff thin client |
-| ser8 | Omarchy, `server` (headless) | always-on server over Tailscale/SSH/gliff, see [Server role](#server-role-ser8) |
+| ser8 | Omarchy, `server` (headless) | always-on server over Tailscale/SSH/gliff; runs agents, see [Server role](#server-role-ser8) |
+| MacBook Air | Omarchy, `client` | a screen to work from; no agents |
+| mitx-omg | Omarchy, `client` | home PC with the big screen and GPU, second boot next to Windows, mostly off; no agents |
 
 ser9 and the MacBook Pro are used the same way, so a setup step for one is a setup step for the other.
 
@@ -61,7 +63,8 @@ What Omarchy's LazyVim had is ported, as plain Lua:
 
 | Role | Machines | Effect |
 |------|----------|--------|
-| `desktop` | laptops, ser9 | SSH via the 1Password agent, only `.pub` selector files on disk |
+| `desktop` | MacBook Pro, ser9 | SSH via the 1Password agent, only `.pub` selector files on disk. Agents work here: service-account token, accepts Tailscale SSH |
+| `client` | MacBook Air, mitx-omg | as `desktop` for me, but no agents: no service-account token, Tailscale shields up, no SSH server. The dotfiles render the same; the difference is what [`fleet-check`](#fleet-check) expects |
 | `server` | ser8 | headless: no SSH key and no `IdentityAgent`, so ssh works only through an agent forwarded by the user (`ssh -A`), `.config/systemd/user/herdr-server.service` installed, server-specific rules in `~/.claude/CLAUDE.md` |
 | `container` | shell image | assumed offline and viewed through someone else's terminal: no nerd-font glyphs, nvim treesitter auto-install and gitsigns off, no 1Password |
 
@@ -70,11 +73,11 @@ machine's chezmoi.toml are ignored and can be dropped.
 
 ## ~/.config/chezmoi/chezmoi.toml
 
-Only non-desktop roles need one. `autoCommit`/`autoPush` stay at chezmoi's default (off) everywhere.
+Every role but `desktop` needs one. `autoCommit`/`autoPush` stay at chezmoi's default (off) everywhere.
 
 ```toml
 [data]
-role = "server"     # or "container"
+role = "server"     # or "client", "container"
 ```
 
 ## Workflow
@@ -426,7 +429,7 @@ omarchy-install-service-tailscale   # Omarchy: package, tailscaled, --operator, 
 tailscale set --ssh                 # only on machines that should accept Tailscale SSH (Linux-only feature)
 ```
 
-macOS: standalone pkg from pkgs.tailscale.com (brew cask `tailscale-app` exists as an alternative, not used). The Mac is a client only.
+macOS: standalone pkg from pkgs.tailscale.com (brew cask `tailscale-app` exists as an alternative, not used). The Mac runs no Tailscale SSH server (Linux-only feature): it connects out, nothing connects in.
 
 ### Policy: servers don't initiate (2026-11-16)
 
@@ -450,6 +453,31 @@ block, with `tag:server` owned by `autogroup:admin`:
   the screen lock and removing the node from the phone, not by this policy.
 - Check: from ser8 `ssh ser9` ends in "tailnet policy does not permit you to SSH to this node"; from
   ser9 `ssh ser8` works.
+
+## Fleet check
+
+`fleet-check` (`~/.local/bin`, from this repo) compares the machine it runs on to what its role
+expects and exits 1 on drift. The role in chezmoi is the declaration; the check asks the running
+system whether it still holds, so a security review has something to look at. It reads state only
+and prints no secret.
+
+| Expectation | `desktop` | `server` | `client` |
+|---|---|---|---|
+| service-account token | yes | yes | no |
+| any other token file in `~/.config/op` | none | none | none |
+| private key files in `~/.ssh`, plain `gh` login, Fly login on disk, git helper pointing at plain `gh` | none | none | none |
+| git over https uses the vault PATs; Claude `Read` deny rules | yes | yes | not checked |
+| 24h release cooldown in a fresh shell | yes | yes | yes |
+| Tailscale SSH server / shields up (Linux) | on / down | on / down | off / up |
+| tagged `tag:server` | no | yes | no |
+| TCP listeners reachable from the LAN (Linux) | none | shown, not judged | none |
+| disk encryption | yes | no, by decision | yes |
+
+Not looked at: UDP listeners, and on macOS listeners and the Tailscale SSH server.
+
+Run it after changing a machine's setup, and on a machine that was off for a while. From another
+machine: `ssh <host> fleet-check`. A new expectation is added here and in the script together, and
+proven by breaking it once.
 
 ## Keybinding rules
 

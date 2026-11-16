@@ -1,0 +1,131 @@
+#!/bin/sh
+# Compares this machine to what its role expects (README "Fleet check"; global CLAUDE.md,
+# Security). Review needs an object: the role in chezmoi is the declaration, this asks
+# the running system whether it still holds. Reads state only, changes nothing, prints
+# no secret. Exit 1 when a line says FAIL.
+#
+# Expectations hang on two facts rendered in at `chezmoi apply`:
+#   agents  = an agent works here, so the machine holds a service-account token and
+#             accepts SSH (the work is reached from elsewhere). desktop and server.
+#   client  = I only sit here. No token, and nothing connects in.
+role={{ .role | quote }}
+os={{ .chezmoi.os | quote }}
+
+case $role in
+  desktop|server) agents=yes ;;
+  client) agents=no ;;
+  *) echo "fleet-check: role '$role' is not part of the fleet, nothing to check"; exit 0 ;;
+esac
+
+# Over ssh the PATH lacks the mise shims, and a tool that is not found reads as "not
+# logged in".
+PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$PATH"
+
+fail=0
+ok()   { printf 'ok    %s\n' "$1"; }
+bad()  { printf 'FAIL  %s\n' "$1"; fail=1; }
+skip() { printf 'skip  %s\n' "$1"; }
+# is <name> <want yes|no> <have yes|no>
+is() { if [ "$2" = "$3" ]; then ok "$1: $3"; else bad "$1: $3, expected $2"; fi; }
+yn() { if "$@" >/dev/null 2>&1; then echo yes; else echo no; fi; }
+
+echo "fleet-check: $(uname -n), role $role, $os"
+
+# --- what the machine holds
+is "service-account token on disk" "$agents" "$(yn test -s "$HOME/.config/op/agent.token")"
+
+extra=$(ls "$HOME/.config/op" 2>/dev/null | grep '\.token$' | grep -v '^agent\.token$' | tr '\n' ' ')
+if [ -z "$extra" ]; then ok "other tokens in ~/.config/op: none"; else bad "other tokens in ~/.config/op: $extra"; fi
+
+# By name, never by content: every role keeps keys in an agent, so anything in ~/.ssh
+# that is not a public key or ssh's own bookkeeping is a private key on disk.
+keys=$(ls "$HOME/.ssh" 2>/dev/null | grep -v -e '\.pub$' -e '^config$' -e '^known_hosts' -e '^authorized_keys' | tr '\n' ' ')
+if [ -z "$keys" ]; then ok "private key files in ~/.ssh: none"; else bad "private key files in ~/.ssh: $keys"; fi
+
+if command -v gh >/dev/null 2>&1; then
+  # `auth token`, not `auth status`: status asks GitHub, so a stored token reads as
+  # "not logged in" when offline or expired.
+  is "plain gh holds a login" no "$(yn gh auth token)"
+else
+  skip "plain gh: not installed"
+fi
+
+is "Fly login on disk" no "$(yn grep -q '^access_token' "$HOME/.fly/config.yml")"
+
+if git config --global --get-regexp '^credential\..*helper' 2>/dev/null | grep -q 'gh auth'; then
+  bad "git credential helper pointing at plain gh: present"
+else
+  ok "git credential helper pointing at plain gh: none"
+fi
+if [ "$agents" = yes ]; then
+  is "git uses the vault PATs for github.com" yes \
+    "$(yn sh -c 'git config --global --get-all credential.https://github.com.helper | grep -q git-credential-op-agent')"
+  for rule in 'Read(~/.1password/agent.sock)' 'Read(~/.config/gh/hosts.yml)'; do
+    is "Claude deny rule $rule" yes "$(yn grep -qF "$rule" "$HOME/.claude/settings.json")"
+  done
+fi
+
+# --- what comes in from outside
+# A fresh interactive shell, as an agent or I would get it: the caller's own env says
+# nothing when this runs over ssh.
+# The three are unset first: they are exported, so a shell started from one that has
+# them would report them even with the rc block gone.
+env_line=$(env -u HEX_COOLDOWN -u NPM_CONFIG_MIN_RELEASE_AGE -u UV_EXCLUDE_NEWER "${SHELL:-sh}" -ic 'echo "FC|$HEX_COOLDOWN|$NPM_CONFIG_MIN_RELEASE_AGE|$UV_EXCLUDE_NEWER|"' 2>/dev/null | grep '^FC|')
+if [ "$env_line" = 'FC|1d|1|1 day|' ]; then
+  ok "24h release cooldown (hex, npm, uv): set"
+else
+  bad "24h release cooldown (hex, npm, uv): got '${env_line:-nothing}'"
+fi
+
+# --- who can reach the machine
+if command -v tailscale >/dev/null 2>&1 && prefs=$(tailscale debug prefs 2>/dev/null); then
+  has() { if printf '%s' "$prefs" | grep -q "\"$1\": true"; then echo yes; else echo no; fi; }
+  if [ "$agents" = no ]; then
+    is "tailscale shields up" yes "$(has ShieldsUp)"
+    is "tailscale ssh server" no "$(has RunSSH)"
+  elif [ "$os" = linux ]; then
+    is "tailscale shields up" no "$(has ShieldsUp)"
+    is "tailscale ssh server" yes "$(has RunSSH)"
+  else
+    skip "tailscale ssh server: not available on $os"
+  fi
+  # --peers=false: the plain status also lists every peer, tags included.
+  tagged=$(yn sh -c 'tailscale status --self --peers=false --json | grep -q "\"tag:server\""')
+  if [ "$role" = server ]; then want=yes; else want=no; fi
+  is "tagged tag:server (cannot initiate ssh)" "$want" "$tagged"
+elif [ "$os" = linux ]; then
+  bad "tailscale: cli not found or daemon not answering, so reach is unchecked"
+else
+  skip "tailscale: cli not on PATH (macOS app: install its CLI), reach is unchecked"
+fi
+
+# Everything but loopback, the tailnet interface and the docker bridge: those are not
+# reachable from the LAN, a wildcard or LAN-address bind is. TCP only: UDP has standing
+# wildcard listeners (mDNS, tailscale) that would need a list of their own. A server's
+# listeners are its job, so they are shown, not judged.
+if [ "$os" = linux ] && command -v ss >/dev/null 2>&1; then
+  open=$(ss -tlnH 2>/dev/null | awk '{print $4}' | grep -v -e '^127\.' -e '^\[::1\]' -e '%lo:' -e '%tailscale0:' -e '^172\.17\.' | sort -u | tr '\n' ' ')
+  if [ "$role" = server ]; then
+    echo "info  listeners reachable from the LAN: ${open:-none}"
+  elif [ -z "$open" ]; then
+    ok "listeners reachable from the LAN: none"
+  else
+    bad "listeners reachable from the LAN: $open"
+  fi
+else
+  skip "listeners: no check on $os"
+fi
+
+# --- what a thief gets
+if [ "$role" = server ]; then
+  skip "disk encryption: the server boots unattended, its disk is unencrypted by decision"
+elif [ "$os" = darwin ]; then
+  is "disk encryption (FileVault)" yes "$(yn sh -c 'fdesetup status | grep -q "FileVault is On"')"
+else
+  # The device under /, not any LUKS device: an encrypted USB disk proves nothing.
+  root_dev=$(findmnt -no SOURCE / 2>/dev/null | sed 's/\[.*//')
+  is "disk encryption (LUKS under /)" yes "$(yn sh -c "lsblk -nso FSTYPE '$root_dev' | grep -q crypto_LUKS")"
+fi
+
+if [ "$fail" = 0 ]; then echo "fleet-check: matches role $role"; else echo "fleet-check: DRIFT from role $role"; fi
+exit "$fail"

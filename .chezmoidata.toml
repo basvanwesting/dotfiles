@@ -2,6 +2,9 @@
 # Keeping a default here means adding a new variable never breaks existing machines.
 
 # "desktop" = interactive workstation with a GUI and the 1Password desktop app.
+#             Agents work here too, so it holds a service-account token.
+# "client"  = a desktop where only I sit: same GUI and app, but no agents, so no
+#             service-account token, and nothing connects in (shields up).
 # "server"  = headless, always-on, reached over Tailscale/SSH. No GUI 1Password,
 #             so no SSH agent socket, and no SSH key on disk either.
 # "container" = throwaway shell image built from this repo: assumed offline and

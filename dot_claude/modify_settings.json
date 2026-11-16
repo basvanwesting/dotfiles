@@ -3,7 +3,7 @@
      this only merges our deny rules into whatever is there; every other key passes
      through. Read deny rules for the two places on a desktop that hold my authority
      instead of the agents' (global CLAUDE.md, Security): the 1Password SSH agent socket
-     and the plain-gh login. They stop the Read tool, not a shell command: a guard
+     and the file where a plain gh login would sit (it stays logged out). They stop the Read tool, not a shell command: a guard
      against slips, not a wall. */ -}}
 {{- $ours := list "Read(~/.1password/agent.sock)" "Read(~/.config/gh/hosts.yml)" -}}
 {{- $settings := dict -}}
