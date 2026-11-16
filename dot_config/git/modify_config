@@ -1,0 +1,47 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /* One target, two owners. On Omarchy the file is Omarchy's (and `git config --global`
+     writes into it): pass it through and only append our include once, as
+     modify_dot_bashrc does for the shell. Everywhere else the file is ours: emit it whole.
+     What we add lives in github.inc, so this file never needs a second append. */ -}}
+{{- $omarchy := eq (get .chezmoi.osRelease "id") "omarchy" -}}
+{{- if and $omarchy (contains "path = github.inc" .chezmoi.stdin) -}}
+{{ .chezmoi.stdin }}
+{{- else -}}
+{{-   if $omarchy -}}
+{{ .chezmoi.stdin | trimSuffix "\n" }}
+{{-   else -}}
+# Shared defaults (seeded from Omarchy's). Identity stays in ~/.gitconfig per machine.
+
+[alias]
+	co = checkout
+	br = branch
+	ci = commit
+	st = status
+[init]
+	defaultBranch = main
+[pull]
+	rebase = true            # Rebase (instead of merge) on pull
+[push]
+	autoSetupRemote = true   # Automatically set upstream branch on push
+[diff]
+	algorithm = histogram    # Clearer diffs on moved/edited lines
+	colorMoved = plain       # Highlight moved blocks in diffs
+	mnemonicPrefix = true    # More intuitive refs in diff output
+[commit]
+	verbose = true           # Include diff comment in commit message template
+[column]
+	ui = auto                # Output in columns when possible
+[branch]
+	sort = -committerdate    # Sort branches by most recent commit first
+[tag]
+	sort = -version:refname  # Sort version numbers as you would expect
+[rerere]
+	enabled = true           # Record and reuse conflict resolutions
+	autoupdate = true        # Apply stored conflict resolutions automatically
+{{-   end }}
+
+# GitHub transport and credentials, managed by chezmoi (README "Git and GitHub").
+# Last in this file, so its credential reset wins over anything set above.
+[include]
+	path = github.inc
+{{ end -}}

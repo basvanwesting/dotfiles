@@ -14,8 +14,8 @@ README.md
 {{ if $omarchy }}
 # Omarchy ships these and keeps improving them; let it own them here.
 # nvim is ours (README: Neovim on Omarchy); the omarchy-nvim package is removed.
+# git config is Omarchy's too, but not ignored: modify_config only appends an include.
 .zshrc
-.config/git/config
 .config/starship.toml
 {{ else }}
 # modify_dot_bashrc only exists to hook ~/.config/shell/* into Omarchy's bashrc.

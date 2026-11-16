@@ -1,0 +1,31 @@
+# Managed by chezmoi; included from ~/.config/git/config. README "Git and GitHub".
+#
+# Writing is mine: every push to GitHub goes over SSH, so it needs my key (the 1Password
+# prompt on a desktop or client, a forwarded agent on the server), whatever the remote's
+# spelling. pushInsteadOf skips a remote that has an explicit push URL.
+[url "ssh://git@github.com/"]
+	pushInsteadOf = https://github.com/
+	pushInsteadOf = git@github.com:
+{{- if or (eq .role "desktop") (eq .role "server") }}
+
+# Reading is the agents' authority: fetch goes over https with the read-only PATs from
+# the `agents` vault, so an agent's fetch never touches my key and the keyless server can
+# fetch at all. `ssh://` as a fetch URL is not rewritten: that spelling means "use my key",
+# for a private repo no PAT covers. insteadOf also rewrites an explicit push URL, so one
+# spelled git@github.com: would go out over https and get a 403: spell it ssh:// or drop it.
+[url "https://github.com/"]
+	insteadOf = git@github.com:
+
+# The owner in the URL picks the PAT, so git must send the path. The empty helper drops
+# every helper set before this point (system config, a `gh auth setup-git` line), so the
+# vault stays the only copy and a stale token can't answer. It cannot drop one set later:
+# in ~/.gitconfig, which git reads after this file, or appended below the include.
+# fleet-check fails on any helper set outside this file.
+[credential "https://github.com"]
+	useHttpPath = true
+	helper =
+	helper = !~/.local/bin/git-credential-op-agent
+{{- else }}
+
+# No agents work here, so there is no vault token to fetch with: fetch is not rewritten.
+{{- end }}

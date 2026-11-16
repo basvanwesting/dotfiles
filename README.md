@@ -26,7 +26,7 @@ ser9 and the MacBook Pro are used the same way, so a setup step for one is a set
 | Layer | Shell stack | Owned by Omarchy, so ignored here | Git identity |
 |-------|-------------|-----------------------------------|--------------|
 | macOS | zsh, starship, nvim, `~/.Brewfile`, himalaya | -- | `~/.gitconfig` |
-| Omarchy | bash + Omarchy's rc layer; we only hook `~/.config/shell/*` into its `~/.bashrc` (`modify_dot_bashrc`) | `.zshrc`, `.config/git/config`, `.config/starship.toml` | `~/.config/git/config`, written by Omarchy's first-run wizard |
+| Omarchy | bash + Omarchy's rc layer; we only hook `~/.config/shell/*` into its `~/.bashrc` (`modify_dot_bashrc`) and one include into its `~/.config/git/config` (`modify_config`) | `.zshrc`, `.config/starship.toml` | `~/.config/git/config`, written by Omarchy's first-run wizard |
 | bare Linux | same as macOS minus `~/.Brewfile` | -- | none needed |
 
 Omarchy is a managed Linux: stay downstream of it and hook in, do not replace its files.
@@ -101,15 +101,12 @@ Read the diff, not just the subjects. Push access is kept narrow (decided 2026-1
 
 - `GH_TOKEN_PERSONAL` (the `agents` vault, readable by every machine's agent token) has no write
   access to this repo. Pushes go over SSH through the 1Password agent, which asks for approval.
-  Fetch goes over https with that token, so an agent's fetch never touches my key.
-  The push URL is spelled `ssh://git@github.com/...`: a machine whose git config rewrites
-  `git@github.com:` to https (`url.insteadOf`; the MacBook Pro's `~/.gitconfig` does, ser8 and ser9
-  have none) would send the scp spelling out over https, where the token gets a 403 and no prompt
-  appears.
+  Fetch goes over https with that token, so an agent's fetch never touches my key. Both follow
+  from the global git config, not from this repo's remote, see [Git and GitHub](#git-and-github).
 - A ruleset on `main` blocks force-pushes and deletion, so history can't be rewritten to hide a commit.
 
 The server has no key and no agent, so it cannot push by itself: it fetches over https and its push
-URL is SSH, which only works with an agent forwarded from a desktop, see "Server role (ser8)".
+goes over SSH, which only works with an agent forwarded from a desktop, see "Server role (ser8)".
 
 ```sh
 dotup
@@ -227,15 +224,14 @@ Every Omarchy desktop then sets up the 1Password app for SSH and the user's own 
 ```sh
 omarchy install service 1password        # sign in, then Settings > Developer:
                                          # "Use the SSH agent" + "Integrate with 1Password CLI"
-chezmoi git -- remote set-url --push origin ssh://git@github.com/basvanwesting/dotfiles.git   # push over the SSH agent
 # Omarchy has no ssh-askpass, so the first connection can't prompt for the host key
 # ("Host key verification failed"); accept it on first use.
 ssh -o StrictHostKeyChecking=accept-new -T git@github.com   # check: "Hi basvanwesting!"
 op --account agilerbv.1password.com vault list   # two accounts, so bare `op` needs --account
 ```
 
-A desktop that runs agents (ser9, like the MacBook Pro) also needs its `op-agent` token and the https
-credential helper, see [Secrets](#secrets-1password). A desktop without agents skips both; the
+A desktop that runs agents (ser9, like the MacBook Pro) also needs its `op-agent` token, see
+[Secrets](#secrets-1password); the git wiring comes with `chezmoi apply`. A desktop without agents skips both; the
 1Password app handles all auth.
 
 ## Install (container)
@@ -302,19 +298,46 @@ every repo, readable by any process, which would undo the per-owner PATs. Whatev
 (ghui, a tool's built-in `gh` use) runs unauthenticated.
 A new owner is a new field plus a line in `~/.local/bin/github-pat-field`, the map both share.
 A passkey cannot do this: it signs in a browser, not git.
-Wiring for git, by hand once per machine (git config is not managed on Omarchy). The empty entry drops
-helpers from system config (osxkeychain on macOS), so the vault stays the only copy. `--replace-all`
-also clears the helper that `gh auth login` / `gh auth setup-git` adds for github.com. On Omarchy that
-helper also points at a version-pinned mise path, which breaks on the next gh upgrade. Its gist.github.com
-entry goes too: it hands gists to the logged-out `gh`:
+
+### Git and GitHub
+
+Reading is the agents' authority, writing is mine, and the global git config says so once for every
+clone (`~/.config/git/github.inc`, included from `~/.config/git/config`; desktop and server roles):
+
+| A GitHub remote spelled | fetches from | pushes to |
+|---|---|---|
+| `https://github.com/o/r` | https, vault PAT | `ssh://git@github.com/o/r`, my key |
+| `git@github.com:o/r` | https, vault PAT | `ssh://git@github.com/o/r`, my key |
+| `ssh://git@github.com/o/r` | SSH, my key | SSH, my key |
+
+- An agent's fetch or clone never touches my key, so it raises no 1Password prompt, and the keyless
+  server can fetch at all. A push needs my key: the prompt on a desktop, a forwarded agent on the server.
+- No per-clone step: `git remote set-url --push` is not needed. A remote that has an explicit push URL
+  is the exception: `pushInsteadOf` skips it and `insteadOf` still applies, so one spelled
+  `git@github.com:` would go out over https and get a 403. Spell it `ssh://` or unset it.
+- `ssh://` as the fetch URL means "use my key for this one": for a private repo no PAT covers, where
+  https has nothing to answer with ("could not read Username").
+- The credential part of the same file sends the repo path to the helper (the owner picks the PAT) and
+  starts with an empty helper, which drops every helper set before it. It cannot drop one set later:
+  in `~/.gitconfig`, which git reads after this file (the Mac has one), or appended below the include
+  by `gh auth setup-git`. So helpers live in `github.inc` only, and `fleet-check` fails on any other.
+- On Omarchy `~/.config/git/config` is Omarchy's, and `git config --global` writes into it, so chezmoi
+  only appends the include once (`modify_config`, as `modify_dot_bashrc` does for the shell).
+- A `client` gets the push half only: no vault token there, so fetch is not rewritten and a
+  `git@`/`ssh://` remote uses my key both ways.
+
+Once per machine that was wired by hand before 2026-11-16, drop the old lines (harmless, but they hide
+what answers), then check:
 
 ```sh
+# the same three on ~/.gitconfig where that file exists (the Mac): add --file ~/.gitconfig
+git config --global --remove-section credential.https://github.com        # absent: error, fine
 git config --global --remove-section credential.https://gist.github.com   # absent: error, fine
-git config --global credential.https://github.com.useHttpPath true
-git config --global --replace-all credential.https://github.com.helper ''
-git config --global --add credential.https://github.com.helper '!~/.local/bin/git-credential-op-agent'
+git config --global --unset-all credential.helper                         # a generic helper, e.g. osxkeychain
+chezmoi git -- config --unset remote.origin.pushurl                       # the old per-clone push URL
 printf 'protocol=https\nhost=github.com\npath=basvanwesting/dotfiles.git\n\n' | git credential fill | grep -c '^password='   # check: 1
 gh-agent repo view basvanwesting/dotfiles --json viewerPermission   # check: ADMIN
+fleet-check
 ```
 
 Rule for any future systemd unit that needs a secret (none does today; `herdr-server.service` has
@@ -363,7 +386,6 @@ install -d -m 700 ~/.config/op      # then place agent.token, 0600, from 1Passwo
 chezmoi init https://github.com/basvanwesting/dotfiles.git      # fetch stays https: the server has no SSH key
 # write ~/.config/chezmoi/chezmoi.toml: role = "server"
 chezmoi apply
-chezmoi git -- remote set-url --push origin ssh://git@github.com/basvanwesting/dotfiles.git   # push only with a forwarded agent
 mise install                                                  # tools from ~/.config/mise/config.toml
 systemctl --user enable --now herdr-server.service             # unit file comes from this repo
 ```
@@ -470,8 +492,11 @@ and prints no secret.
 |---|---|---|---|
 | service-account token | yes | yes | no |
 | any other token file in `~/.config/op` | none | none | none |
-| private key files in `~/.ssh`, plain `gh` login, Fly login on disk, git helper pointing at plain `gh` | none | none | none |
+| private key files in `~/.ssh`, plain `gh` login, Fly login on disk | none | none | none |
 | git over https uses the vault PATs; Claude `Read` deny rules | yes | yes | not checked |
+| GitHub push goes over ssh; the dotfiles clone's push URL is `ssh://` | yes | yes | yes |
+| GitHub fetch rewritten to https | yes | yes | no |
+| credential helpers set outside `github.inc` (system config exempt: the reset drops it) | none | none | none |
 | 24h release cooldown in a fresh shell | yes | yes | yes |
 | Tailscale SSH server / shields up (Linux) | on / down | on / down | off / up |
 | tagged `tag:server` | no | yes | no |

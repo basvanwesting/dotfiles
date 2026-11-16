@@ -54,17 +54,42 @@ fi
 # A logout keeps the key and empties it (access_token: ""), so only a value counts.
 is "Fly login on disk" no "$(yn grep -Eq "^access_token: *([^\"' ]|\"[^\"]|'[^'])" "$HOME/.fly/config.yml")"
 
-if git config --global --get-regexp '^credential\..*helper' 2>/dev/null | grep -q 'gh auth'; then
-  bad "git credential helper pointing at plain gh: present"
-else
-  ok "git credential helper pointing at plain gh: none"
-fi
+# Git config is asked from / with no --global: outside a repo that is the effective system
+# and user config, includes followed. --global reads ~/.gitconfig alone once that file
+# exists, and would miss the XDG file our block is included from.
+gitcfg() { (cd / && git config --includes "$@" 2>/dev/null); }
+
+# The reset in github.inc only drops helpers set before it. One set anywhere else (a
+# `gh auth setup-git` line, osxkeychain in ~/.gitconfig) answers too, and a helper that
+# stores would keep a copy of the PAT.
+# System config is exempt: git reads it first, so the reset does drop it (osxkeychain as
+# shipped with git on macOS), and it is not ours to edit.
+stray=$(gitcfg --show-scope --show-origin --get-regexp '^credential\.(.*\.)?helper$' | grep -v -e '^system' -e 'github\.inc' | awk '{print $2}' | sort -u | tr '\n' ' ')
+if [ -z "$stray" ]; then ok "credential helpers set outside github.inc: none"; else bad "credential helpers set outside github.inc: $stray"; fi
 if [ "$agents" = yes ]; then
+  # --get gives the last helper, the one that answers after the reset.
   is "git uses the vault PATs for github.com" yes \
-    "$(yn sh -c 'git config --global --get-all credential.https://github.com.helper | grep -q git-credential-op-agent')"
+    "$(if gitcfg --get credential.https://github.com.helper | grep -q git-credential-op-agent; then echo yes; else echo no; fi)"
   for rule in 'Read(~/.1password/agent.sock)' 'Read(~/.config/gh/hosts.yml)'; do
     is "Claude deny rule $rule" yes "$(yn grep -qF "$rule" "$HOME/.claude/settings.json")"
   done
+fi
+
+# Writing is mine on every role: a push to GitHub goes over ssh, whatever the remote's
+# spelling. Reading is the agents' authority where agents work: fetch over https with the
+# vault PAT. A client has no vault token, so there fetch is not rewritten.
+push_rules=$(gitcfg --get-all url.ssh://git@github.com/.pushInsteadOf | sort | tr '\n' ' ')
+is "github push goes over ssh" yes "$(yn test "$push_rules" = 'git@github.com: https://github.com/ ')"
+fetch_url=$(cd / && git ls-remote --get-url git@github.com:o/r.git 2>/dev/null)
+is "github fetch goes over https (vault PAT)" "$agents" "$(yn test "$fetch_url" = https://github.com/o/r.git)"
+# The rules above are skipped or overruled by an explicit push URL, so ask one real clone.
+if command -v chezmoi >/dev/null 2>&1 && dot_push=$(chezmoi git -- remote get-url --push origin 2>/dev/null); then
+  case $dot_push in
+    ssh://git@github.com/*) ok "dotfiles push URL: ssh" ;;
+    *) bad "dotfiles push URL: $dot_push, expected ssh://git@github.com/... (unset remote.origin.pushurl)" ;;
+  esac
+else
+  skip "dotfiles push URL: no chezmoi repo"
 fi
 
 # --- what comes in from outside
