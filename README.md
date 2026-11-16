@@ -249,7 +249,7 @@ Then `git clone https://github.com/zsh-users/zsh-autosuggestions ~/.local/share/
 
 ## Secrets (1Password)
 
-Every API key or token an agent or dev shell needs is a field on an item in the `agents` vault
+Every API key or token that active work by an agent or dev shell needs is a field on an item in the `agents` vault
 (Agiler BV account). Projects commit a dotenv of references, never values
 (`ENGAGE_API_KEY=op://agents/engage/ENGAGE_API_KEY`), and run the consumer under
 `op-agent run --env-file .env -- <cmd>`. `~/.local/bin/op-agent` comes from this repo and is the
@@ -260,8 +260,8 @@ whole account, a service account is scoped read-only to one vault and never prom
 | Vault | Holds | Read by |
 |-------|-------|---------|
 | `ser8-host` | ser8's ed25519 SSH key | provisioning only (`chezmoi apply` with the provisioning token) |
-| `agents` | service tokens for every agent and dev shell, all machines | agent runtime (`op-agent`) |
-| `agents-disabled` | `agents` items parked while not in use; moved back when needed | nobody (no service account), so a stolen machine can't read them |
+| `agents` | service tokens for the work that is active now, all machines | agent runtime (`op-agent`) |
+| `agents-disabled` | `agents` items parked while not in use; moved back for as long as the work takes | nobody (no service account), so a stolen or misled machine can't read them |
 
 - every machine: its own `agents` service account (revocable per machine), token in
   `~/.config/op/agent.token`. A new secret is a new item or field in `agents`, made in the app; a
