@@ -101,6 +101,8 @@ Read the diff, not just the subjects. Push access is kept narrow (decided 2026-1
 
 - `GH_TOKEN_PERSONAL` (the `agents` vault, readable by every machine's agent token) has no write
   access to this repo. Pushes go over SSH through the 1Password agent, which asks for approval.
+  The push URL is spelled `ssh://git@github.com/...`: `~/.gitconfig` rewrites `git@github.com:`
+  to https (`url.insteadOf`), where the token gets a 403 and no prompt appears.
 - A ruleset on `main` blocks force-pushes and deletion, so history can't be rewritten to hide a commit.
 
 The server has no key and no agent, so it cannot push by itself: it fetches over https and its push
@@ -222,7 +224,7 @@ Every Omarchy desktop then sets up the 1Password app for SSH and the user's own 
 ```sh
 omarchy install service 1password        # sign in, then Settings > Developer:
                                          # "Use the SSH agent" + "Integrate with 1Password CLI"
-chezmoi git -- remote set-url origin git@github.com:basvanwesting/dotfiles.git   # push over the SSH agent
+chezmoi git -- remote set-url --push origin ssh://git@github.com/basvanwesting/dotfiles.git   # push over the SSH agent
 # Omarchy has no ssh-askpass, so the first connection can't prompt for the host key
 # ("Host key verification failed"); accept it on first use.
 ssh -o StrictHostKeyChecking=accept-new -T git@github.com   # check: "Hi basvanwesting!"
@@ -358,7 +360,7 @@ install -d -m 700 ~/.config/op      # then place agent.token, 0600, from 1Passwo
 chezmoi init https://github.com/basvanwesting/dotfiles.git      # fetch stays https: the server has no SSH key
 # write ~/.config/chezmoi/chezmoi.toml: role = "server"
 chezmoi apply
-chezmoi git -- remote set-url --push origin git@github.com:basvanwesting/dotfiles.git   # push only with a forwarded agent
+chezmoi git -- remote set-url --push origin ssh://git@github.com/basvanwesting/dotfiles.git   # push only with a forwarded agent
 mise install                                                  # tools from ~/.config/mise/config.toml
 systemctl --user enable --now herdr-server.service             # unit file comes from this repo
 ```
