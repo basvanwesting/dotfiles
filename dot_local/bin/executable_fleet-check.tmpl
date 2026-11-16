@@ -38,8 +38,9 @@ extra=$(ls "$HOME/.config/op" 2>/dev/null | grep '\.token$' | grep -v '^agent\.t
 if [ -z "$extra" ]; then ok "other tokens in ~/.config/op: none"; else bad "other tokens in ~/.config/op: $extra"; fi
 
 # By name, never by content: every role keeps keys in an agent, so anything in ~/.ssh
-# that is not a public key or ssh's own bookkeeping is a private key on disk.
-keys=$(ls "$HOME/.ssh" 2>/dev/null | grep -v -e '\.pub$' -e '^config$' -e '^known_hosts' -e '^authorized_keys' | tr '\n' ' ')
+# that is not a public key or ssh's own bookkeeping is a private key on disk. agent/ is
+# where ssh-agent puts its sockets since OpenSSH 10.1.
+keys=$(ls "$HOME/.ssh" 2>/dev/null | grep -v -e '\.pub$' -e '^config$' -e '^known_hosts' -e '^authorized_keys' -e '^agent$' | tr '\n' ' ')
 if [ -z "$keys" ]; then ok "private key files in ~/.ssh: none"; else bad "private key files in ~/.ssh: $keys"; fi
 
 if command -v gh >/dev/null 2>&1; then
@@ -50,7 +51,8 @@ else
   skip "plain gh: not installed"
 fi
 
-is "Fly login on disk" no "$(yn grep -q '^access_token' "$HOME/.fly/config.yml")"
+# A logout keeps the key and empties it (access_token: ""), so only a value counts.
+is "Fly login on disk" no "$(yn grep -Eq "^access_token: *([^\"' ]|\"[^\"]|'[^'])" "$HOME/.fly/config.yml")"
 
 if git config --global --get-regexp '^credential\..*helper' 2>/dev/null | grep -q 'gh auth'; then
   bad "git credential helper pointing at plain gh: present"
