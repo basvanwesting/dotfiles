@@ -4,6 +4,14 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export ERL_AFLAGS="-kernel shell_history enabled"
 export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 
+# 24h wait on new releases when resolving dependencies, time for a poisoned release to be
+# caught (global CLAUDE.md, Security). Env, not per-tool config files: one place, and it
+# reaches agent shells. mise has the same wait built in. Installs from a lockfile are not
+# held back.
+export HEX_COOLDOWN=1d
+export NPM_CONFIG_MIN_RELEASE_AGE=1 # days
+export UV_EXCLUDE_NEWER="1 day"
+
 # hyprctl from ssh shells and herdr panes (herdr-server starts outside Hyprland), so the
 # headless ser8's windows can be maintained from there. Only fills in a missing or dead
 # instance (Hyprland restarted via Relogin); a value Hyprland set itself is left alone.
