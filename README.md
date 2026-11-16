@@ -4,7 +4,8 @@ One repo for every machine: macOS laptops, Omarchy desktops, a headless Omarchy 
 throwaway Linux shell image. Shared here: herdr, ghostty, git defaults, starship, nvim (kickstart),
 `~/.config/shell/{env,aliases,functions}.sh`, `~/.claude/CLAUDE.md`, `~/.local/bin/op-agent`.
 Machine-local and unmanaged: `~/.config/shell/local.sh` (client project shortcuts; sourced by
-aliases.sh if present) and git identity (see the OS layer table). Hyprland/Omarchy config is Omarchy's.
+aliases.sh if present) and git identity (see the OS layer table). Hyprland/Omarchy config is Omarchy's;
+the mail and calendar window groups hook in beside it (see "Mail and calendar on Omarchy").
 
 ## Machines
 
@@ -57,6 +58,30 @@ What Omarchy's LazyVim had is ported, as plain Lua:
 - remote clipboard (`lua/remote_clipboard.lua`): on every OS, pbcopy added for macOS. Inside herdr,
   tmux or ssh a yank also goes out as OSC 52, so a yank on ser8 lands on the laptop.
 - not ported: the transparency and lualine tweaks.
+
+### Mail and calendar on Omarchy (decided 2026-11-16)
+
+Mail and calendars are Omarchy web apps, one window per account, held together as tabbed Hyprland
+window groups: `~/.config/hypr/webapp-group` (its header has the lists and why no native client).
+It ships to every Omarchy machine but the server. Hyprland's own files stay Omarchy's, so ours sit
+beside them and each machine does the rest by hand. The first line again after
+`omarchy refresh hyprland`, which rewrites `hyprland.lua` (the keys falling back to HEY is the sign):
+
+```sh
+echo 'require("hypr.webapp-groups")' >> ~/.config/hypr/hyprland.lua   # the keys; replaces the HEY defaults
+xdg-mime default mail-compose.desktop x-scheme-handler/mailto
+```
+
+- Logins live in a Chromium profile of their own (`~/.config/chromium-mail`), never in this repo.
+  Gmail tabs go by account index, so the files name no address, and the tab order on a machine
+  follows the order the accounts were signed in there. Sign in in the same order everywhere.
+- The one file with addresses, `webapp-group-titles/labels.js`, is machine-local: chezmoi creates it
+  empty (`create_`) and `apply` never overwrites it. Fill in the Outlook addresses by hand. This repo
+  is public; an address belongs in that file or nowhere. `chezmoi add` on it would copy the real file
+  into the source, so `.gitignore` keeps that copy out of a commit.
+- If Chromium offers to handle email links, decline: accepting hands `mailto:` to the normal browser.
+- After changing `titles.js`: `node dot_config/hypr/webapp-group-titles/titles.test.js` in the source.
+  It reaches the extension only when the mail browser restarts, with every window of it closed.
 
 **Role** is configured in chezmoi.toml and says what the machine is for. Default `desktop`
 (from `.chezmoidata.toml`), so a desktop needs no chezmoi.toml at all.
@@ -157,6 +182,8 @@ MacBook with an ISO keyboard (e.g. Dutch): `hid_apple` auto-detects ISO and swap
 echo "options hid_apple fnmode=2 iso_layout=0" | sudo tee /etc/modprobe.d/hid_apple.conf
 sudo limine-mkinitcpio
 ```
+
+Mail and calendar keys: two lines by hand, see [Mail and calendar on Omarchy](#mail-and-calendar-on-omarchy-decided-2026-11-16).
 
 Hyprland overrides: Hyprland config is Omarchy's, so append these to `~/.config/hypr/input.lua` by hand.
 

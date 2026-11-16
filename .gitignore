@@ -1,0 +1,4 @@
+# The mail setup's address file is machine-local (README: Mail and calendar on
+# Omarchy). Only create_labels.js, the empty seed, belongs here; `chezmoi add` on
+# that directory would write the real one as labels.js, into a public repo.
+dot_config/hypr/webapp-group-titles/labels.js

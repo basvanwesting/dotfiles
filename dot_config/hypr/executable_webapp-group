@@ -1,0 +1,170 @@
+#!/bin/bash
+# Mail and calendars: one web-app window per account, held together as tabbed
+# window groups.
+#
+#   webapp-group mail-google       focus the group, opening any window that is missing
+#   webapp-group mail-microsoft
+#   webapp-group calendar
+#   webapp-group mailto:...        compose in the first Gmail account
+#
+# The windows are Chromium web apps on a profile of their own, so they stay out
+# of the normal browser and share one set of logins: a calendar is signed in by
+# its mailbox. Each group's bar shows the page titles, unread counts included.
+# Chosen over a native mail client because Google blocks unverified clients
+# (Omamail, 2026-11) and a self-made OAuth client was more plumbing than the
+# unified inbox was worth.
+set -euo pipefail
+
+# Named for mail, which it held first; moving a Chromium profile risks its logins.
+profile="$HOME/.config/chromium-mail"
+
+# Windows per group, in tab order. Google goes by account index, the order the
+# accounts were signed in to this profile; index 0 is the one mailto: composes
+# from. The calendars are Google (index 0), iCloud and the corporate Microsoft one.
+case ${1:-} in
+  mail-google)
+    apps=(
+      https://mail.google.com/mail/u/0/
+      https://mail.google.com/mail/u/2/
+      https://mail.google.com/mail/u/1/
+      https://mail.google.com/mail/u/3/
+    )
+    ;;
+  mail-microsoft)
+    apps=(
+      https://outlook.live.com/mail/
+      https://outlook.office.com/mail/
+    )
+    ;;
+  calendar)
+    apps=(
+      https://calendar.google.com/calendar/u/0/r/week
+      https://www.icloud.com/calendar/
+      https://outlook.office.com/calendar/view/week
+    )
+    ;;
+  mailto:*) ;;
+  *)
+    echo "usage: webapp-group mail-google | mail-microsoft | calendar | mailto:..." >&2
+    exit 2
+    ;;
+esac
+
+# Chromium looks for native-messaging hosts inside the profile directory, and
+# 1Password only installs its host into the default one. Without this link the
+# extension here cannot reach the desktop app and asks for its own sign-in.
+mkdir -p "$profile/NativeMessagingHosts"
+ln -sf "$HOME/.config/chromium/NativeMessagingHosts/com.1password.1password.json" "$profile/NativeMessagingHosts/"
+
+# The group bar shows window titles, which Hyprland cannot change, so an
+# extension retitles the mail pages to "address (unread)". Chromium keeps only
+# the last --load-extension it is given, and Omarchy's own extensions arrive that
+# way too (chromium-flags.conf), so theirs are repeated in front of ours. It is
+# read when the profile's browser starts: a change needs every window closed.
+extensions=""
+if [[ -r $HOME/.config/chromium-flags.conf ]]; then
+  extensions=$(sed -n 's/^--load-extension=//p' "$HOME/.config/chromium-flags.conf" | tail -1)
+fi
+extensions="${extensions:+$extensions,}$HOME/.config/hypr/webapp-group-titles"
+
+open_app() {
+  setsid uwsm-app -- chromium --user-data-dir="$profile" --load-extension="$extensions" --app="$1" >/dev/null 2>&1 &
+}
+
+# Compose goes through /mail/, not /mail/u/0/: Chromium drops the query from the
+# window class, so on the inbox's path a compose window would pass for inbox 0
+# and be grouped, focused and counted as it. /mail/ is Gmail's own handler URL
+# and opens the first account.
+if [[ $1 == mailto:* ]]; then
+  open_app "https://mail.google.com/mail/?extsrc=mailto&url=$(jq -rn --arg u "$1" '$u | @uri')"
+  exit
+fi
+
+group=$1
+
+# Chromium names a web-app window after its URL: chrome-<host>__<path>-<profile>,
+# with the slashes of the path as underscores.
+class_of() {
+  local rest=${1#https://}
+  local path=${rest#*/}
+  printf 'chrome-%s__%s-Default' "${rest%%/*}" "${path//\//_}"
+}
+
+classes=()
+for url in "${apps[@]}"; do
+  classes+=("$(class_of "$url")")
+done
+
+# The address of the window of this class, if it is open.
+window_of() {
+  hyprctl clients -j | jq -r --arg class "$1" 'first(.[] | select(.class == $class)) | .address // empty'
+}
+
+focus() {
+  hyprctl dispatch "hl.dsp.focus({ window = \"address:$1\" })" >/dev/null
+}
+
+# How this group's windows open is a window rule this script owns, so the lists
+# above stay the one place that names them. It is rewritten in place by name,
+# and only matters while a window opens: a Hyprland reload dropping it costs
+# nothing, the next run sets it again.
+#
+#   found   the first window of a group starts a new, locked group of its own.
+#           Without "barred" it would join whichever group has focus, and that
+#           is another of these groups when its key is pressed from there.
+#   join    every later window opens into the locked group that has focus.
+#
+# Locked, so a terminal or browser opened on top of a group stays out of it.
+rule=""
+set_rule() {
+  [[ $rule == "$1" ]] && return
+  rule=$1
+
+  local effect pattern
+  case $1 in
+    found) effect="barred set lock" ;;
+    join) effect="set lock invade" ;;
+  esac
+  pattern=$(printf '%s|' "${classes[@]}")
+  pattern="^(${pattern%|})\$"
+  pattern=${pattern//./\\\\.}
+
+  hyprctl eval "hl.window_rule({ name = \"webapp-group-$group\", match = { class = \"$pattern\" }, group = \"$effect\" })" >/dev/null
+}
+
+# The window showing in the group is the one focused most recently.
+shown=$(hyprctl clients -j | jq -r --args \
+  '[.[] | select(.class as $c | $ARGS.positional | index($c))] | min_by(.focusHistoryID) | .address // empty' \
+  "${classes[@]}")
+
+# A new tab lands after the focused one, so the group is focused before each
+# window opens, on the one before it in the list; a reopened window gets its
+# place back that way. Each is waited for so the tabs keep their order.
+last=$shown
+for i in "${!apps[@]}"; do
+  address=$(window_of "${classes[$i]}")
+  if [[ -n $address ]]; then
+    last=$address
+    continue
+  fi
+
+  if [[ -n $last ]]; then
+    set_rule join
+    focus "$last"
+  else
+    set_rule found
+  fi
+  open_app "${apps[$i]}"
+
+  # Nothing announces the window to a shell script, so poll for it.
+  for _ in $(seq 100); do
+    last=$(window_of "${classes[$i]}")
+    [[ -n $last ]] && break
+    sleep 0.1
+  done
+  [[ -n $last ]] || { echo "webapp-group: ${apps[$i]} did not open" >&2; exit 1; }
+done
+
+# Back to the window that was showing, or the first one after a fresh start.
+target=${shown:-$(window_of "${classes[0]}")}
+[[ -n $target ]] && focus "$target"

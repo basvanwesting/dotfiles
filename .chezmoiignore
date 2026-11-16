@@ -1,4 +1,6 @@
 README.md
+# A check of the source, run from here (README: Mail and calendar on Omarchy).
+.config/hypr/webapp-group-titles/titles.test.js
 {{- /* Three OS layers: macOS (zsh stack, Homebrew), Omarchy (a managed Linux that
        owns bash, starship and git config; we stay downstream and only hook
        in), and bare Linux (nothing to stay downstream of, so the zsh stack applies).
@@ -24,6 +26,14 @@ README.md
 # nvim's Omarchy hook-ins: the theme symlink points into Omarchy's state dir.
 .config/nvim/lua/custom/omarchy
 .config/nvim/lua/custom/omarchy/**
+{{ end }}
+{{ if or (not $omarchy) (eq .role "server") }}
+# Mail and calendar as Hyprland window groups (README: Mail and calendar on Omarchy)
+# need an Omarchy desktop someone sits at. Whole trees, as for systemd below.
+.config/hypr
+.config/hypr/**
+.local/share/applications
+.local/share/applications/**
 {{ end }}
 {{ if ne .role "server" }}
 # herdr as a lingering user service is a server thing; desktops start herdr on demand.
