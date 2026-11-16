@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Plan
 
-This session designs, the worker builds. The user approves the design here. The worker gets a written brief, a clean context and a definition of done, and commits without asking (global CLAUDE.md, worker exception). The push stays the user's review.
+This session designs, the worker builds. The user approves the design here. The worker gets a written brief, a clean context and a definition of done, and commits without asking (global CLAUDE.md, worker exception). The push stays the user's ship decision.
 
 ## Read-only
 
