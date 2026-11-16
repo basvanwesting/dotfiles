@@ -62,7 +62,7 @@ What Omarchy's LazyVim had is ported, as plain Lua:
 | Role | Machines | Effect |
 |------|----------|--------|
 | `desktop` | laptops, ser9 | SSH via the 1Password agent, only `.pub` selector files on disk |
-| `server` | ser8 | headless: ed25519 key rendered to disk from 1Password and every `~/.ssh/config` Host block uses it (no `IdentityAgent`), `.config/systemd/user/herdr-server.service` installed, server-specific rules in `~/.claude/CLAUDE.md` |
+| `server` | ser8 | headless: no SSH key and no `IdentityAgent`, so ssh works only through an agent forwarded by the user (`ssh -A`), `.config/systemd/user/herdr-server.service` installed, server-specific rules in `~/.claude/CLAUDE.md` |
 | `container` | shell image | assumed offline and viewed through someone else's terminal: no nerd-font glyphs, nvim treesitter auto-install and gitsigns off, no 1Password |
 
 `role` is the only data variable. Older `have_nerd_font`, `personal`, `offline`, `remote` keys in a
@@ -75,9 +75,6 @@ Only non-desktop roles need one. `autoCommit`/`autoPush` stay at chezmoi's defau
 ```toml
 [data]
 role = "server"     # or "container"
-
-[onepassword]       # server only: chezmoi refuses a service-account token without it
-mode = "service"
 ```
 
 ## Workflow
@@ -103,9 +100,8 @@ Read the diff, not just the subjects. Push access is kept narrow (decided 2026-1
   access to this repo. Pushes go over SSH through the 1Password agent, which asks for approval.
 - A ruleset on `main` blocks force-pushes and deletion, so history can't be rewritten to hide a commit.
 
-On the server too, without a token: `.chezmoiignore` skips the SSH key template unless
-`OP_SERVICE_ACCOUNT_TOKEN` is set, so day-to-day commands never touch 1Password and leave the key on
-disk alone. Writing the key is a provisioning action, see "Server role (ser8)".
+The server has no key and no agent, so it cannot push by itself: it fetches over https and its push
+URL is SSH, which only works with an agent forwarded from a desktop, see "Server role (ser8)".
 
 ```sh
 dotup
@@ -259,7 +255,7 @@ whole account, a service account is scoped read-only to one vault and never prom
 
 | Vault | Holds | Read by |
 |-------|-------|---------|
-| `ser8-host` | ser8's ed25519 SSH key | provisioning only (`chezmoi apply` with the provisioning token) |
+| `ser8-host` | backup copy of ser8's `agents` token | nobody (no service account) |
 | `agents` | service tokens for the work that is active now, all machines | agent runtime (`op-agent`) |
 | `agents-disabled` | `agents` items parked while not in use; moved back for as long as the work takes | nobody (no service account), so a stolen or misled machine can't read them |
 
@@ -280,17 +276,13 @@ whole account, a service account is scoped read-only to one vault and never prom
   Developer > Directory.
 - desktop: SSH keys also live in 1Password: `IdentityAgent` in `~/.ssh/config`, only `.pub` selector
   files on disk. Bare `op` is still the app, for the user's own whole-account use.
-- server: no GUI, so a second service account for `ser8-host`, token in `~/.config/op/ser8-provision.token`.
+- server: no GUI and no SSH key. An agent there runs as the user, so a key file (or a token that can
+  fetch one) is readable by every agent whatever its mode; a key rendered to disk from `ser8-host`
+  was removed 2026-11-16 for that reason.
 
-Split deliberately: an agent on the server must not be able to read the SSH key. Tokens
-live as 0600 files in `~/.config/op` (next to op's own `config`) and are injected per process, never
-exported from a shell rc file such as `~/.config/shell/local.sh`, which every interactive shell (and
-every agent) would inherit. The provisioning token is used for one thing, writing or rotating the
-SSH key (bootstrap, or after the key changed in the vault); a plain `chezmoi apply` skips the key:
-
-```sh
-OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply ~/.ssh/id_ed25519
-```
+Tokens live as 0600 files in `~/.config/op` (next to op's own `config`) and are injected per process,
+never exported from a shell rc file such as `~/.config/shell/local.sh`, which every interactive shell
+(and every agent) would inherit.
 
 GitHub over https uses the same vault: item `github` holds one fine-grained PAT per repo owner
 (`GH_TOKEN_FOURSTACK`, `GH_TOKEN_PERSONAL`; a fine-grained PAT covers a single owner), and
@@ -324,10 +316,13 @@ day-to-day rules for agents.
 ## Server role (ser8)
 
 `role = "server"` marks a headless, always-on machine reached over Tailscale/SSH. There is no GUI
-1Password there, so `~/.1password/agent.sock` never exists and the agent-based SSH config cannot
-work. Instead the server renders a private key to disk from the `ser8-host` vault, and
-`.chezmoiignore` keeps that key off every other role. ser8's key is its own key on the GitHub account, so
-revoking it never touches the laptops.
+1Password there, so `~/.1password/agent.sock` never exists. The server holds no SSH key either: git
+goes over https with the scoped tokens from `agents`, and what needs a key (a push to this repo, a
+login on a deploy host) runs in the login shell of a session opened with `ssh -A` from a desktop,
+whose 1Password agent approves the use. The `.pub` selector files in `~/.ssh/config` pick the key
+from that forwarded agent. Two limits: a herdr pane does not inherit the login's `SSH_AUTH_SOCK`, so
+there is no agent in it; and while such a session is open every process of the user on ser8 can
+reach the forwarded socket, within what 1Password already approved, so keep those sessions short.
 
 ### Bootstrap runbook
 
@@ -347,7 +342,7 @@ unencrypted disk physical access already meant full access; this only lowers the
 a USB stick to plugging in a monitor.
 
 ```sh
-omarchy pkg add chezmoi ripgrep fd sd lazygit 1password-cli   # cli is not on a fresh install; `chezmoi apply` needs it
+omarchy pkg add chezmoi ripgrep fd sd lazygit 1password-cli   # cli is not on a fresh install; `op-agent` needs it
 omarchy install service tailscale && sudo tailscale set --ssh --advertise-tags=tag:server   # delete the old ser8 node in the admin console first; the tag: see Tailscale
 omarchy toggle idle stay-awake     # always pass the mode: bare `toggle idle` flips it. Verify: omarchy toggle idle status
 sudo loginctl enable-linger "$USER"
@@ -356,12 +351,12 @@ sudo systemctl enable --now btrfs-scrub@-.timer   # monthly checksum verify; unc
 printf '[Autologin]\nUser=%s\nSession=hyprland-uwsm\nRelogin=true\n' "$USER" | sudo tee /etc/sddm.conf.d/20-autologin.conf
 sudo systemctl restart sddm                         # Hyprland now runs on seat0: pgrep -u "$USER" Hyprland
 omarchy pkg add smartmontools                       # drive health: smartctl -a /dev/nvme0
-install -d -m 700 ~/.config/op      # then place ser8-provision.token + agent.token, 0600, from 1Password
-chezmoi init https://github.com/basvanwesting/dotfiles.git      # https: no SSH key yet
-# write ~/.config/chezmoi/chezmoi.toml: role = "server", [onepassword] mode = "service"
-OP_SERVICE_ACCOUNT_TOKEN="$(< ~/.config/op/ser8-provision.token)" chezmoi apply
+install -d -m 700 ~/.config/op      # then place agent.token, 0600, from 1Password
+chezmoi init https://github.com/basvanwesting/dotfiles.git      # fetch stays https: the server has no SSH key
+# write ~/.config/chezmoi/chezmoi.toml: role = "server"
+chezmoi apply
+chezmoi git -- remote set-url --push origin git@github.com:basvanwesting/dotfiles.git   # push only with a forwarded agent
 mise install                                                  # tools from ~/.config/mise/config.toml
-chezmoi git remote set-url origin git@github.com:basvanwesting/dotfiles.git
 systemctl --user enable --now herdr-server.service             # unit file comes from this repo
 ```
 
@@ -380,14 +375,14 @@ Manual, outside chezmoi:
 
 The disk is unencrypted (see above), so treat every credential on it as read. No device-side kill
 switch (decided 2026-11-11): it only fires if the thief boots it online, and pulling the SSD
-bypasses it. Revoke from another machine instead; ser8 has its own keys and service accounts so
-this never touches the laptops. The specifics (which services, where to rotate each) are in a
+bypasses it. Revoke from another machine instead; ser8 has its own service account and no SSH
+key, so this never touches the laptops. The specifics (which services, where to rotate each) are in a
 private 1Password note, not here and not in `agents` (the vault being revoked):
 
-1. 1Password: revoke ser8's service-account tokens.
-2. GitHub: delete ser8's SSH key. Until then, and before any `dotup` or `git pull`
+1. 1Password: revoke ser8's service-account token.
+2. GitHub: rotate the PATs in `agents`. Until then, and before any `dotup` or `git pull`
    anywhere, review commits pushed after the theft: every machine applies this repo, so a commit
-   pushed with ser8's key or a GitHub token from `agents` would run on the laptops.
+   pushed with a GitHub token from `agents` would run on the laptops.
 3. Rotate what ser8's token read after the theft, per the service accounts' activity log; rotate
    all of `agents` if the log can't tell. Items parked in `agents-disabled` need nothing.
 4. Tailscale: remove the ser8 node (a tagged node's key does not expire, so it never drops off by itself).
