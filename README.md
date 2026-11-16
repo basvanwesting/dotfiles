@@ -348,7 +348,7 @@ a USB stick to plugging in a monitor.
 
 ```sh
 omarchy pkg add chezmoi ripgrep fd sd lazygit 1password-cli   # cli is not on a fresh install; `chezmoi apply` needs it
-omarchy install service tailscale && sudo tailscale set --ssh   # delete the old ser8 node in the admin console first
+omarchy install service tailscale && sudo tailscale set --ssh --advertise-tags=tag:server   # delete the old ser8 node in the admin console first; the tag: see Tailscale
 omarchy toggle idle stay-awake     # always pass the mode: bare `toggle idle` flips it. Verify: omarchy toggle idle status
 sudo loginctl enable-linger "$USER"
 sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
@@ -369,8 +369,7 @@ Manual, outside chezmoi:
 - herdr: Omarchy stable lags upstream (0.8.2 vs 0.9.1 on 2026-09-21); install the same package from
   Omarchy's edge channel instead, see "herdr ahead of Omarchy stable" below. Never a hand-copied binary in
   `~/.local/bin`: Omarchy's herdr migration deletes it and re-adds the package on purpose.
-- Tailscale ACL: `ssh` rule `action: accept`, `users: [autogroup:nonroot]` (default `check` re-auths every 12h).
-- Tailscale admin console, ser8 node: Disable key expiry. Node keys expire after 180 days; a headless box then drops off the tailnet until someone re-auths it locally. Independent of the ACL: expiry is node membership, the ACL is per-session login friction.
+- Tailscale: the tailnet policy and the `tag:server` tag, see [Tailscale](#tailscale). The tag also takes care of key expiry: a tagged node's key does not expire, so the headless box never drops off the tailnet waiting for a local re-auth.
 - 1Password GUI off, only if the installer put it there (a fresh 3.x install had neither GUI nor cli):
   `rm ~/.config/autostart/com.onepassword.OnePassword.desktop`, `omarchy pkg drop 1password` (keeps 1password-cli).
 - Git identity: the Omarchy first-run wizard already wrote it to `~/.config/git/config`; no `~/.gitconfig` needed.
@@ -391,7 +390,7 @@ private 1Password note, not here and not in `agents` (the vault being revoked):
    pushed with ser8's key or a GitHub token from `agents` would run on the laptops.
 3. Rotate what ser8's token read after the theft, per the service accounts' activity log; rotate
    all of `agents` if the log can't tell. Items parked in `agents-disabled` need nothing.
-4. Tailscale: remove the ser8 node (key expiry is disabled, so it never drops off by itself).
+4. Tailscale: remove the ser8 node (a tagged node's key does not expire, so it never drops off by itself).
 5. Sign out ser8's sessions of any logged-in tools (agent subscriptions).
 6. If personal data was on it after all (premise above broken): start the data breach procedure
    (GDPR: 72 hours to report).
@@ -433,6 +432,29 @@ tailscale set --ssh                 # only on machines that should accept Tailsc
 ```
 
 macOS: standalone pkg from pkgs.tailscale.com (brew cask `tailscale-app` exists as an alternative, not used). The Mac is a client only.
+
+### Policy: servers don't initiate (2026-11-16)
+
+The tailnet policy lives in the admin console (Access controls), which keeps its own history. Its `ssh`
+block, with `tag:server` owned by `autogroup:admin`:
+
+```json
+"ssh": [
+  { "action": "accept", "src": ["autogroup:member"], "dst": ["autogroup:self"], "users": ["autogroup:nonroot"] },
+  { "action": "accept", "src": ["autogroup:member"], "dst": ["tag:server"],     "users": ["autogroup:nonroot"] }
+]
+```
+
+- `accept`, not the default `check`: `check` re-auths in a browser every 12h, a prompt that turns into a
+  habit and that nothing unattended can answer. Inside the tailnet is trusted (global CLAUDE.md, Security).
+- The edge is direction instead: ser8 is tagged `tag:server` (`sudo tailscale set --advertise-tags=tag:server`),
+  so it is no longer one of my own devices and matches no `src`. The always-on box cannot open a session
+  on a machine where I sit, next to the 1Password app and the browser. To go on from ser8, connect from
+  the machine in front of you instead.
+- A stolen, unlocked client still reaches every SSH-enabled node: that is covered by disk encryption,
+  the screen lock and removing the node from the phone, not by this policy.
+- Check: from ser8 `ssh ser9` ends in "tailnet policy does not permit you to SSH to this node"; from
+  ser9 `ssh ser8` works.
 
 ## Keybinding rules
 
