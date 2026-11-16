@@ -64,8 +64,17 @@ gitcfg() { (cd / && git config --includes "$@" 2>/dev/null); }
 # stores would keep a copy of the PAT.
 # System config is exempt: git reads it first, so the reset does drop it (osxkeychain as
 # shipped with git on macOS), and it is not ours to edit.
-stray=$(gitcfg --show-scope --show-origin --get-regexp '^credential\.(.*\.)?helper$' | grep -v -e '^system' -e 'github\.inc' | awk '{print $2}' | sort -u | tr '\n' ' ')
-if [ -z "$stray" ]; then ok "credential helpers set outside github.inc: none"; else bad "credential helpers set outside github.inc: $stray"; fi
+# Exempt only a helper scoped to a literal other host (git.heroku.com): git never asks it for
+# GitHub. An empty host (https://) or a wildcard (https://*.com) does match github.com.
+# Tab-split: the origin path is unquoted and may hold spaces; the key ends at the first space.
+stray=$(gitcfg --show-scope --show-origin --get-regexp '^credential\.(.*\.)?helper$' | grep -v -e '^system' -e 'github\.inc' | awk -F'\t' '{
+  split($3, kv, " "); k = kv[1]
+  if (k == "credential.helper") { print $2; next }
+  host = substr(k, 12, length(k) - 18)      # between "credential." and ".helper"
+  sub(/^[A-Za-z][A-Za-z0-9+.-]*:\/\//, "", host); sub(/\/.*/, "", host)
+  if (host == "" || host ~ /\*/ || tolower(host) ~ /github/) print $2
+}' | sort -u | tr '\n' ' ')
+if [ -z "$stray" ]; then ok "github credential helpers set outside github.inc: none"; else bad "github credential helpers set outside github.inc: $stray"; fi
 if [ "$agents" = yes ]; then
   # --get gives the last helper, the one that answers after the reset.
   is "git uses the vault PATs for github.com" yes \
