@@ -75,18 +75,21 @@ fi
 
 # Reload every idle shell pane in herdr; panes running a program (incl. agents) are skipped.
 # reload_all [machine]  -> reload_all ser8 acts on that saved machine's server.
-# herdr only prints JSON; grep/cut keep this free of jq or python.
+# herdr only prints JSON; grep/cut keep this free of jq or python. The foreground process is
+# `argv0` on the Mac's herdr; Arch's 0.9.5 has no argv0, only `name`.
 reload_all() {
   _m=$1
   _herdr() { if [ -n "$_m" ]; then herdr --machine "$_m" "$@"; else herdr "$@"; fi; }
   for _id in $(_herdr pane list | grep -o '"pane_id":"[^"]*"' | cut -d'"' -f4); do
-    _fg=$(_herdr pane process-info --pane "$_id" | grep -o '"argv0":"[^"]*"' | head -1 | cut -d'"' -f4)
+    _pi=$(_herdr pane process-info --pane "$_id")
+    _fg=$(printf '%s' "$_pi" | grep -o '"argv0":"[^"]*"' | head -1 | cut -d'"' -f4)
+    [ -n "$_fg" ] || _fg=$(printf '%s' "$_pi" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
     case "$_fg" in
       zsh|bash) _herdr pane run "$_id" reload >/dev/null && echo "reloaded $_id" ;;
       *) echo "skipped  $_id (running: ${_fg:-?})" ;;
     esac
   done
-  unset -f _herdr; unset _m _id _fg
+  unset -f _herdr; unset _m _id _fg _pi
 }
 {{- if eq .role "desktop" }}
 
