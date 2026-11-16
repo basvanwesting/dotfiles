@@ -88,3 +88,12 @@ reload_all() {
   done
   unset -f _herdr; unset _m _id _fg
 }
+
+# 1Password shell plugins (`op plugin init <tool>` writes this file per machine): the
+# tool gets its credential from the desktop app at use, so nothing sits on disk. Absent
+# on machines without the app (ser8). The plugin wraps `flyctl` only; `fly` is the same
+# binary under its short name and would run without the credential.
+if [ -f "$HOME/.config/op/plugins.sh" ]; then
+  . "$HOME/.config/op/plugins.sh"
+  fly() { flyctl "$@"; }
+fi
