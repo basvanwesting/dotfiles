@@ -1,0 +1,27 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /* Claude Code owns ~/.claude/settings.json and rewrites it (/model, /config), so
+     this only merges our deny rules into whatever is there; every other key passes
+     through. Read deny rules for the two places on a desktop that hold my authority
+     instead of the agents' (global CLAUDE.md, Security): the 1Password SSH agent socket
+     and the plain-gh login. They stop the Read tool, not a shell command: a guard
+     against slips, not a wall. */ -}}
+{{- $ours := list "Read(~/.1password/agent.sock)" "Read(~/.config/gh/hosts.yml)" -}}
+{{- $settings := dict -}}
+{{- if .chezmoi.stdin | trim -}}
+{{-   $settings = fromJson .chezmoi.stdin -}}
+{{- end -}}
+{{- $deny := dig "permissions" "deny" (list) $settings -}}
+{{- $missing := false -}}
+{{- range $ours -}}
+{{-   if not (has . $deny) -}}
+{{-     $deny = append $deny . -}}
+{{-     $missing = true -}}
+{{-   end -}}
+{{- end -}}
+{{- /* Rules already there: hand the file back byte for byte. Re-rendering would reorder
+     Claude Code's keys and show as drift after each of its own writes. */ -}}
+{{- if $missing -}}
+{{ setValueAtPath "permissions.deny" $deny $settings | toPrettyJson }}
+{{- else -}}
+{{ .chezmoi.stdin }}
+{{- end -}}
