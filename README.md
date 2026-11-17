@@ -12,7 +12,7 @@ the mail and calendar window groups hook in beside it (see "Mail and calendar on
 | Machine | OS / role | Used for |
 |---------|-----------|----------|
 | ser9 | Omarchy, `desktop` (monitor attached) | main development machine at the office; runs agents (since 2026-11-12) |
-| MacBook Pro | macOS, `desktop` | main personal development machine; runs agents. Being phased out, to become an Omarchy gliff thin client |
+| MacBook Pro | macOS, `desktop` | personal machine, mainly a herdr client to the others; runs agents. Stays macOS for now (2026-11-17): the plan to make it an Omarchy gliff thin client is shelved |
 | ser8 | Omarchy, `server` (headless) | always-on server over Tailscale/SSH/gliff; runs agents, see [Server role](#server-role-ser8) |
 | MacBook Air | Omarchy, `client` | a screen to work from; no agents |
 | mitx-omg | Omarchy, `client` | home PC with the big screen and GPU, second boot next to Windows, mostly off; no agents |
