@@ -161,6 +161,7 @@ Then give the machine its `op-agent` token, see [Secrets](#secrets-1password).
 
 ```sh
 omarchy pkg add chezmoi ripgrep fd sd lazygit
+omarchy pkg add syncthing                           # on machines that hold ~/Sync, then see "Syncthing"
 # neovim is only a dependency of omarchy-nvim; `pkg drop` is `pacman -Rns` and would take it along.
 sudo pacman -D --asexplicit neovim && omarchy pkg drop omarchy-nvim   # see "Neovim on Omarchy"
 # LazyVim's config and its 260 MB plugin/mason data live in nvim's dirs, which ours reuses; set them aside.
@@ -483,7 +484,7 @@ omarchy-install-service-tailscale   # Omarchy: package, tailscaled, --operator, 
 tailscale set --ssh                 # only on machines that should accept Tailscale SSH (Linux-only feature)
 ```
 
-macOS: standalone pkg from pkgs.tailscale.com (brew cask `tailscale-app` exists as an alternative, not used). The Mac runs no Tailscale SSH server (Linux-only feature): it connects out, nothing connects in.
+macOS: standalone pkg from pkgs.tailscale.com (brew cask `tailscale-app` exists as an alternative, not used). The Mac runs no Tailscale SSH server (Linux-only feature): for SSH it connects out, nothing connects in.
 
 ### Policy: servers don't initiate (2026-11-16)
 
@@ -507,6 +508,47 @@ block, with `tag:server` owned by `autogroup:admin`:
   the screen lock and removing the node from the phone, not by this policy.
 - Check: from ser8 `ssh ser9` ends in "tailnet policy does not permit you to SSH to this node"; from
   ser9 `ssh ser8` works.
+
+## Syncthing (decided 2026-11-17)
+
+`~/Sync` (documents, 21 GB) is one Syncthing folder, id `sync`, between the Mac and ser9; it replaces
+Resilio Sync. Syncthing's config holds the device key, so it is machine state and not managed here:
+only the package is declared (`~/.Brewfile`; the Omarchy install steps).
+
+- Tailnet only: global and local discovery, relays and NAT traversal are off, and a device reaches
+  the other by a fixed `tcp://<name>.<tailnet>.ts.net:22000`. Nothing is announced, to Syncthing's
+  public servers or to the LAN. Cost: no sync while Tailscale is down. Usage and crash reporting are
+  off for the same reason. Set these before the first start, or the device announces itself once.
+- A connection needs only one side to dial, so only the Mac listens, on its Tailscale address
+  (`tcp://<tailscale ip>:22000`, not reachable from a Wi-Fi it joins; a listener that cannot bind
+  because Tailscale is not up yet is retried, seen at about one-minute intervals over two minutes,
+  longer not measured). ser9 dials: its listen address is `tcp://127.0.0.1:22000`, which keeps
+  `fleet-check`'s "no listeners reachable from the LAN" true for a desktop and needs no ufw rule.
+  Only the dialling side gets the other's address; the listening side leaves it `dynamic`, or it
+  dials a loopback-only peer forever. ser8 is a server, whose listeners are its job: the plan is
+  that it listens and the desktops dial. Not decided yet for ser8: its ufw rule, and whether the
+  user unit needs `loginctl enable-linger` (it runs only while the user has a session).
+- No git repos inside `~/Sync`: Syncthing copies `.git` file by file, and work on two machines before
+  a sync settles corrupts the repo. The old projects there are tarballs.
+- `.stignore` is per machine and not synced; `(?d)` lets a folder that only holds ignored files be deleted.
+- No file versioning yet; reopen when ser8, the always-on copy, joins.
+
+A new device, before sharing the folder: get the tree there with rsync first (`rsync -a --delete
+--exclude='.DS_Store' ~/Sync/ <host>:Sync/`), since Syncthing has no deletion history for a tree it
+has not seen and would otherwise send stale files back.
+
+```sh
+syncthing generate --no-port-probing      # key and config, without starting
+# in config.xml (`syncthing paths`): globalAnnounceEnabled, localAnnounceEnabled, relaysEnabled, natEnabled,
+# crashReportingEnabled -> false; urAccepted -> -1; listenAddress -> see above
+printf '(?d).DS_Store\n(?d)._*\n' > ~/Sync/.stignore
+brew services start syncthing             # Omarchy: systemctl --user enable --now syncthing.service
+syncthing cli config devices add --device-id <other> --name <name> --addresses tcp://<name>.<tailnet>.ts.net:22000   # --addresses only on the dialling side
+syncthing cli config folders add --id sync --label Sync --path ~/Sync
+syncthing cli config folders sync devices add --device-id <other>
+```
+
+Web UI: `http://127.0.0.1:8384` on each machine (ser9: over an ssh port forward).
 
 ## Fleet check
 
