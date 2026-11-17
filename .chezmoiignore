@@ -34,6 +34,14 @@ README.md
 .config/hypr/**
 .local/share/applications
 .local/share/applications/**
+.local/share/icons
+.local/share/icons/**
+{{ else if not (lookPath "syncthing") }}
+# Syncthing's web UI as an Omarchy web app (README: Syncthing): only where Syncthing is installed.
+# The icons tree is whole because its icon is the only one; narrow it when a second arrives.
+.local/share/applications/Syncthing.desktop
+.local/share/icons
+.local/share/icons/**
 {{ end }}
 {{ if ne .role "server" }}
 # herdr as a lingering user service is a server thing; desktops start herdr on demand.

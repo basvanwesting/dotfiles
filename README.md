@@ -551,7 +551,9 @@ syncthing cli config folders add --id sync --label Sync --path ~/Sync
 syncthing cli config folders sync devices add --device-id <other>
 ```
 
-Web UI: `http://127.0.0.1:8384` on each machine (ser9: over an ssh port forward).
+Web UI: `http://127.0.0.1:8384` on each machine (ser9: over an ssh port forward). On an Omarchy
+desktop with Syncthing installed it is also a web app in the launcher ("Syncthing"), made once with
+`omarchy webapp install` and kept here as its launcher and icon; install Syncthing before `chezmoi apply`.
 
 ## Fleet check
 
