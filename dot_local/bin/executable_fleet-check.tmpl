@@ -136,11 +136,38 @@ else
 fi
 
 # Everything but loopback, the tailnet interface and the docker bridge: those are not
-# reachable from the LAN, a wildcard or LAN-address bind is. TCP only: UDP has standing
-# wildcard listeners (mDNS, tailscale) that would need a list of their own. A server's
-# listeners are its job, so they are shown, not judged.
+# reachable from the LAN, a wildcard or LAN-address bind is. A bind to this machine's tailnet
+# address (Syncthing) is different from a bind to the interface: Linux accepts a packet for
+# any local address on any interface, so a LAN host that routes the address here reaches it.
+# Only the firewall stops that, so such a listener is exempt only while ufw is on, denies
+# incoming by default and no user rule can open its port. Fail-safe: every accepting rule
+# counts as opening it, whatever its source or interface, unless it is on tailscale0 or
+# names one other port; a --dports rule always counts (not parsed). before.rules is not
+# read. TCP only: UDP has standing wildcard listeners (mDNS,
+# tailscale) that would need a list of their own. A server's listeners are its job, so they
+# are shown, not judged.
 if [ "$os" = linux ] && command -v ss >/dev/null 2>&1; then
-  open=$(ss -tlnH 2>/dev/null | awk '{print $4}' | grep -v -e '^127\.' -e '^\[::1\]' -e '%lo:' -e '%tailscale0:' -e '^172\.17\.' | sort -u | tr '\n' ' ')
+  ts4=$(tailscale ip -4 2>/dev/null | head -1)
+  ufw_rules=/etc/ufw/user.rules
+  fw_deny=false
+  if systemctl is-active --quiet ufw 2>/dev/null && [ -r "$ufw_rules" ] \
+    && grep -q '^ENABLED=yes' /etc/ufw/ufw.conf 2>/dev/null \
+    && grep -Eq '^DEFAULT_INPUT_POLICY="?(DROP|REJECT)' /etc/default/ufw 2>/dev/null; then
+    fw_deny=true
+  fi
+  open=$(ss -tlnH 2>/dev/null | awk '{print $4}' | grep -v -e '^127\.' -e '^\[::1\]' -e '%lo:' -e '%tailscale0:' -e '^172\.17\.' | sort -u | while read -r a; do
+    if [ -n "$ts4" ] && [ "${a%:*}" = "$ts4" ] && $fw_deny \
+      && ! awk -v p="${a##*:}" '
+        /^-A ufw-user-input/ && /-j (ACCEPT|ufw-user-limit-accept)/ && !/ -i tailscale0 / {
+          if (/--dports /) f = 1
+          else if (/--dport /) { if (index($0, "--dport " p " ")) f = 1 }
+          else f = 1
+        }
+        END { exit !f }' "$ufw_rules"; then
+      continue
+    fi
+    printf '%s ' "$a"
+  done)
   if [ "$role" = server ]; then
     echo "info  listeners reachable from the LAN: ${open:-none}"
   elif [ -z "$open" ]; then

@@ -519,15 +519,18 @@ only the package is declared (`~/.Brewfile`; the Omarchy install steps).
   the other by a fixed `tcp://<name>.<tailnet>.ts.net:22000`. Nothing is announced, to Syncthing's
   public servers or to the LAN. Cost: no sync while Tailscale is down. Usage and crash reporting are
   off for the same reason. Set these before the first start, or the device announces itself once.
-- A connection needs only one side to dial, so only the Mac listens, on its Tailscale address
-  (`tcp://<tailscale ip>:22000`, not reachable from a Wi-Fi it joins; a listener that cannot bind
-  because Tailscale is not up yet is retried, seen at about one-minute intervals over two minutes,
-  longer not measured). ser9 dials: its listen address is `tcp://127.0.0.1:22000`, which keeps
-  `fleet-check`'s "no listeners reachable from the LAN" true for a desktop and needs no ufw rule.
-  Only the dialling side gets the other's address; the listening side leaves it `dynamic`, or it
-  dials a loopback-only peer forever. ser8 is a server, whose listeners are its job: the plan is
-  that it listens and the desktops dial. Not decided yet for ser8: its ufw rule, and whether the
-  user unit needs `loginctl enable-linger` (it runs only while the user has a session).
+- Every device listens on its own Tailscale address only (`tcp://<tailscale ip>:22000`) and has
+  the others' addresses, so either side can dial and no pair depends on who starts. On the
+  Mac the bind alone keeps the port off a Wi-Fi it joins (macOS only accepts a packet on the
+  interface that owns the address). On Linux it does not: a LAN host that routes the address to
+  the machine reaches the listener, and only ufw's default deny stops it. So no ufw rule may open
+  22000, to any source or on any interface but `tailscale0`, and `fleet-check` exempts a
+  tailnet-address listener only while that holds. Tailnet traffic gets in without a ufw rule (the Mac reached ser9 on 22000). A listener that cannot bind because
+  Tailscale is not up yet is retried, seen at about one-minute intervals over two minutes, longer
+  not measured. Rejected: a loopback-only listener on the desktops (dial-only), which passed the
+  check unchanged but made every pair depend on one side. Not decided yet for ser8: whether its
+  ufw needs a rule, and whether the user unit needs `loginctl enable-linger` (it runs only while
+  the user has a session).
 - No git repos inside `~/Sync`: Syncthing copies `.git` file by file, and work on two machines before
   a sync settles corrupts the repo. The old projects there are tarballs.
 - `.stignore` is per machine and not synced; `(?d)` lets a folder that only holds ignored files be deleted.
@@ -540,10 +543,10 @@ has not seen and would otherwise send stale files back.
 ```sh
 syncthing generate --no-port-probing      # key and config, without starting
 # in config.xml (`syncthing paths`): globalAnnounceEnabled, localAnnounceEnabled, relaysEnabled, natEnabled,
-# crashReportingEnabled -> false; urAccepted -> -1; listenAddress -> see above
+# crashReportingEnabled -> false; urAccepted -> -1; listenAddress -> tcp://<tailscale ip>:22000
 printf '(?d).DS_Store\n(?d)._*\n' > ~/Sync/.stignore
 brew services start syncthing             # Omarchy: systemctl --user enable --now syncthing.service
-syncthing cli config devices add --device-id <other> --name <name> --addresses tcp://<name>.<tailnet>.ts.net:22000   # --addresses only on the dialling side
+syncthing cli config devices add --device-id <other> --name <name> --addresses tcp://<name>.<tailnet>.ts.net:22000
 syncthing cli config folders add --id sync --label Sync --path ~/Sync
 syncthing cli config folders sync devices add --device-id <other>
 ```
@@ -569,7 +572,7 @@ and prints no secret.
 | 24h release cooldown in a fresh shell | yes | yes | yes |
 | Tailscale SSH server / shields up (Linux) | on / down | on / down | off / up |
 | tagged `tag:server` | no | yes | no |
-| TCP listeners reachable from the LAN (Linux) | none | shown, not judged | none |
+| TCP listeners reachable from the LAN (Linux); one on the machine's tailnet address counts unless ufw is on, denies incoming by default and has no user rule that can open its port (any accepting rule not on `tailscale0` and not naming one other port) | none | shown, not judged | none |
 | disk encryption | yes | no, by decision | yes |
 
 Not looked at: UDP listeners, and on macOS listeners and the Tailscale SSH server.
