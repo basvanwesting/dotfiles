@@ -34,7 +34,7 @@ Moving a machine: close every Claude session, then `move-code-to-Work -n` to see
 `move-code-to-Work` from a plain terminal. It moves the folders, carries Claude's path-keyed state
 along (project folders, trust and repo paths in `~/.claude.json`, prompt history; originals kept as
 `*.before-Work`) and revokes trust on `~/Work`. mise trust is asked again per project. It can be
-run again after a stop halfway. `fleet-check` fails while `~/workspace` or `~/sandbox/self` exists or
+run again after a stop halfway. `fleet-check` fails while `~/workspace` exists or
 `~` or `~/Work` is trusted (the script revokes only `~/Work`). Delete the script once every machine passes.
 
 ## Two axes
@@ -590,7 +590,7 @@ and prints no secret.
 | GitHub fetch rewritten to https | yes | yes | no |
 | credential helpers that can answer for GitHub, set outside `github.inc` (exempt: system config, which the reset drops, and a helper scoped to another host such as `git.heroku.com`) | none | none | none |
 | 24h release cooldown in a fresh shell | yes | yes | yes |
-| `~/workspace` or `~/sandbox/self` beside `~/Work` ([Code lives in ~/Work](#code-lives-in-work-decided-2026-11-18)) | none | none | none |
+| `~/workspace` beside `~/Work` ([Code lives in ~/Work](#code-lives-in-work-decided-2026-11-18)) | none | none | none |
 | Claude trust on `~` or `~/Work` (a trusted parent counts) | no | no | no |
 | Tailscale SSH server / shields up (Linux) | on / down | on / down | off / up |
 | tagged `tag:server` | no | yes | no |

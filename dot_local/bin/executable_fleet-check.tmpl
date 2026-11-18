@@ -103,8 +103,7 @@ fi
 
 # One code folder under one name on every machine (README "Code lives in ~/Work"): Claude keys
 # a project's memory by its absolute path, so a second name splits it.
-old_code=$(for d in workspace sandbox/self; do [ -e "$HOME/$d" ] && printf '~/%s ' "$d"; done)
-if [ -z "$old_code" ]; then ok "code folders beside ~/Work: none"; else bad "code folders beside ~/Work: ${old_code}(run move-code-to-Work)"; fi
+if [ -e "$HOME/workspace" ]; then bad "~/workspace beside ~/Work: yes (run move-code-to-Work)"; else ok "~/workspace beside ~/Work: none"; fi
 # ~/Work holds every project, so a trust grant there would cover whatever is cloned into it.
 # Claude also counts a trusted parent folder, so ~ is asked too.
 if [ ! -f "$HOME/.claude.json" ]; then
