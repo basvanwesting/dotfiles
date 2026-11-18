@@ -21,12 +21,12 @@ ser9 and the MacBook Pro are used the same way, so a setup step for one is a set
 
 ### Code lives in ~/Work (decided 2026-11-18)
 
-Every machine keeps its code in `~/Work/<project>`, `try` experiments in `~/Work/tries`, and machine
-admin (this repo's work) in `~/Work/self`. One name everywhere because Claude keys a project's memory,
-sessions and trust by its absolute path, and scripts name paths too. `~/Work` because Omarchy makes it
-at install and its `try` wrapper and app skill use it; the Mac gets the same via
-`~/.config/shell/functions.sh`. Rejected: `~/workspace` (the old name on ser8, the Mac and ser9),
-which meant overriding Omarchy on every new machine. `~/Work` itself is never trusted by Claude, so
+Every machine keeps its code in `~/Work/<project>` and machine admin (this repo's work) in
+`~/Work/self`. One name everywhere because Claude keys a project's memory, sessions and trust by its
+absolute path, and scripts name paths too. `~/Work` because Omarchy makes it at install and its `try`
+wrapper (`~/Work/tries`) and app skill use it, so nothing here overrides Omarchy; the Mac creates the
+folder by hand. Rejected: `~/workspace` (the old name on ser8, the Mac and ser9), which needed a `try`
+override on every Omarchy machine. `~/Work` itself is never trusted by Claude, so
 nothing cloned into it inherits trust; start Claude in a project, not in `~/Work`. No `~/workspace`
 symlink: one folder with two names gives a project two memories.
 
