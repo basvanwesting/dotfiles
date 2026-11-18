@@ -101,6 +101,21 @@ else
   skip "dotfiles push URL: no chezmoi repo"
 fi
 
+# One code folder under one name on every machine (README "Code lives in ~/Work"): Claude keys
+# a project's memory by its absolute path, so a second name splits it.
+old_code=$(for d in workspace sandbox/self; do [ -e "$HOME/$d" ] && printf '~/%s ' "$d"; done)
+if [ -z "$old_code" ]; then ok "code folders beside ~/Work: none"; else bad "code folders beside ~/Work: ${old_code}(run move-code-to-Work)"; fi
+# ~/Work holds every project, so a trust grant there would cover whatever is cloned into it.
+# Claude also counts a trusted parent folder, so ~ is asked too.
+if [ ! -f "$HOME/.claude.json" ]; then
+  skip "Claude trust on ~ or ~/Work: no ~/.claude.json"
+elif ! command -v jq >/dev/null 2>&1; then
+  skip "Claude trust on ~ or ~/Work: no jq"
+else
+  is "Claude trust on ~ or ~/Work" no \
+    "$(jq -r --arg h "$HOME" '[.projects[$h, $h + "/Work"].hasTrustDialogAccepted] | if any then "yes" else "no" end' "$HOME/.claude.json")"
+fi
+
 # --- what comes in from outside
 # A fresh interactive shell, as an agent or I would get it: the caller's own env says
 # nothing when this runs over ssh.
