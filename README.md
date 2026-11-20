@@ -30,12 +30,10 @@ override on every Omarchy machine. `~/Work` itself is never trusted by Claude, s
 nothing cloned into it inherits trust; start Claude in a project, not in `~/Work`. No `~/workspace`
 symlink: one folder with two names gives a project two memories.
 
-Moving a machine: close every Claude session, then `move-code-to-Work -n` to see the plan and
-`move-code-to-Work` from a plain terminal. It moves the folders, carries Claude's path-keyed state
-along (project folders, trust and repo paths in `~/.claude.json`, prompt history; originals kept as
-`*.before-Work`) and revokes trust on `~/Work`. mise trust is asked again per project. It can be
-run again after a stop halfway. `fleet-check` fails while `~/workspace` exists or
-`~` or `~/Work` is trusted (the script revokes only `~/Work`). Delete the script once every machine passes.
+Every machine was moved by 2026-11-20 and the one-time script for it is gone (git history,
+`move-code-to-Work`, for another path rename: Claude's project folders, the `.projects` keys and
+`.githubRepoPaths` in `~/.claude.json` and the prompt history all carry the path).
+`fleet-check` fails while `~/workspace` exists or `~` or `~/Work` is trusted.
 
 ## Two axes
 
