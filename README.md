@@ -404,8 +404,9 @@ reach the forwarded socket, within what 1Password already approved, so keep thos
 Omarchy ISO: Ctrl+C in the install form toggles disk encryption -- leave it OFF for an
 unattended-boot server (a LUKS prompt blocks boot until someone types; see git log).
 Reconsidered 2026-11-11 for gliff, kept OFF: gliff needs ssh + a running Hyprland, so it can't
-answer the prompt. Premise: no sensitive data on ser8 (no personal data, no production exports);
-its credentials are revocable, see "If ser8 is stolen". Reopen if data lands here. Rejected: TPM2
+answer the prompt. Premise: no sensitive data on ser8's internal disk (no personal data, no
+production exports; personal data lives only on the encrypted USB drives, see "Storage"); its
+credentials are revocable, see "If ser8 is stolen". Reopen if data lands there. Rejected: TPM2
 auto-unlock (only guards a pulled SSD), ssh unlock in the initramfs (dropbear; LAN-only, Tailscale
 isn't up yet).
 Hostname `ser8`. Unencrypted installs get no SDDM autologin; ser8 adds it (below), since gliff
@@ -445,6 +446,60 @@ Manual, outside chezmoi:
 - `chezmoi init` works against a pre-existing clone in `~/.local/share/chezmoi` (no repo arg, nothing re-cloned).
 - BIOS (Beelink SER8, AMI Aptio): Del at boot, Advanced > AMD CBS > FCH Common Options > AC Power Loss Options > Always On, F4 to save. Not under any Power/Chipset menu. Test: unplug while off, replug, it should boot. Unplug the install USB.
 
+### Storage (decided 2026-11-20)
+
+Two USB-C SSDs hold the personal data: `backup` (1TB Samsung T5, the online copy of the family
+photos; offline copies exist elsewhere) at `/srv/backup`, and `sync` (500GB, `~/Sync`, planned) at
+`/srv/sync`. Both are LUKS2 + btrfs with the same passphrase (personal 1Password vault, not
+`agents`), and both unlock by hand only: after a power cut or reboot,
+`ssh ser8` and `sudo systemctl start storage.target`. Boot never waits for it: crypttab and fstab
+say `noauto`, and `storage.target` has no `[Install]`. `fleet-check` fails when boot would pull a
+drive's unlock in, or when a drive has a key file or a TPM/FIDO2 option.
+
+- Why encrypt both: the photos are no less private, a USB drive is what goes missing, an SSD
+  can't be wiped reliably, and the second drive costs one crypttab line once the first exists.
+- Why by hand: auto-unlock (a key file on the unencrypted root, TPM2) guards only a drive pulled on
+  its own, not the box taken whole; ser8 is always on, so the passphrase is rarely asked.
+- Rejected: a separate system user owning the mounts, to keep agents out. `~/Sync` is already
+  readable by the agents on the Mac and ser9, so a wall here alone buys nothing. No btrfs subvolumes or
+  snapshots: they existed only for versioning, which `~/Sync` doesn't use.
+- No TRIM: the T5 enclosure does not pass it (`lsblk -D` shows `DISC-MAX 0B`). Left so, since the
+  photo copy is written once and rarely rewritten. The `discard` in crypttab is a no-op until a
+  kernel enables unmap. Rejected: a udev rule forcing `provisioning_mode=unmap`. SMART works
+  through it: `sudo smartctl -d sat -a /dev/sdX`.
+- The empty mountpoint is immutable, so a copy started while the drive is locked fails instead of
+  filling the internal disk.
+
+Per drive (`sdX` checked with `lsblk` first; `sgdisk` is not installed, util-linux does it):
+
+```sh
+sudo wipefs -a /dev/sdX?* ; sudo wipefs -a /dev/sdX   # old partitions' signatures (if any), then the table
+printf 'label: gpt\ntype=L, name=backup\n' | sudo sfdisk /dev/sdX
+sudo cryptsetup luksFormat --type luks2 --label backup-crypt /dev/sdX1
+sudo cryptsetup open /dev/sdX1 backup && sudo mkfs.btrfs -L backup /dev/mapper/backup
+sudo mount /dev/mapper/backup /mnt && sudo chown "$USER": /mnt && sudo umount /mnt && sudo cryptsetup close backup
+sudo install -d /srv/backup && sudo chattr +i /srv/backup
+echo "backup  UUID=$(sudo cryptsetup luksUUID /dev/sdX1)  none  luks,noauto,discard" | sudo tee -a /etc/crypttab
+echo '/dev/mapper/backup  /srv/backup  btrfs  noauto,compress=zstd:3  0 0' | sudo tee -a /etc/fstab
+printf '[Unit]\nDescription=Encrypted USB storage (manual unlock)\nWants=systemd-cryptsetup@backup.service srv-backup.mount\n' | sudo tee /etc/systemd/system/storage.target
+sudo systemctl daemon-reload && sudo systemctl start storage.target
+sudo systemctl enable --now btrfs-scrub@srv-backup.timer
+```
+
+The scrub's `RequiresMountsFor=` pulls in the unlock, and crypttab waits for the passphrase
+without a timeout, so a scrub that fires while the drive is locked waits at the prompt. The next
+`start storage.target` answers it and the scrub runs then. An empty `RequiresMountsFor=` in a
+drop-in does not clear the list (tried, systemd 262), so no override.
+
+The `sync` drive, when it comes: the same with `sync`. Add `systemd-cryptsetup@sync.service`,
+`srv-sync.mount` and `syncthing@$USER.service` to the target's `Wants=`, and a drop-in
+`syncthing@$USER.service.d/mount.conf` with `Requires=srv-sync.mount` and `After=srv-sync.mount`.
+Never enable Syncthing at boot: it starts with the unlock. Symlink `~/Sync` to `/srv/sync`. A system
+unit, not the user unit, so it can depend on the mount and needs no linger. Syncthing's own state
+(its index lists every file name in `~/Sync`) goes on `/srv/sync` too (`--home`), or the internal
+disk holds personal data after all. Check then that the unlock asks once for both drives: the
+cached passphrase should be tried for the second, but both units start at the same time.
+
 ### If ser8 is stolen
 
 The disk is unencrypted (see above), so treat every credential on it as read. No device-side kill
@@ -461,8 +516,9 @@ private 1Password note, not here and not in `agents` (the vault being revoked):
    all of `agents` if the log can't tell. Items parked in `agents-disabled` need nothing.
 4. Tailscale: remove the ser8 node (a tagged node's key does not expire, so it never drops off by itself).
 5. Sign out ser8's sessions of any logged-in tools (agent subscriptions).
-6. If personal data was on it after all (premise above broken): start the data breach procedure
-   (GDPR: 72 hours to report).
+6. If personal data was on the internal disk after all (premise above broken): start the data breach
+   procedure (GDPR: 72 hours to report). The USB drives lock when the power goes, so a thief gets
+   them locked; only a leaked passphrase changes that.
 
 ### herdr ahead of Omarchy stable (decided 2026-09-21, ser8 on edge since 2026-09-26)
 
@@ -545,12 +601,12 @@ only the package is declared (`~/.Brewfile`; the Omarchy install steps).
   Tailscale is not up yet is retried, seen at about one-minute intervals over two minutes, longer
   not measured. Rejected: a loopback-only listener on the desktops (dial-only), which passed the
   check unchanged but made every pair depend on one side. Not decided yet for ser8: whether its
-  ufw needs a rule, and whether the user unit needs `loginctl enable-linger` (it runs only while
-  the user has a session).
+  ufw needs a rule. It will run the system unit `syncthing@$USER`, started with the drive unlock
+  (see "Storage"), so no linger question.
 - No git repos inside `~/Sync`: Syncthing copies `.git` file by file, and work on two machines before
   a sync settles corrupts the repo. The old projects there are tarballs.
 - `.stignore` is per machine and not synced; `(?d)` lets a folder that only holds ignored files be deleted.
-- No file versioning yet; reopen when ser8, the always-on copy, joins.
+- No file versioning, also not on ser8 (decided 2026-11-20): never relied on it.
 
 A new device, before sharing the folder: get the tree there with rsync first (`rsync -a --delete
 --exclude='.DS_Store' ~/Sync/ <host>:Sync/`), since Syncthing has no deletion history for a tree it
@@ -594,6 +650,7 @@ and prints no secret.
 | tagged `tag:server` | no | yes | no |
 | TCP listeners reachable from the LAN (Linux); one on the machine's tailnet address counts unless ufw is on, denies incoming by default and has no user rule that can open its port (any accepting rule not on `tailscale0` and not naming one other port) | none | shown, not judged | none |
 | disk encryption | yes | no, by decision | yes |
+| data drives whose unlock boot pulls in (reachable from `default.target`), or that unlock without a passphrase (key file, TPM/FIDO2/PKCS#11 option; an enrolled LUKS token is not seen) | not checked | none | not checked |
 
 Not looked at: UDP listeners, and on macOS listeners and the Tailscale SSH server.
 

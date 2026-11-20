@@ -204,5 +204,29 @@ else
   is "disk encryption (LUKS under /)" yes "$(yn sh -c "lsblk -nso FSTYPE '$root_dev' | grep -q crypto_LUKS")"
 fi
 
+# The server's data drives lock on every power cut and wait for me (README "Storage"). Two ways
+# around that are seen: boot pulling a drive's unlock in (crypttab or fstab without noauto, an
+# enabled storage.target; asked as reachability from default.target, which follows mount ->
+# device -> cryptsetup), and an unlock that needs no passphrase (a key file, a TPM/FIDO2/PKCS#11
+# option). Read from the generated units, since /etc/crypttab is root-only. Not seen: a LUKS
+# token enrolled with systemd-cryptenroll (the header needs root), and a timer whose service
+# needs the mount (Triggers= is not followed; such a unit only waits at the prompt).
+if [ "$role" = server ]; then
+  units=$(systemctl list-unit-files --no-legend 'systemd-cryptsetup@*' 2>/dev/null | awk '{print $1}')
+  deps=$(systemctl list-dependencies --all --plain default.target 2>/dev/null)
+  boot=$(for u in $units; do
+    printf '%s\n' "$deps" | awk -v u="$u" '$1 == u { f = 1 } END { exit !f }' && echo "$u"
+  done | tr '\n' ' ')
+  if [ -z "$boot" ]; then ok "data drives unlocked by boot: none"; else bad "data drives unlocked by boot: $boot"; fi
+  nopass=$(for u in $units; do
+    systemctl show "$u" -p ExecStart --value | awk '{
+      for (i = 1; i <= NF; i++) if ($i == "attach") break
+      key = $(i + 3); opts = "," $(i + 4) ","
+      if ((key != "none" && key != "-" && key != ";") || opts ~ /,(tpm2-device|fido2-device|pkcs11-uri)=/) print $(i + 1)
+    }'
+  done | tr '\n' ' ')
+  if [ -z "$nopass" ]; then ok "data drives that unlock without a passphrase: none"; else bad "data drives that unlock without a passphrase: $nopass"; fi
+fi
+
 if [ "$fail" = 0 ]; then echo "fleet-check: matches role $role"; else echo "fleet-check: DRIFT from role $role"; fi
 exit "$fail"
