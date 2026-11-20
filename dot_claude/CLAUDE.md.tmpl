@@ -75,6 +75,10 @@ Never read key files, paste secrets, or put secret values in config/env blocks. 
 - This machine: bare `op` goes through the 1Password app and asks the user for the whole account; that is the user's path, not an agent's. SSH: keys live in 1Password (SSH agent via `IdentityAgent` in chezmoi-managed `~/.ssh/config`); only `.pub` selector files on disk.
 {{- end }}
 
+## Environment: every machine
+
+- Every project is checked out at `~/Work/<name>`, under the same name on every machine (Mac, ser8, ser9). Code that reads from a sibling project uses that path as is: no path override, no fallback for a missing checkout.
+
 {{ if eq .chezmoi.os "darwin" -}}
 ## Environment: macOS
 
