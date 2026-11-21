@@ -405,7 +405,8 @@ Omarchy ISO: Ctrl+C in the install form toggles disk encryption -- leave it OFF 
 unattended-boot server (a LUKS prompt blocks boot until someone types; see git log).
 Reconsidered 2026-11-11 for gliff, kept OFF: gliff needs ssh + a running Hyprland, so it can't
 answer the prompt. Premise: no sensitive data on ser8's internal disk (no personal data, no
-production exports; personal data lives only on the encrypted USB drives, see "Storage"); its
+production exports; personal data lives only on the encrypted USB drives, see "Storage", apart
+from the odd file name in Syncthing's journal lines); its
 credentials are revocable, see "If ser8 is stolen". Reopen if data lands there. Rejected: TPM2
 auto-unlock (only guards a pulled SSD), ssh unlock in the initramfs (dropbear; LAN-only, Tailscale
 isn't up yet).
@@ -448,13 +449,20 @@ Manual, outside chezmoi:
 
 ### Storage (decided 2026-11-20)
 
-Two USB-C SSDs hold the personal data: `backup` (1TB Samsung T5, the online copy of the family
-photos; offline copies exist elsewhere) at `/srv/backup`, and `sync` (500GB, `~/Sync`, planned) at
-`/srv/sync`. Both are LUKS2 + btrfs with the same passphrase (personal 1Password vault, not
-`agents`), and both unlock by hand only: after a power cut or reboot,
-`ssh ser8` and `sudo systemctl start storage.target`. Boot never waits for it: crypttab and fstab
-say `noauto`, and `storage.target` has no `[Install]`. `fleet-check` fails when boot would pull a
-drive's unlock in, or when a drive has a key file or a TPM/FIDO2 option.
+Two USB SSDs (Samsung T5) hold the personal data, named for how they are used:
+
+| Drive | Mount | Holds |
+|---|---|---|
+| `backup` (1TB) | `/srv/backup` | the online copy of the family photos and videos, mostly static; offline copies exist elsewhere |
+| `active` (500GB) | `/srv/active` | data services work on daily: `Sync/` (`~/Sync` is a symlink to it) and `syncthing/` (Syncthing's state) |
+
+Both are LUKS2 + btrfs with the same passphrase (personal 1Password vault, not `agents`), and both
+unlock by hand only: after a power cut or reboot, `ssh ser8` and `sudo systemctl start
+storage.target`, which also starts Syncthing. One passphrase opens both: the second drive's prompt
+shows and is withdrawn once the cached passphrase opens it (the `Failed to open
+'/run/systemd/ask-password/...'` line is that withdrawal). Boot never waits for it: crypttab and
+fstab say `noauto`, `storage.target` has no `[Install]`, and Syncthing is not enabled. `fleet-check`
+fails when boot would pull a drive's unlock in, or when a drive has a key file or a TPM/FIDO2 option.
 
 - Why encrypt both: the photos are no less private, a USB drive is what goes missing, an SSD
   can't be wiped reliably, and the second drive costs one crypttab line once the first exists.
@@ -463,42 +471,60 @@ drive's unlock in, or when a drive has a key file or a TPM/FIDO2 option.
 - Rejected: a separate system user owning the mounts, to keep agents out. `~/Sync` is already
   readable by the agents on the Mac and ser9, so a wall here alone buys nothing. No btrfs subvolumes or
   snapshots: they existed only for versioning, which `~/Sync` doesn't use.
-- No TRIM: the T5 enclosure does not pass it (`lsblk -D` shows `DISC-MAX 0B`). Left so, since the
-  photo copy is written once and rarely rewritten. The `discard` in crypttab is a no-op until a
-  kernel enables unmap. Rejected: a udev rule forcing `provisioning_mode=unmap`. SMART works
-  through it: `sudo smartctl -d sat -a /dev/sdX`.
+- Names: siblings differ by use, static copy vs daily work; both are encrypted and both personal, so
+  neither tells them apart. Rejected: `sync` (Sync is one folder in it), `live` (reads as live boot
+  media), `vault`/`private`/`data` (fit `backup` as well). A media server's database and thumbnails
+  churn, so they belong on `active`, not `backup`.
+- No TRIM: the T5 enclosure does not pass it (`lsblk -D` shows `DISC-MAX 0B` on both). Left so:
+  `backup` is written once, and `active` is mostly free space the drive manages itself. The
+  `discard` in crypttab is a no-op until a kernel enables unmap. Rejected: a udev rule forcing
+  `provisioning_mode=unmap`. SMART works through it: `sudo smartctl -d sat -a /dev/sdX`.
+- Cable: a USB-A to C cable must be a USB 3 one, and the port too: either at USB 2 gives 480 Mb/s
+  (~40 MB/s instead of ~470/560 write/read). Check the link with the `speed` file of the drive's
+  USB device in sysfs (`10000` is right).
 - The empty mountpoint is immutable, so a copy started while the drive is locked fails instead of
   filling the internal disk.
 
-Per drive (`sdX` checked with `lsblk` first; `sgdisk` is not installed, util-linux does it):
+Per drive, with `NAME` = `backup` or `active` (`sdX` checked with `lsblk` first; `sgdisk` is not
+installed, util-linux does it):
 
 ```sh
 sudo wipefs -a /dev/sdX?* ; sudo wipefs -a /dev/sdX   # old partitions' signatures (if any), then the table
-printf 'label: gpt\ntype=L, name=backup\n' | sudo sfdisk /dev/sdX
-sudo cryptsetup luksFormat --type luks2 --label backup-crypt /dev/sdX1
-sudo cryptsetup open /dev/sdX1 backup && sudo mkfs.btrfs -L backup /dev/mapper/backup
-sudo mount /dev/mapper/backup /mnt && sudo chown "$USER": /mnt && sudo umount /mnt && sudo cryptsetup close backup
-sudo install -d /srv/backup && sudo chattr +i /srv/backup
-echo "backup  UUID=$(sudo cryptsetup luksUUID /dev/sdX1)  none  luks,noauto,discard" | sudo tee -a /etc/crypttab
-echo '/dev/mapper/backup  /srv/backup  btrfs  noauto,compress=zstd:3  0 0' | sudo tee -a /etc/fstab
-printf '[Unit]\nDescription=Encrypted USB storage (manual unlock)\nWants=systemd-cryptsetup@backup.service srv-backup.mount\n' | sudo tee /etc/systemd/system/storage.target
-sudo systemctl daemon-reload && sudo systemctl start storage.target
-sudo systemctl enable --now btrfs-scrub@srv-backup.timer
+printf 'label: gpt\ntype=L, name=NAME\n' | sudo sfdisk /dev/sdX
+sudo cryptsetup luksFormat --type luks2 --label NAME-crypt /dev/sdX1
+sudo cryptsetup open /dev/sdX1 NAME && sudo mkfs.btrfs -L NAME /dev/mapper/NAME
+sudo mount /dev/mapper/NAME /mnt && sudo chown "$USER": /mnt && sudo umount /mnt && sudo cryptsetup close NAME
+sudo install -d /srv/NAME && sudo chattr +i /srv/NAME
+echo "NAME  UUID=$(sudo cryptsetup luksUUID /dev/sdX1)  none  luks,noauto,discard" | sudo tee -a /etc/crypttab
+echo '/dev/mapper/NAME  /srv/NAME  btrfs  noauto,compress=zstd:3  0 0' | sudo tee -a /etc/fstab
+sudo systemctl enable --now btrfs-scrub@srv-NAME.timer
 ```
+
+Then once, in this order: Syncthing must not start before its config is tailnet-only, or it
+announces itself once and makes its own key.
+
+```sh
+printf '[Unit]\nDescription=Encrypted USB storage (manual unlock)\nWants=systemd-cryptsetup@backup.service srv-backup.mount\nWants=systemd-cryptsetup@active.service srv-active.mount\nWants=syncthing@%s.service\n' "$USER" | sudo tee /etc/systemd/system/storage.target
+sudo install -d /etc/systemd/system/syncthing@$USER.service.d
+printf '[Unit]\nRequires=srv-active.mount\nAfter=srv-active.mount\n\n[Service]\nEnvironment=STHOMEDIR=/srv/active/syncthing\n' | sudo tee /etc/systemd/system/syncthing@$USER.service.d/active.conf
+sudo systemctl daemon-reload && sudo systemctl start srv-backup.mount srv-active.mount   # the drives only, not Syncthing yet
+mkdir /srv/active/Sync /srv/active/syncthing && ln -s /srv/active/Sync ~/Sync
+# Syncthing's generate and config.xml edits, see "Syncthing" (ser8 notes); then:
+sudo systemctl start storage.target
+```
+
+Syncthing runs as the packaged system unit `syncthing@$USER`, not the user unit, so it can require
+the mount and needs no linger. Its state (the index lists every file name in `~/Sync`) lives on
+`active` through `STHOMEDIR`, set by environment rather than an `ExecStart` override, so a package
+update to the start command does not clash with the drop-in. Accepted: its log goes to the
+persistent journal on the internal disk and names a path now and then (a scan error, a renamed
+file). Some file names, no contents; silencing it (`StandardOutput=null`) would hide the errors too. Never enable the unit: the package declares `WantedBy=multi-user.target`,
+and enabled it would pull in the unlock at boot (`fleet-check` fails on that).
 
 The scrub's `RequiresMountsFor=` pulls in the unlock, and crypttab waits for the passphrase
 without a timeout, so a scrub that fires while the drive is locked waits at the prompt. The next
 `start storage.target` answers it and the scrub runs then. An empty `RequiresMountsFor=` in a
 drop-in does not clear the list (tried, systemd 262), so no override.
-
-The `sync` drive, when it comes: the same with `sync`. Add `systemd-cryptsetup@sync.service`,
-`srv-sync.mount` and `syncthing@$USER.service` to the target's `Wants=`, and a drop-in
-`syncthing@$USER.service.d/mount.conf` with `Requires=srv-sync.mount` and `After=srv-sync.mount`.
-Never enable Syncthing at boot: it starts with the unlock. Symlink `~/Sync` to `/srv/sync`. A system
-unit, not the user unit, so it can depend on the mount and needs no linger. Syncthing's own state
-(its index lists every file name in `~/Sync`) goes on `/srv/sync` too (`--home`), or the internal
-disk holds personal data after all. Check then that the unlock asks once for both drives: the
-cached passphrase should be tried for the second, but both units start at the same time.
 
 ### If ser8 is stolen
 
@@ -583,8 +609,8 @@ block, with `tag:server` owned by `autogroup:admin`:
 
 ## Syncthing (decided 2026-11-17)
 
-`~/Sync` (documents, 21 GB) is one Syncthing folder, id `sync`, between the Mac and ser9; it replaces
-Resilio Sync. Syncthing's config holds the device key, so it is machine state and not managed here:
+`~/Sync` (documents, 22 GB) is one Syncthing folder, id `sync`, between the Mac, ser9 and ser8 (the
+always-on copy, since 2026-11-21; its setup is in "Storage"); it replaces Resilio Sync. Syncthing's config holds the device key, so it is machine state and not managed here:
 only the package is declared (`~/.Brewfile`; the Omarchy install steps).
 
 - Tailnet only: global and local discovery, relays and NAT traversal are off, and a device reaches
@@ -600,9 +626,8 @@ only the package is declared (`~/.Brewfile`; the Omarchy install steps).
   tailnet-address listener only while that holds. Tailnet traffic gets in without a ufw rule (the Mac reached ser9 on 22000). A listener that cannot bind because
   Tailscale is not up yet is retried, seen at about one-minute intervals over two minutes, longer
   not measured. Rejected: a loopback-only listener on the desktops (dial-only), which passed the
-  check unchanged but made every pair depend on one side. Not decided yet for ser8: whether its
-  ufw needs a rule. It will run the system unit `syncthing@$USER`, started with the drive unlock
-  (see "Storage"), so no linger question.
+  check unchanged but made every pair depend on one side. ser8 needs no ufw rule either: the Mac
+  and ser9 reach it on 22000. The tailnet policy limits only Tailscale SSH, so ser8 dials out too.
 - No git repos inside `~/Sync`: Syncthing copies `.git` file by file, and work on two machines before
   a sync settles corrupts the repo. The old projects there are tarballs.
 - `.stignore` is per machine and not synced; `(?d)` lets a folder that only holds ignored files be deleted.
@@ -610,20 +635,23 @@ only the package is declared (`~/.Brewfile`; the Omarchy install steps).
 
 A new device, before sharing the folder: get the tree there with rsync first (`rsync -a --delete
 --exclude='.DS_Store' ~/Sync/ <host>:Sync/`), since Syncthing has no deletion history for a tree it
-has not seen and would otherwise send stale files back.
+has not seen and would otherwise send stale files back. While the new device takes in the others'
+indexes, its web UI shows them below 100% (ser9 went 52%, 67%, 100% in minutes): that is its partial
+view of their index, not files they lack.
 
 ```sh
-syncthing generate --no-port-probing      # key and config, without starting
+syncthing generate --no-port-probing      # key and config, without starting; ser8: add --home=/srv/active/syncthing
 # in config.xml (`syncthing paths`): globalAnnounceEnabled, localAnnounceEnabled, relaysEnabled, natEnabled,
 # crashReportingEnabled -> false; urAccepted -> -1; listenAddress -> tcp://<tailscale ip>:22000
+# ser8 also startBrowser -> false, and `syncthing paths` and every `syncthing cli` below take --home=/srv/active/syncthing
 printf '(?d).DS_Store\n(?d)._*\n' > ~/Sync/.stignore
-brew services start syncthing             # Omarchy: systemctl --user enable --now syncthing.service
+brew services start syncthing             # Omarchy: systemctl --user enable --now syncthing.service; ser8: see "Storage"
 syncthing cli config devices add --device-id <other> --name <name> --addresses tcp://<name>.<tailnet>.ts.net:22000
 syncthing cli config folders add --id sync --label Sync --path ~/Sync
 syncthing cli config folders sync devices add --device-id <other>
 ```
 
-Web UI: `http://127.0.0.1:8384` on each machine (ser9: over an ssh port forward). On an Omarchy
+Web UI: `http://127.0.0.1:8384` on each machine (ser9 and ser8: over an ssh port forward). On an Omarchy
 desktop with Syncthing installed it is also a web app in the launcher ("Syncthing"), made once with
 `omarchy webapp install` and kept here as its launcher and icon; install Syncthing before `chezmoi apply`.
 
