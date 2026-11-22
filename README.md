@@ -454,14 +454,14 @@ Two USB SSDs (Samsung T5) hold the personal data, named for how they are used:
 | Drive | Mount | Holds |
 |---|---|---|
 | `backup` (1TB) | `/srv/backup` | the online copy of the family photos and videos, mostly static; offline copies exist elsewhere |
-| `active` (500GB) | `/srv/active` | data services work on daily: `Sync/` (`~/Sync` is a symlink to it) and `syncthing/` (Syncthing's state) |
+| `active` (500GB) | `/srv/active` | data services work on daily: `Sync/` (`~/Sync` is a symlink to it), `syncthing/` (Syncthing's state) and `immich/` (Immich's compose files, database and thumbnails, see "Immich") |
 
 Both are LUKS2 + btrfs with the same passphrase (personal 1Password vault, not `agents`), and both
 unlock by hand only: after a power cut or reboot, `ssh ser8` and `sudo systemctl start
-storage.target`, which also starts Syncthing. One passphrase opens both: the second drive's prompt
+storage.target`, which also starts Syncthing and Immich. One passphrase opens both: the second drive's prompt
 shows and is withdrawn once the cached passphrase opens it (the `Failed to open
 '/run/systemd/ask-password/...'` line is that withdrawal). Boot never waits for it: crypttab and
-fstab say `noauto`, `storage.target` has no `[Install]`, and Syncthing is not enabled. `fleet-check`
+fstab say `noauto`, `storage.target` has no `[Install]`, and Syncthing and Immich are not enabled. `fleet-check`
 fails when boot would pull a drive's unlock in, or when a drive has a key file or a TPM/FIDO2 option.
 
 - Why encrypt both: the photos are no less private, a USB drive is what goes missing, an SSD
@@ -504,12 +504,13 @@ Then once, in this order: Syncthing must not start before its config is tailnet-
 announces itself once and makes its own key.
 
 ```sh
-printf '[Unit]\nDescription=Encrypted USB storage (manual unlock)\nWants=systemd-cryptsetup@backup.service srv-backup.mount\nWants=systemd-cryptsetup@active.service srv-active.mount\nWants=syncthing@%s.service\n' "$USER" | sudo tee /etc/systemd/system/storage.target
+printf '[Unit]\nDescription=Encrypted USB storage (manual unlock)\nWants=systemd-cryptsetup@backup.service srv-backup.mount\nWants=systemd-cryptsetup@active.service srv-active.mount\nWants=syncthing@%s.service immich.service\n' "$USER" | sudo tee /etc/systemd/system/storage.target
 sudo install -d /etc/systemd/system/syncthing@$USER.service.d
 printf '[Unit]\nRequires=srv-active.mount\nAfter=srv-active.mount\n\n[Service]\nEnvironment=STHOMEDIR=/srv/active/syncthing\n' | sudo tee /etc/systemd/system/syncthing@$USER.service.d/active.conf
 sudo systemctl daemon-reload && sudo systemctl start srv-backup.mount srv-active.mount   # the drives only, not Syncthing yet
 mkdir /srv/active/Sync /srv/active/syncthing && ln -s /srv/active/Sync ~/Sync
-# Syncthing's generate and config.xml edits, see "Syncthing" (ser8 notes); then:
+# Syncthing's generate and config.xml edits, see "Syncthing" (ser8 notes), and Immich's files and
+# unit, see "Immich"; then:
 sudo systemctl start storage.target
 ```
 
@@ -525,6 +526,86 @@ The scrub's `RequiresMountsFor=` pulls in the unlock, and crypttab waits for the
 without a timeout, so a scrub that fires while the drive is locked waits at the prompt. The next
 `start storage.target` answers it and the scrub runs then. An empty `RequiresMountsFor=` in a
 drop-in does not clear the list (tried, systemd 262), so no override.
+
+### Immich (decided 2026-11-22)
+
+The family's media server: everyone is on a Mac or iPhone, and Immich has the iPhone app (timeline,
+albums, faces, map; HEIC and Live Photos) and a full web app for the Mac. It indexes `/srv/backup`
+read-only as an external library. Rejected: Plex (weak for photos, a Plex cloud account for login),
+Jellyfin + Infuse (video first), a Samba share (folders only, slow on an iPhone with thousands of
+photos).
+
+Reached only as `https://ser8.<tailnet>.ts.net`: Immich publishes on `127.0.0.1:2283` and
+`tailscale serve` proxies the tailnet's HTTPS to it, with a real certificate. The family gets ser8
+by node sharing, not membership, and the policy gives `autogroup:shared` only port 443 (see
+"Tailscale"). Rejected: a LAN port (only at home, plain HTTP over Wi-Fi, the login page open to every
+device on the LAN) and tailnet membership for the family (the `ssh` block lets every member into
+`tag:server`).
+
+Everything is in `/srv/active/immich`: Immich's release `docker-compose.yml` as downloaded,
+`docker-compose.override.yml` with our changes, `.env` (0600, a random `DB_PASSWORD` generated there,
+not in 1Password: it is only used inside the compose network), and `library/` and `postgres/`.
+The override:
+
+```yaml
+services:
+  immich-server:
+    ports: !override
+      - '127.0.0.1:2283:2283'          # Docker publishes ports past ufw: upstream's '2283:2283' opens the LAN
+    volumes:
+      - /srv/backup:/mnt/backup:ro    # the external library
+    depends_on: !override             # the server only once Postgres accepts connections
+      redis:
+        condition: service_started
+      database:
+        condition: service_healthy
+```
+
+`depends_on`: upstream starts the server as soon as Postgres's container runs. On the first init
+(and a recovery after a power cut) the server crashes on `ECONNREFUSED`, and `compose up --wait`
+fails on the unhealthy state in between (seen on the first start).
+
+`.env` sets `UPLOAD_LOCATION=/srv/active/immich/library`, `DB_DATA_LOCATION=/srv/active/immich/postgres`,
+`TZ=Europe/Amsterdam` and `IMMICH_VERSION` pinned to a release, never upstream's floating `v3`: a
+release waits 24h before it is pulled.
+
+`/etc/systemd/system/immich.service`, started by `storage.target`, no `[Install]`:
+
+```ini
+[Unit]
+Description=Immich (docker compose in /srv/active/immich)
+Requires=docker.service srv-active.mount srv-backup.mount
+After=docker.service srv-active.mount srv-backup.mount
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/srv/active/immich
+ExecStart=/usr/bin/docker compose up -d --wait
+ExecStop=/usr/bin/docker compose down
+TimeoutStartSec=10min
+```
+
+It requires `backup` too: an external library that is missing at a scan gets its files marked
+offline. Set up once: `sudo tailscale serve --bg 2283` (kept across reboots); the first account made
+in the web UI is the admin; the external library imports from `/mnt/backup` (or folders in it),
+with exclusions `**/.DS_Store` and `**/._*`.
+
+- Upstream's `restart: always` stays. After a power cut Docker starts the containers at boot, before
+  the unlock: the server and Postgres fail on their bind mounts (the empty mountpoint is immutable),
+  Redis and machine learning start with nothing personal in them. After a clean stop `compose down`
+  has removed them.
+- Accepted: container logs in `/var/lib/docker` on the internal disk can name file paths, like
+  Syncthing's journal. The models cache is a named volume there too (downloaded models only).
+- Open: `active` has no backup. The photos are copies, but the database (accounts, albums, faces)
+  is not, and uploads from the family's iPhones would have no second copy on the server. Decide
+  before turning uploads on.
+
+Upgrade: pick a release at least 24h old and read its notes for breaking changes. Download its
+`docker-compose.yml` to a temporary name and diff it against ours before replacing: the override
+replaces `immich-server`'s `ports` and `depends_on` whole, so a dependency or port upstream adds
+there would be dropped silently. Compare its `example.env` with ours too. Then set
+`IMMICH_VERSION`, `docker compose pull` and `sudo systemctl restart immich.service`.
 
 ### If ser8 is stolen
 
@@ -606,6 +687,24 @@ block, with `tag:server` owned by `autogroup:admin`:
   the screen lock and removing the node from the phone, not by this policy.
 - Check: from ser8 `ssh ser9` ends in "tailnet policy does not permit you to SSH to this node"; from
   ser9 `ssh ser8` works.
+
+Its `grants` (2026-11-22, replacing the default allow-all):
+
+```json
+"grants": [
+  { "src": ["autogroup:member", "tag:server"], "dst": ["*"], "ip": ["*"] },
+  { "src": ["autogroup:shared"], "dst": ["tag:server"], "ip": ["tcp:443"] }
+]
+```
+
+- The family reaches ser8 through a node share, and the default `*` would give them every port on
+  it. `autogroup:shared` gets only 443, Immich behind `tailscale serve` (see "Immich").
+- `tag:server` is named because a tagged device is no longer a member: without it ser8 cannot dial
+  out, and Syncthing pairs with ser8 would depend on the other side dialling in.
+- Check: from ser8, port 22000 on the Mac and ser9 opens; on a family device the Immich URL loads
+  and `nc -z ser8.<tailnet>.ts.net 22` (and 22000) fails (not yet tested with a share). The full
+  name, not `ssh ser8`: a sharee likely lacks the short MagicDNS name, so that would fail on name
+  resolution and prove nothing about the grant.
 
 ## Syncthing (decided 2026-11-17)
 
