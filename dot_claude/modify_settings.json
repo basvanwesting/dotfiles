@@ -1,11 +1,26 @@
 {{- /* chezmoi:modify-template */ -}}
 {{- /* Claude Code owns ~/.claude/settings.json and rewrites it (/model, /config), so
-     this only merges our deny rules into whatever is there; every other key passes
-     through. Read deny rules for the two places on a desktop that hold my authority
-     instead of the agents' (global CLAUDE.md, Security): the 1Password SSH agent socket
-     and the file where a plain gh login would sit (it stays logged out). They stop the Read tool, not a shell command: a guard
-     against slips, not a wall. */ -}}
+     this only merges our deny rules and env variables into whatever is there; every other
+     key passes through. Both are guards against slips, not walls.
+
+     Read deny rules for the two places on a desktop that hold my authority instead of the
+     agents' (global CLAUDE.md, Security): the 1Password SSH agent socket and the file
+     where a plain gh login would sit (it stays logged out). They stop the Read tool, not
+     a shell command.
+
+     env: git reads config from GIT_CONFIG_COUNT/KEY_n/VALUE_n, and Claude Code hands `env`
+     to every command of a session. So inside an agent's session, and only there, a push
+     to GitHub is rewritten to SSH and needs my key: agents don't push project code
+     (README "Git and GitHub"; project management, not security). Global git config would
+     stop me as well. board-data and the dotfiles have longer rules in github.inc, which
+     win. A tool that sets GIT_CONFIG_COUNT itself replaces these. */ -}}
 {{- $ours := list "Read(~/.1password/agent.sock)" "Read(~/.config/gh/hosts.yml)" -}}
+{{- $env := list
+      (list "GIT_CONFIG_COUNT" "2")
+      (list "GIT_CONFIG_KEY_0" "url.ssh://git@github.com/.pushInsteadOf")
+      (list "GIT_CONFIG_VALUE_0" "https://github.com/")
+      (list "GIT_CONFIG_KEY_1" "url.ssh://git@github.com/.pushInsteadOf")
+      (list "GIT_CONFIG_VALUE_1" "git@github.com:") -}}
 {{- $settings := dict -}}
 {{- if .chezmoi.stdin | trim -}}
 {{-   $settings = fromJson .chezmoi.stdin -}}
@@ -18,7 +33,13 @@
 {{-     $missing = true -}}
 {{-   end -}}
 {{- end -}}
-{{- /* Rules already there: hand the file back byte for byte. Re-rendering would reorder
+{{- range $env -}}
+{{-   if ne (dig "env" (index . 0) "" $settings) (index . 1) -}}
+{{-     $settings = setValueAtPath (printf "env.%s" (index . 0)) (index . 1) $settings -}}
+{{-     $missing = true -}}
+{{-   end -}}
+{{- end -}}
+{{- /* All already there: hand the file back byte for byte. Re-rendering would reorder
      Claude Code's keys and show as drift after each of its own writes. */ -}}
 {{- if $missing -}}
 {{ setValueAtPath "permissions.deny" $deny $settings | toPrettyJson }}

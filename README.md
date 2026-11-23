@@ -365,21 +365,31 @@ Two decisions, with different reasons, so either can be reopened alone:
   herdr pane, and agents pushing would hide what is still to look at. Not a security edge, so the
   config below is a guard against a slip, not a wall. It may go once the board carries the todos.
 
-The global git config says so once for every clone (`~/.config/git/github.inc`, included from
-`~/.config/git/config`; desktop and server roles):
+Two files say so once for every clone, on desktop and server roles. The global git config
+(`~/.config/git/github.inc`, included from `~/.config/git/config`) holds what is true for everyone
+who runs git. The guard on an agent's push is in the agents' environment instead (decided
+2026-11-23): `env` in `~/.claude/settings.json` (`modify_settings.json`) sets the rewrite of a push
+to SSH as `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_n`/`GIT_CONFIG_VALUE_n`, which git reads as config, so
+it holds in a Claude session and nowhere else. In git config it stopped me too, and on the keyless
+server my own push then needed a session with a forwarded agent.
 
-| A GitHub remote spelled | fetches from | pushes to |
-|---|---|---|
-| `https://github.com/o/r` | https, vault PAT | `ssh://git@github.com/o/r`, my key |
-| `git@github.com:o/r` | https, vault PAT | `ssh://git@github.com/o/r`, my key |
-| `ssh://git@github.com/o/r` | SSH, my key | SSH, my key |
+| A GitHub remote spelled | fetches from | I push to | an agent's session pushes to |
+|---|---|---|---|
+| `https://github.com/o/r` | https, vault PAT | https, vault PAT | `ssh://git@github.com/o/r`, my key |
+| `git@github.com:o/r` | https, vault PAT | https, vault PAT | `ssh://git@github.com/o/r`, my key |
+| `ssh://git@github.com/o/r` | SSH, my key | SSH, my key | SSH, my key |
+| the dotfiles, `https://` or `git@` | https, vault PAT | `ssh://`, my key | `ssh://`, my key |
 
 - An agent's fetch or clone never touches my key, so it raises no 1Password prompt, and the keyless
-  server can fetch at all. A push needs my key: the prompt on a desktop, a forwarded agent on the server.
+  server can fetch at all. An agent's push needs my key: the prompt on a desktop (an alarm, unless
+  I asked for that push), a refusal on the server.
+- "An agent's session" is one Claude Code started, a `! git push` typed in it included: push from a
+  plain shell. An agent started by anything else has no guard until it gets the same variables.
+- The dotfiles have a rule of their own in `github.inc`: no PAT covers them, so https would get a 403.
 - No per-clone step: `git remote set-url --push` is not needed. A remote that has an explicit push URL
   is the exception: `pushInsteadOf` skips it and `insteadOf` still applies, so one spelled
-  `git@github.com:` goes out over https with the PAT: it pushes a project repo (the slip the guard is
-  for) and gets a 403 on the dotfiles. Spell it `ssh://` or unset it.
+  `git@github.com:` goes out over https with the PAT, from an agent's session too: it pushes a
+  project repo (the slip the guard is for) and gets a 403 on the dotfiles. Spell it `ssh://` or unset it.
 - `ssh://` as the fetch URL means "use my key for this one": for a private repo no PAT covers, where
   https has nothing to answer with ("could not read Username").
 - The credential part of the same file sends the repo path to the helper (the owner picks the PAT) and
@@ -393,8 +403,8 @@ The global git config says so once for every clone (`~/.config/git/github.inc`, 
   which wins as the longest match). It holds the todos itself, so there is no unpushed state to
   track, while my key would prompt on every agent write and the keyless server could not write at
   all. An `ssh://` spelling of board-data still pushes over SSH, on purpose: that spelling means my key.
-- A `client` gets the push half only: no vault token there, so fetch is not rewritten and a
-  `git@`/`ssh://` remote uses my key both ways.
+- A `client` has no vault token, so there the rewrite of every push to SSH stays in `github.inc`,
+  fetch is not rewritten, and a `git@`/`ssh://` remote uses my key both ways.
 
 Once per machine that was wired by hand before 2026-11-16, drop the old lines (harmless, but they hide
 what answers), then check:
@@ -793,7 +803,9 @@ and prints no secret.
 | any other token file in `~/.config/op` | none | none | none |
 | private key files in `~/.ssh`, plain `gh` login, Fly login on disk | none | none | none |
 | git over https uses the vault PATs; Claude `Read` deny rules | yes | yes | not checked |
-| GitHub push goes over ssh; the dotfiles clone's push URL is `ssh://` | yes | yes | yes |
+| the dotfiles clone's push URL is `ssh://` | yes | yes | yes |
+| git config rewrites every GitHub push to ssh | no (it would stop my own push) | no | yes |
+| `~/.claude/settings.json` `env` rewrites a GitHub push to ssh, for Claude sessions | yes | yes | not checked |
 | GitHub fetch rewritten to https | yes | yes | no |
 | the `~/Work/board-data` clone's push URL is https (when the clone exists) | yes | yes | not checked |
 | the vault PATs cannot push the dotfiles (a dry-run https push is refused) | yes | yes | not checked |

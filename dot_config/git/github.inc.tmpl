@@ -4,30 +4,34 @@
 # - Security, enforced by GitHub: the vault PATs can write the project repos, never the
 #   dotfiles, since a dotfiles push installs on every machine. fleet-check asks GitHub.
 # - Project management, not security: agents don't push project code, because unpushed
-#   commits are my todo list in herdr. So every push to GitHub goes over SSH and needs my
-#   key (the 1Password prompt on a desktop or client, a forwarded agent on the server),
-#   whatever the remote's spelling. A guard against a slip, not a wall: pushInsteadOf skips
-#   a remote with an explicit push URL. board-data, below, is the exception.
-[url "ssh://git@github.com/"]
-	pushInsteadOf = https://github.com/
-	pushInsteadOf = git@github.com:
+#   commits are my todo list in herdr. Where agents work that guard is not in this file:
+#   here it would stop me as well, and on the keyless server I could then only push through
+#   a forwarded agent. It sits in the agents' environment instead (~/.claude/settings.json
+#   `env`: the rewrite to SSH as GIT_CONFIG_* variables), so a push from my own shell goes
+#   over https with the PAT. A guard against a slip, not a wall.
+
+# The dotfiles are pushed with my key, by me and by an agent alike: no PAT covers them, so
+# https would only get a 403. git takes the longest matching pushInsteadOf, so this holds
+# next to any shorter rule, in either spelling. A prefix: a dotfiles* repo is caught too.
+[url "ssh://git@github.com/basvanwesting/dotfiles"]
+	pushInsteadOf = https://github.com/basvanwesting/dotfiles
+	pushInsteadOf = git@github.com:basvanwesting/dotfiles
 {{- if or (eq .role "desktop") (eq .role "server") }}
 
 # Reading is the agents' authority: fetch goes over https with the PATs from
 # the `agents` vault, so an agent's fetch never touches my key and the keyless server can
-# fetch at all. `ssh://` as a fetch URL is not rewritten: that spelling means "use my key",
-# for a private repo no PAT covers. insteadOf also rewrites an explicit push URL, so one
-# spelled git@github.com: goes out over https with the PAT: it pushes a project repo (the
-# slip this guard is for) and gets a 403 on the dotfiles. Spell it ssh:// or drop it.
+# fetch at all. `ssh://` as a URL is not rewritten: that spelling means "use my key", for
+# a private repo no PAT covers. insteadOf also applies to a push no pushInsteadOf takes, so
+# from my shell a remote spelled git@github.com: is pushed over https with the PAT.
 [url "https://github.com/"]
 	insteadOf = git@github.com:
 
 # board-data is the agents' to push: the `board` tool pushes it on every write, from every
 # agent machine, the keyless server included. It holds the todos itself, so there is no
 # unpushed state for me to track, and my key would only raise a 1Password prompt per write.
-# git takes the longest matching pushInsteadOf, so this identity rule keeps its pushes on
-# https with the PAT, in either spelling, and leaves every other push on SSH. It is a
-# prefix, so a future fourstack/board-data* repo would be caught too.
+# This identity rule is longer than the rewrite in the agents' environment, so there too
+# it keeps board-data on https with the PAT, in either spelling. It is a prefix, so a
+# future fourstack/board-data* repo would be caught too.
 [url "https://github.com/fourstack/board-data"]
 	pushInsteadOf = https://github.com/fourstack/board-data
 	pushInsteadOf = git@github.com:fourstack/board-data
@@ -43,5 +47,10 @@
 	helper = !~/.local/bin/git-credential-op-agent
 {{- else }}
 
-# No agents work here, so there is no vault token to fetch with: fetch is not rewritten.
+# No agents work here, so there is no vault token: fetch is not rewritten, and every push
+# to GitHub goes over SSH with my key, whatever the remote's spelling (an https push would
+# have nothing to answer with).
+[url "ssh://git@github.com/"]
+	pushInsteadOf = https://github.com/
+	pushInsteadOf = git@github.com:
 {{- end }}

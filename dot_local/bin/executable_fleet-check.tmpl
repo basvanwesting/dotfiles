@@ -85,15 +85,29 @@ if [ "$agents" = yes ]; then
 fi
 
 # Pushing project code is mine on every role (project management: unpushed commits are my
-# todos), so a push to GitHub goes over ssh, whatever the remote's spelling. Reading is the
-# agents' authority where agents work: fetch over https with the vault PAT. A client has no
-# vault token, so there fetch is not rewritten.
-push_rules=$(gitcfg --get-all url.ssh://git@github.com/.pushInsteadOf | sort | tr '\n' ' ')
-is "github push goes over ssh" yes "$(yn test "$push_rules" = 'git@github.com: https://github.com/ ')"
+# todos). Where agents work, the rewrite of a push to ssh sits in the agents' environment
+# (~/.claude/settings.json `env`), not in git config, so my own shell pushes over https
+# with the vault PAT and the keyless server needs no forwarded agent for it. A client has
+# no vault token: there git config sends every push over ssh, and fetch is not rewritten.
+# This may itself run in an agent's session, so the config is asked without its variables.
+push_rules=$(unset GIT_CONFIG_COUNT; gitcfg --get-all url.ssh://git@github.com/.pushInsteadOf | sort | tr '\n' ' ')
+if [ "$agents" = yes ]; then
+  is "git config rewrites every github push to ssh (it would stop my own push)" no "$(yn test -n "$push_rules")"
+  env_rules=yes
+  for pair in 'GIT_CONFIG_COUNT=2' \
+    'GIT_CONFIG_KEY_0=url.ssh://git@github.com/.pushInsteadOf' 'GIT_CONFIG_VALUE_0=https://github.com/' \
+    'GIT_CONFIG_KEY_1=url.ssh://git@github.com/.pushInsteadOf' 'GIT_CONFIG_VALUE_1=git@github.com:'; do
+    grep -Eq "\"${pair%%=*}\" *: *\"${pair#*=}\"" "$HOME/.claude/settings.json" 2>/dev/null || env_rules=no
+  done
+  is "Claude sessions rewrite a github push to ssh (settings.json env)" yes "$env_rules"
+else
+  is "github push goes over ssh" yes "$(yn test "$push_rules" = 'git@github.com: https://github.com/ ')"
+fi
 fetch_url=$(cd / && git ls-remote --get-url git@github.com:o/r.git 2>/dev/null)
 is "github fetch goes over https (vault PAT)" "$agents" "$(yn test "$fetch_url" = https://github.com/o/r.git)"
-# The rules above are skipped or overruled by an explicit push URL, so ask one real clone.
-if command -v chezmoi >/dev/null 2>&1 && dot_push=$(chezmoi git -- remote get-url --push origin 2>/dev/null); then
+# The dotfiles go out with my key from every shell (github.inc has a rule of their own; no
+# PAT covers them). An explicit push URL skips that rule, so ask the real clone.
+if command -v chezmoi >/dev/null 2>&1 && dot_push=$(unset GIT_CONFIG_COUNT; chezmoi git -- remote get-url --push origin 2>/dev/null); then
   case $dot_push in
     ssh://git@github.com/*) ok "dotfiles push URL: ssh" ;;
     *) bad "dotfiles push URL: $dot_push, expected ssh://git@github.com/... (unset remote.origin.pushurl)" ;;
@@ -102,10 +116,12 @@ else
   skip "dotfiles push URL: no chezmoi repo"
 fi
 # The security edge is the PATs' scope, not the config: GitHub must refuse them a push to
-# the dotfiles, which install on every machine. A dry run over https, with the push rules
-# above overruled for this one URL, sends nothing; a 403 is the pass.
+# the dotfiles, which install on every machine. A dry run over https sends nothing; a 403
+# is the pass. The identity rule keeps it on https: git takes the longest pushInsteadOf and,
+# on a tie, the config file's, so the URL gets its .git to be longer than github.inc's
+# dotfiles rule.
 if [ "$agents" = yes ] && dot_url=$(chezmoi git -- remote get-url origin 2>/dev/null); then
-  dot_https=$(printf %s "$dot_url" | sed -e 's#^ssh://git@github.com/#https://github.com/#' -e 's#^git@github.com:#https://github.com/#')
+  dot_https=$(printf %s "$dot_url" | sed -e 's#^ssh://git@github.com/#https://github.com/#' -e 's#^git@github.com:#https://github.com/#' -e 's#/*$##' -e 's#\.git$##').git
   # No terminal prompt: when the vault can't answer, git would ask for a username and hang.
   if dot_try=$(GIT_TERMINAL_PROMPT=0 chezmoi git -- -c "url.$dot_https.pushInsteadOf=$dot_https" push --dry-run "$dot_https" HEAD 2>&1); then
     bad "vault PATs cannot push the dotfiles: the dry-run push was accepted"
