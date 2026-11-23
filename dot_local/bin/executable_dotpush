@@ -1,0 +1,46 @@
+#!/bin/sh
+# dotpush: push the dotfiles, the outgoing twin of `dotpull` (README "Workflow"). This repo is
+# public and every machine applies it, so before the push: every outgoing commit in full, every
+# one carries a Reviewed-by trailer (the fresh-eyes review ran, global CLAUDE.md Commit Loop),
+# and no identifier of this tailnet is in it. Catches a skipped review or a slip, not intent.
+# Exit 1 on any failure; nothing is pushed then.
+set -u
+g() { chezmoi git -- "$@"; }
+
+g fetch --quiet || exit 1
+if [ -n "$(g rev-list 'HEAD..@{u}')" ]; then
+  echo "dotpush: upstream has new commits, run dotpull first"; exit 1
+fi
+out=$(g rev-list --reverse '@{u}..HEAD') || exit 1
+[ -z "$out" ] && { echo "dotpush: nothing to push"; exit 0; }
+
+g log --reverse --format=fuller -p '@{u}..HEAD'
+
+fail=0
+for c in $out; do
+  if [ -z "$(g log -1 --format='%(trailers:key=Reviewed-by,valueonly)' "$c")" ]; then
+    echo "dotpush: $(g log -1 --format='%h %s' "$c"): no Reviewed-by trailer"; fail=1
+  fi
+done
+
+# Identifiers read live, so this script holds none: the tailnet's DNS suffix and every node's
+# tailnet IPv4 and IPv6. Messages, added and removed lines all count: a pushed diff publishes
+# each; --text and grep -a so a binary file is scanned, not reported as "binary file matches".
+# No tailscale CLI means no scan, and a skipped scan must not pass as a clean one.
+ids=""
+if command -v tailscale >/dev/null 2>&1 && ts=$(tailscale status --json 2>/dev/null); then
+  ids=$( { printf '%s' "$ts" | grep -o '"MagicDNSSuffix": *"[^"]*"' | head -1 | cut -d'"' -f4 | cut -d. -f1
+           printf '%s' "$ts" | grep -o '"fd7a:[^"]*"' | tr -d '"'
+           tailscale status | awk '$1 ~ /^100\./ {print $1}'; } | sed '/^$/d' | sort -u)
+fi
+if [ -z "$ids" ]; then
+  echo "dotpush: tailscale cli not answering, identifier scan impossible"; fail=1
+else
+  hits=$(g log --format=%B -p --text '@{u}..HEAD' | grep -anF "$ids")
+  [ -n "$hits" ] && { echo "dotpush: tailnet identifiers in outgoing commits:"; echo "$hits"; fail=1; }
+fi
+
+[ "$fail" = 0 ] || exit 1
+printf 'Push these commits? [y/N] '
+read -r a
+case $a in y | Y) g push ;; *) echo "dotpush: nothing pushed"; exit 1 ;; esac

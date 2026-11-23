@@ -43,7 +43,7 @@ unmig() {
 # Pull and apply the dotfiles only after reading what came in. This repo is public and
 # every machine applies it, so a pushed commit is code on all of them (README "Workflow").
 # Shows each incoming commit in full (author, committer, diff), then asks.
-dotup() {
+dotpull() {
   chezmoi git -- fetch --quiet || return
   if [ -z "$(chezmoi git -- log --oneline 'HEAD..@{u}')" ]; then
     echo "dotfiles: no new commits"

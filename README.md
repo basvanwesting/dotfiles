@@ -127,17 +127,25 @@ Several machines commit to this public repo (the Mac and ser8 both did on the sa
 produced a rebase conflict), so:
 
 ```sh
-dotup                                  # before editing, every time (review + apply, below)
+dotpull                                # before editing, every time (review + apply, below)
 chezmoi source-path ~/.config/foo      # find the source file, edit that, never the target
 chezmoi diff && chezmoi apply
 chezmoi git -- commit -am "..."        # plain git in ~/.local/share/chezmoi, no autoCommit
-chezmoi git push                       # by hand, nothing leaves a machine unasked
+dotpush                                # by hand, nothing leaves a machine unasked
 ```
 
-Other machines: `dotup` (in `~/.config/shell/functions.sh`), never `chezmoi update`. Every machine
+`dotpush` (`~/.local/bin`) shows every outgoing commit in full and pushes after a yes, but refuses
+when upstream moved (`dotpull` first), when a commit lacks a `Reviewed-by:` trailer, or when a
+commit's message or diff holds this tailnet's name or a node's tailnet IP. The trailer says the
+fresh-eyes review ran (global CLAUDE.md, Commit Loop: never skipped here, doc-only included, since
+this repo is public): `Reviewed-by: fresh-eyes` from an agent's review, `Reviewed-by: owner (draft
+approved)` or `owner (requested)` from `/my-learn`, or my own value when I committed by hand. The identifiers are
+read live from `tailscale status`, so the script holds none; without a tailscale CLI it refuses.
+
+Other machines: `dotpull` (in `~/.config/shell/functions.sh`), never `chezmoi update`. Every machine
 applies `main`, and that writes `~/.local/bin/op-agent`, the shell rc layer and the agents' `~/.claude/`
 instructions. A pushed commit is therefore code on all of them, and agents push here too (`/my-learn`).
-`dotup` fetches, shows every incoming commit in full, and fast-forwards plus applies only after a yes.
+`dotpull` fetches, shows every incoming commit in full, and fast-forwards plus applies only after a yes.
 Read the diff, not just the subjects. Push access is kept narrow (decided 2026-11-12, security review):
 
 - `GH_TOKEN_PERSONAL` (the `agents` vault, readable by every machine's agent token) has no write
@@ -150,7 +158,7 @@ The server has no key and no agent, so it cannot push by itself: it fetches over
 goes over SSH, which only works with an agent forwarded from a desktop, see "Server role (ser8)".
 
 ```sh
-dotup
+dotpull
 systemctl --user is-active herdr-server          # post-update check on ser8
 ```
 
@@ -616,7 +624,7 @@ key, so this never touches the laptops. The specifics (which services, where to 
 private 1Password note, not here and not in `agents` (the vault being revoked):
 
 1. 1Password: revoke ser8's service-account token.
-2. GitHub: rotate the PATs in `agents`. Until then, and before any `dotup` or `git pull`
+2. GitHub: rotate the PATs in `agents`. Until then, and before any `dotpull` or `git pull`
    anywhere, review commits pushed after the theft: every machine applies this repo, so a commit
    pushed with a GitHub token from `agents` would run on the laptops.
 3. Rotate what ser8's token read after the theft, per the service accounts' activity log; rotate
@@ -663,7 +671,7 @@ omarchy-install-service-tailscale   # Omarchy: package, tailscaled, --operator, 
 tailscale set --ssh                 # only on machines that should accept Tailscale SSH (Linux-only feature)
 ```
 
-macOS: standalone pkg from pkgs.tailscale.com (brew cask `tailscale-app` exists as an alternative, not used). The Mac runs no Tailscale SSH server (Linux-only feature): for SSH it connects out, nothing connects in.
+macOS: standalone pkg from pkgs.tailscale.com (brew cask `tailscale-app` exists as an alternative, not used); its CLI is installed from the app's settings, since `fleet-check` and `dotpush` call `tailscale`. The Mac runs no Tailscale SSH server (Linux-only feature): for SSH it connects out, nothing connects in.
 
 ### Policy: servers don't initiate (2026-11-16)
 
