@@ -4,6 +4,16 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export ERL_AFLAGS="-kernel shell_history enabled"
 export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 
+# `cargo install` puts tools (board) in ~/.cargo/bin. Here, so interactive bash, herdr panes and
+# the agents' shells (which snapshot interactive .bashrc) find them on every machine: nothing
+# managed added it for bash, and rustup's own `. ~/.cargo/env` line is outside chezmoi and not
+# on every machine. Non-interactive bash (`ssh host board`) still lacks it, as it lacks the rest
+# of this file. Guarded: .zshrc and rustup's line may have added it already.
+case ":$PATH:" in
+  *":$HOME/.cargo/bin:"*) ;;
+  *) export PATH="$HOME/.cargo/bin:$PATH" ;;
+esac
+
 # 24h wait on new releases when resolving dependencies, time for a poisoned release to be
 # caught (global CLAUDE.md, Security). Env, not per-tool config files: one place, and it
 # reaches agent shells. mise has the same wait built in. Installs from a lockfile are not
