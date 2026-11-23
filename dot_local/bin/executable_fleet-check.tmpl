@@ -100,6 +100,16 @@ if command -v chezmoi >/dev/null 2>&1 && dot_push=$(chezmoi git -- remote get-ur
 else
   skip "dotfiles push URL: no chezmoi repo"
 fi
+# board-data is the exception (github.inc): where agents work, the board tool pushes it over
+# https with the vault PAT, so it never needs my key.
+if [ "$agents" = yes ] && board_push=$(git -C "$HOME/Work/board-data" remote get-url --push origin 2>/dev/null); then
+  case $board_push in
+    https://github.com/*) ok "board-data push URL: https (vault PAT)" ;;
+    *) bad "board-data push URL: $board_push, expected https://github.com/... (github.inc board-data rule)" ;;
+  esac
+else
+  skip "board-data push URL: no agents or no ~/Work/board-data clone"
+fi
 
 # One code folder under one name on every machine (README "Code lives in ~/Work"): Claude keys
 # a project's memory by its absolute path, so a second name splits it.

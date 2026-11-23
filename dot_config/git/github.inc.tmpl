@@ -1,20 +1,32 @@
 # Managed by chezmoi; included from ~/.config/git/config. README "Git and GitHub".
 #
-# Writing is mine: every push to GitHub goes over SSH, so it needs my key (the 1Password
+# Writing code is mine: every push to GitHub goes over SSH, so it needs my key (the 1Password
 # prompt on a desktop or client, a forwarded agent on the server), whatever the remote's
-# spelling. pushInsteadOf skips a remote that has an explicit push URL.
+# spelling. pushInsteadOf skips a remote that has an explicit push URL. The one exception,
+# board-data, is below: it is data, not code.
 [url "ssh://git@github.com/"]
 	pushInsteadOf = https://github.com/
 	pushInsteadOf = git@github.com:
 {{- if or (eq .role "desktop") (eq .role "server") }}
 
-# Reading is the agents' authority: fetch goes over https with the read-only PATs from
+# Reading is the agents' authority: fetch goes over https with the PATs from
 # the `agents` vault, so an agent's fetch never touches my key and the keyless server can
 # fetch at all. `ssh://` as a fetch URL is not rewritten: that spelling means "use my key",
 # for a private repo no PAT covers. insteadOf also rewrites an explicit push URL, so one
 # spelled git@github.com: would go out over https and get a 403: spell it ssh:// or drop it.
 [url "https://github.com/"]
 	insteadOf = git@github.com:
+
+# board-data is the agents' to write: the `board` tool pushes it on every write, from every
+# agent machine, the keyless server included. It is data, not code: no CI and no deploy run
+# on it, and any clone restores it, so the PAT is enough and my key would only raise a
+# 1Password prompt per write. git takes the longest matching pushInsteadOf, so this
+# identity rule keeps its pushes on https, in either spelling, and leaves every other push
+# on SSH. It is a prefix, so a future fourstack/board-data* repo would be caught too. Theft
+# of a machine already exposes the PATs through its vault token; rotating them is the answer.
+[url "https://github.com/fourstack/board-data"]
+	pushInsteadOf = https://github.com/fourstack/board-data
+	pushInsteadOf = git@github.com:fourstack/board-data
 
 # The owner in the URL picks the PAT, so git must send the path. The empty helper drops
 # every helper set before this point (system config, a `gh auth setup-git` line), so the

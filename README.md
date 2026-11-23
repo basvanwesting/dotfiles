@@ -353,7 +353,7 @@ A passkey cannot do this: it signs in a browser, not git.
 
 ### Git and GitHub
 
-Reading is the agents' authority, writing is mine, and the global git config says so once for every
+Reading is the agents' authority, writing code is mine, and the global git config says so once for every
 clone (`~/.config/git/github.inc`, included from `~/.config/git/config`; desktop and server roles):
 
 | A GitHub remote spelled | fetches from | pushes to |
@@ -375,6 +375,16 @@ clone (`~/.config/git/github.inc`, included from `~/.config/git/config`; desktop
   by `gh auth setup-git`. So helpers for GitHub live in `github.inc` only, and `fleet-check` fails on any other that could answer for it (one scoped to another host, like Heroku's, is left alone).
 - On Omarchy `~/.config/git/config` is Omarchy's, and `git config --global` writes into it, so chezmoi
   only appends the include once (`modify_config`, as `modify_dot_bashrc` does for the shell).
+- One exception: `fourstack/board-data`, the `board` tool's data repo, pushes over https with the
+  vault PAT on desktop and server roles, spelled `https://` or `git@` (an identity `pushInsteadOf`,
+  which wins as the longest match). So `GH_TOKEN_FOURSTACK` has write access: accepted because no
+  fourstack repo runs CI or a deploy on a push (owner, 2026-11-23), so a push by it ships nothing.
+  It is data, not code: no CI or deploy runs on it and any clone restores it, while my key would
+  prompt on every agent write and the keyless server could not write at all. This rule changes no
+  token: a stolen machine exposes the PATs, write included, through its vault token either way;
+  rotate on theft. For fourstack, "writing code is mine" is therefore a convention the config
+  carries (a remote with an explicit https push URL skips it), accepted while a push ships nothing.
+  An `ssh://` spelling of board-data still pushes over SSH, on purpose: that spelling means my key.
 - A `client` gets the push half only: no vault token there, so fetch is not rewritten and a
   `git@`/`ssh://` remote uses my key both ways.
 
@@ -777,6 +787,7 @@ and prints no secret.
 | git over https uses the vault PATs; Claude `Read` deny rules | yes | yes | not checked |
 | GitHub push goes over ssh; the dotfiles clone's push URL is `ssh://` | yes | yes | yes |
 | GitHub fetch rewritten to https | yes | yes | no |
+| the `~/Work/board-data` clone's push URL is https (when the clone exists) | yes | yes | not checked |
 | credential helpers that can answer for GitHub, set outside `github.inc` (exempt: system config, which the reset drops, and a helper scoped to another host such as `git.heroku.com`) | none | none | none |
 | 24h release cooldown in a fresh shell | yes | yes | yes |
 | `~/workspace` beside `~/Work` ([Code lives in ~/Work](#code-lives-in-work-decided-2026-11-18)) | none | none | none |
