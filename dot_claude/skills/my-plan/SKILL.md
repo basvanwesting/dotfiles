@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Plan
 
-This session designs, the worker builds. The user approves the design here. The worker gets a written brief, a clean context and a definition of done, and commits without asking (global CLAUDE.md, worker exception). The push stays the user's ship decision.
+This session designs, the worker builds. The user approves the design here. The worker gets a written brief, a clean context and a definition of done, and commits without asking (global CLAUDE.md, worker exception). The push of project code stays the user's: unpushed commits are the user's todo list (global CLAUDE.md).
 
 ## Read-only
 
@@ -20,7 +20,7 @@ The worker is the peer named like this session with `-work` for `-plan` (`shop-p
 
 ## The board
 
-One board per project, in the shared board-data repo (one clone per machine), read and written through `board` (`board --help` is the reference; it finds the project's board from the directory it runs in). The files are the record; a message between the sessions is only a wake-up, because a report sent as a message lands in the middle of the design conversation and dies with the transcript. `board` syncs the repo on every write (pull, commit, push): it is data, so that push is no ship decision. Never run `git` in the board-data repo by hand.
+One board per project, in the shared board-data repo (one clone per machine), read and written through `board` (`board --help` is the reference; it finds the project's board from the directory it runs in). The files are the record; a message between the sessions is only a wake-up, because a report sent as a message lands in the middle of the design conversation and dies with the transcript. `board` syncs the repo on every write (pull, commit, push): the board is the todo list itself, so that push is the global never-push rule's exception. Never run `git` in the board-data repo by hand.
 
 - Briefs (`126`): one file each. The design is the planner's; its status and its report are the worker's, set through `board`.
 - Chores (`c12`): the user's own actions that briefs leave behind (a PROD edit, a hand fix, things to judge after a deploy). Every "not doable by the worker" becomes one when its brief is filed. Chores expire unannounced (a push, a deploy, an edit in another repo), so each names its check: the command or place that shows it done.

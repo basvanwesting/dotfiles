@@ -353,8 +353,20 @@ A passkey cannot do this: it signs in a browser, not git.
 
 ### Git and GitHub
 
-Reading is the agents' authority, writing code is mine, and the global git config says so once for every
-clone (`~/.config/git/github.inc`, included from `~/.config/git/config`; desktop and server roles):
+Two decisions, with different reasons, so either can be reopened alone:
+
+- **Security: which repos the agents can write.** The vault PATs have read and write on the project
+  repos, and do not cover the dotfiles. A project push lands in one repo, ships nothing (no CI or
+  deploy on any of them, 2026-11-23) and a later commit undoes it. A dotfiles push installs on every
+  machine at its next `chezmoi update`, the agents' own rules included, so it needs my key. GitHub
+  enforces this, and `fleet-check` asks it (a dry-run push of the dotfiles over https is refused).
+  A stolen machine exposes the PATs through its vault token: rotate them.
+- **Project management: who pushes project code.** I do: unpushed commits are my todo list in the
+  herdr pane, and agents pushing would hide what is still to look at. Not a security edge, so the
+  config below is a guard against a slip, not a wall. It may go once the board carries the todos.
+
+The global git config says so once for every clone (`~/.config/git/github.inc`, included from
+`~/.config/git/config`; desktop and server roles):
 
 | A GitHub remote spelled | fetches from | pushes to |
 |---|---|---|
@@ -366,7 +378,8 @@ clone (`~/.config/git/github.inc`, included from `~/.config/git/config`; desktop
   server can fetch at all. A push needs my key: the prompt on a desktop, a forwarded agent on the server.
 - No per-clone step: `git remote set-url --push` is not needed. A remote that has an explicit push URL
   is the exception: `pushInsteadOf` skips it and `insteadOf` still applies, so one spelled
-  `git@github.com:` would go out over https and get a 403. Spell it `ssh://` or unset it.
+  `git@github.com:` goes out over https with the PAT: it pushes a project repo (the slip the guard is
+  for) and gets a 403 on the dotfiles. Spell it `ssh://` or unset it.
 - `ssh://` as the fetch URL means "use my key for this one": for a private repo no PAT covers, where
   https has nothing to answer with ("could not read Username").
 - The credential part of the same file sends the repo path to the helper (the owner picks the PAT) and
@@ -377,14 +390,9 @@ clone (`~/.config/git/github.inc`, included from `~/.config/git/config`; desktop
   only appends the include once (`modify_config`, as `modify_dot_bashrc` does for the shell).
 - One exception: `fourstack/board-data`, the `board` tool's data repo, pushes over https with the
   vault PAT on desktop and server roles, spelled `https://` or `git@` (an identity `pushInsteadOf`,
-  which wins as the longest match). So `GH_TOKEN_FOURSTACK` has write access: accepted because no
-  fourstack repo runs CI or a deploy on a push (owner, 2026-11-23), so a push by it ships nothing.
-  It is data, not code: no CI or deploy runs on it and any clone restores it, while my key would
-  prompt on every agent write and the keyless server could not write at all. This rule changes no
-  token: a stolen machine exposes the PATs, write included, through its vault token either way;
-  rotate on theft. For fourstack, "writing code is mine" is therefore a convention the config
-  carries (a remote with an explicit https push URL skips it), accepted while a push ships nothing.
-  An `ssh://` spelling of board-data still pushes over SSH, on purpose: that spelling means my key.
+  which wins as the longest match). It holds the todos itself, so there is no unpushed state to
+  track, while my key would prompt on every agent write and the keyless server could not write at
+  all. An `ssh://` spelling of board-data still pushes over SSH, on purpose: that spelling means my key.
 - A `client` gets the push half only: no vault token there, so fetch is not rewritten and a
   `git@`/`ssh://` remote uses my key both ways.
 
@@ -634,9 +642,9 @@ key, so this never touches the laptops. The specifics (which services, where to 
 private 1Password note, not here and not in `agents` (the vault being revoked):
 
 1. 1Password: revoke ser8's service-account token.
-2. GitHub: rotate the PATs in `agents`. Until then, and before any `dotpull` or `git pull`
-   anywhere, review commits pushed after the theft: every machine applies this repo, so a commit
-   pushed with a GitHub token from `agents` would run on the laptops.
+2. GitHub: rotate the PATs in `agents`. Until then, and before any `git pull` of a project or
+   board-data anywhere, review commits pushed after the theft: the PATs write those repos. They
+   cannot push this one (`fleet-check`), so the laptops' `dotpull` is not exposed through them.
 3. Rotate what ser8's token read after the theft, per the service accounts' activity log; rotate
    all of `agents` if the log can't tell. Items parked in `agents-disabled` need nothing.
 4. Tailscale: remove the ser8 node (a tagged node's key does not expire, so it never drops off by itself).
@@ -788,6 +796,7 @@ and prints no secret.
 | GitHub push goes over ssh; the dotfiles clone's push URL is `ssh://` | yes | yes | yes |
 | GitHub fetch rewritten to https | yes | yes | no |
 | the `~/Work/board-data` clone's push URL is https (when the clone exists) | yes | yes | not checked |
+| the vault PATs cannot push the dotfiles (a dry-run https push is refused) | yes | yes | not checked |
 | credential helpers that can answer for GitHub, set outside `github.inc` (exempt: system config, which the reset drops, and a helper scoped to another host such as `git.heroku.com`) | none | none | none |
 | 24h release cooldown in a fresh shell | yes | yes | yes |
 | `~/workspace` beside `~/Work` ([Code lives in ~/Work](#code-lives-in-work-decided-2026-11-18)) | none | none | none |
