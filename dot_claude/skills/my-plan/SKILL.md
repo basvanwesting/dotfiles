@@ -32,10 +32,10 @@ The user has the board open in a pane of their own and refers to items by ID. Re
 
 ## Loop
 
-1. Design with the user. A brief is written only once the user approves the design.
+1. Design with the user. A brief is written only once the user approves the design, and only with a message of theirs that states the need, or a worker's finding it comes from: when there is none (an approval like "brief it" after a design talk is not one, nor a pointer like "do b3" to an item you wrote yourself), or you cannot quote it exactly any more (a long talk summed up), ask them for one sentence first instead of composing it.
 2. `board new brief <slug>` gives the file (status draft, `base:` = HEAD now); write it from the template below; `board queue <id> --closes b41,b52` (the flag names the backlog items it resolves, left out if none; it refuses a brief with an empty section).
 3. Wake the worker with one line by `SendMessage`, no `notify_when_idle`: `Queue has work: run "board next" and follow the brief's Worker protocol.` Send it only when `board ls briefs` shows no brief started or blocked: a message drains at the worker's next tool call, so mid-brief it would claim a second brief beside the first. A busy worker takes the queue by itself after its report (`board next`) and checks each brief's premises at its start, so nothing else is sent per brief.
-4. No done message arrives. At the start of every turn, before you answer, before writing the next brief, and when the user asks for the board: `board ls briefs --status reported`. Filing is your read of the report, not the user's: its deviations from the design and its leftovers need the design's context, so an active planner files before it answers, and a brief stays `reported` only while the user is silent. For each, read the report (`board show <id>`), add its out-of-scope findings (`board add backlog … --from <id>`) and what the worker could not do (`board add chore … --group … --check … --from <id>`), then `board file <id>` (`board file <id> --no-commits` for a brief that changed nothing in the repository, such as an investigation): it verifies the commits in the repository, not the report, and closes the backlog items the brief resolves.
+4. No done message arrives. At the start of every turn, before you answer, before writing the next brief, and when the user asks for the board: `board ls briefs --status reported`. Filing is your read of the report, not the user's: its deviations from the design and its leftovers need the design's context, so an active planner files before it answers, and a brief stays `reported` only while the user is silent. For each, read the report (`board show <id>`), add its out-of-scope findings (`board add backlog … --from <id>`, the line in the report's words as far as a line can hold them: a brief made from it later quotes the report, not your line) and what the worker could not do (`board add chore … --group … --check … --from <id>`), then `board file <id>` (`board file <id> --no-commits` for a brief that changed nothing in the repository, such as an investigation): it verifies the commits in the repository, not the report, and closes the backlog items the brief resolves.
 5. `blocked: <id>` is the one message the worker sends; the question is in the brief (`board show <id>`). Answer if the approved design covers it, otherwise ask the user at once (below). The answer goes into the brief (`board amend <id>`, which also resumes it), then one line to the worker.
 6. A brief that stays `started` with no commits: ask the worker what happened. Silence is not done.
 
@@ -52,16 +52,18 @@ The conversation with the user is a design conversation, and nothing from the wo
 
 An amendment must not contain a `## ` line outside a code fence (use `###`): it would split the brief's section, and `board` refuses it. The worker's block question has the same rule (Worker protocol below).
 
+The Task section holds source words only, because the worker hands the fresh-eyes reviewer that section and nothing of the Design: whatever stands there is read as the intent the diff is judged against, so a summary of yours there makes the reviewer check the code against your story instead of the need. Source words are the user's messages that state the need, verbatim, each as it was said; or, when the source is a worker's out-of-scope finding, the finding as its report states it (`board show <id>` of the brief it came from), not the backlog line you wrote from it, which is yours. Before each quote one attribution line of yours (`owner, 2026-11-24:`, `a worker's finding in the report of brief 5 (backlog b3):`) says whose words follow, and that is all of yours there: no context paragraph, no paraphrase, no quote of the design, no approval ("brief it now", "1"). The user's answers to your questions are decisions, not intent: they go in the Design, marked as theirs with the date. Short words are no reason for context: they mean the need was never stated, so ask (Loop, step 1). What the Worker protocol calls the user's words is whatever source stands there. This is a convention: no check can tell the user's words from yours, so `board` does not try.
+
 `board new brief <slug>` writes the header (id, status, base); the body is:
 
 ```markdown
 # <title>
 
 ## Task
-<the user's words, verbatim>
+<per source, an attribution line, then its words verbatim: the user's messages that state the need, or a worker's finding as its report states it; nothing of yours>
 
 ## Design
-<approved decisions and the rejected alternatives the commit body should name>
+<approved decisions (the user's answers to your questions among them, marked as theirs with the date) and the rejected alternatives the commit body should name>
 
 ## Premises
 <what must still hold at HEAD; entry points, files>
