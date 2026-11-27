@@ -361,9 +361,10 @@ Two decisions, with different reasons, so either can be reopened alone:
   machine at its next `chezmoi update`, the agents' own rules included, so it needs my key. GitHub
   enforces this, and `fleet-check` asks it (a dry-run push of the dotfiles over https is refused).
   A stolen machine exposes the PATs through its vault token: rotate them.
-- **Project management: who pushes project code.** I do: unpushed commits are my todo list in the
-  herdr pane, and agents pushing would hide what is still to look at. Not a security edge, so the
-  config below is a guard against a slip, not a wall. It may go once the board carries the todos.
+- **Project management: who pushes project code.** I do: the push is my final validation as owner,
+  the one who answers for what ships, and where I read a migration's diff. Unpushed commits are my
+  todo list for it in the herdr pane, and agents pushing would hide what is still to look at. Not a
+  matter of trust or security, so the config below is a guard against a slip, not a wall.
 
 Two files say so once for every clone, on desktop and server roles. The global git config
 (`~/.config/git/github.inc`, included from `~/.config/git/config`) holds what is true for everyone
